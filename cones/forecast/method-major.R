@@ -1,0 +1,180 @@
+###################### MAJOR METHOD ##########################
+# Instead of just looking at course enrollments as the CONDUIT method does,
+# this MAJOR method looks at how MAJORS changed from prev conduit term to conduit term (ie last two semesters)
+# (the conduit term is just the term before the target term)
+# Then, apply the change in majors percentage to prev_target_term enrollments
+# compute how much that will contribute to target term enrollment based composition of majors in target course
+
+# This function only handles a single course and term at a time. 
+# Current logic is likely to work better for spring than fall for LD courses
+
+major_forecast <- function(students,opt) {
+  message("welcome to major_forecast! (in forecast.R)")
+  
+  target_course <- opt[["course"]]
+  target_term <- opt[["term"]]
+  target_term_type <- get_term_type(target_term)
+  message("target term type set to: ",target_term_type)
+  
+  conduit_term <- subtract_term(target_term,opt$summer)
+  
+  #subtract one academic year for each target and conduit terms
+  prev_target_term <- as.integer(target_term)-100
+  prev_conduit_term <- as.integer(conduit_term)-100
+
+  message("processing ", target_course, " for ", target_term,".")
+  
+  # NOTE: basically everything is course agnostic until applying change in majors to target course
+  
+  # TODO: all instances of getting student list, then class count, should be done all at once w/o term filtering
+  
+  # get all distinct students in previous conduit term
+  # since we're counting majors, we need DISTINCT students across ALL classes.
+  # TODO: better to use academic study guided ad hoc report (no course duplication...)?
+  prev_conduit_student_list <- students %>% filter (`Academic Period Code` == prev_conduit_term ) %>% 
+    select(`Academic Period Code`,`Student ID`,`Major`,`Student Classification`) %>% distinct()
+  
+  # tally students in previous conduit term by majors and classifications
+  prev_conduit_class_count <- prev_conduit_student_list %>% group_by() %>%  
+    count(`Academic Period Code`,Major, `Student Classification`)
+  
+  # get number of majors in conduit_term
+  conduit_student_list <- students %>% filter (`Academic Period Code` == conduit_term ) %>% 
+    select(`Academic Period Code`,`Student ID`,Major,`Student Classification`) %>% distinct()
+  
+  # tally students in previous target term by majors and classifications  
+  conduit_class_count <- conduit_student_list %>% group_by() %>%  
+    count(`Academic Period Code`,Major,`Student Classification`)
+  
+  # combine pre_conduit and prev_target counts
+  conduits <- rbind(prev_conduit_class_count,conduit_class_count)
+  
+  # this is a nice display of how the number of Major/Classification changed over conduit semesters
+  message("convert to wide format, so each row is a major/classification combination and terms are cols: ")
+  conduits_wide <- spread(conduits, `Academic Period Code`, n)
+  conduits_wide %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  
+  
+  # make NAs into 0s; first test to see if any NAs exist to avoid error
+  if (any(is.na(conduits_wide[3:4]))) { 
+    conduits_wide[3:4][is.na(conduits_wide[3:4])] <- 0
+  }
+
+  # compute differences between conduit terms
+  conduits_wide$abs_diff <- conduits_wide[[as.character(conduit_term)]] - conduits_wide[[as.character(prev_conduit_term)]]
+  conduits_wide$pct_diff <- conduits_wide[[as.character(conduit_term)]] / conduits_wide[[as.character(prev_conduit_term)]] * 100
+  
+  message("filtering out grad students...")
+  conduits_wide <- conduits_wide %>% filter( !grepl("Graduate", `Student Classification`))
+  
+  # for testing and inspection, order by greatest change
+  conduits_wide <- conduits_wide %>% arrange(desc(abs_diff))
+  
+  # TODO: Be careful with fall->spring vs spring->fall projections
+  # Don't factor in increases in majors for when students are already past a course.
+  
+  # Now that we know how conduits have changed in composition, see what prev_target was like for our course
+  # get courses/enrollments from prev_target_term and apply pct diff to conduit_term enrollments
+  prev_target_student_list <- students %>% filter (`Academic Period Code` == prev_target_term & SUBJ_CRSE == target_course) %>%  
+    select(`Academic Period Code`,`Student ID` ,Major,`Student Classification`)  %>% distinct()
+  
+  # count total students in previous conduit term (ie collapse students into majors and classifications)
+  prev_target_class_count <- prev_target_student_list %>% group_by() %>% 
+    count(`Academic Period Code`,Major, `Student Classification`)
+  
+
+  # filter out freshman if forecasting fall course, since those can be better estimated from nosedive
+  # for now, we only have nso data for fall 2024; don't use nosedive if forecasting earlier terms
+  if (opt$nso && target_term_type == "Fall" && target_term == 202480) {
+    message("term type detected as Fall 2024..." )
+    prev_target_class_count <- prev_target_student_list %>% 
+      filter (`Student Classification` != 'Freshman, 1st Yr, 1st Sem') %>% 
+      filter (`Student Classification` != 'Freshman, 1st Yr, 2nd Sem') %>% 
+      count(`Academic Period Code`,Major, `Student Classification`)
+
+    # use nosedive to find out freshman contribution to course we're reporting on
+    
+    # load NSO data
+    NSOers <- load_NSO_data()
+    
+    # calculate NSO Freshman contribution to course
+    # use opt, which should have target term specified
+    # forecast_enrl_from_majors uses rollcall, so make sure necessary params are set
+    myopt <- opt
+    myopt[["aggregate"]] <- "course_classification_major"
+    prog_NSO_enrl <- forecast_enrl_from_majors(NSOers,students,myopt)
+    message("results from forecast_enrl_from_majors:")
+    print(prog_NSO_enrl)
+    
+    # get just course for report 
+    prog_NSO_enrl <- prog_NSO_enrl %>% 
+      filter (SUBJ_CRSE == opt$course) 
+  }
+  
+  prev_target_class_count %>% tibble::as_tibble() %>% print(n = 20, width=Inf) 
+  
+  
+  # merge target_demographics with conduits
+  conduits_w_prev_target <- merge(prev_target_class_count,conduits_wide,by=c("Major","Student Classification"),all.x=T)
+  
+  # if forecast term is current or past (not future), Academic Period Code col will have both prev_target_term and target_term
+  # otherwise just the prev_target_term
+  prev_term_enrls <- conduits_w_prev_target %>% mutate(proj_enrl = n * (pct_diff/100) *1)
+  prev_term_enrls <- prev_term_enrls %>% mutate(proj_enrl2 = n * (1+(n/abs_diff)))
+  
+  # if enrollment doesn't change, the percent diff is INF, so just project the same number of students 
+  prev_term_enrls$proj_enrl <- ifelse(is.finite(prev_term_enrls$proj_enrl), prev_term_enrls$proj_enrl, prev_term_enrls$n)
+  prev_term_enrls$proj_enrl2 <- ifelse(is.finite(prev_term_enrls$proj_enrl2), prev_term_enrls$proj_enrl2, prev_term_enrls$n)
+  
+  # as a continuation of above, APC is both prev_target and target (provided target is in the past)
+  # i think only the prev_target rows make any sense
+  message("Enrollment projections by classification:")
+  
+  projections <- prev_term_enrls %>% 
+    group_by(`Student Classification`, `Academic Period Code`) %>% 
+    summarize(prev_target_enrl=sum(n), target_proj_enrl=sum(proj_enrl),target_proj_enrl2=sum(proj_enrl2)) %>% 
+    tibble::as_tibble() %>% print(n = 20, width=Inf) 
+  
+
+  enrl_projs <- projections %>% group_by(`Academic Period Code`) %>% 
+    summarise(target_proj_enrl = sum(target_proj_enrl))
+
+  # add SUBJ_CRSE back into DF for reference and merging
+  enrl_projs$SUBJ_CRSE <- opt[["course"]]
+  
+  # if fall term, merge freshman projection, else placehold with NA
+  if (opt$nso && target_term_type == "fall" && target_term == 202480) {
+    message("merging nso_enrl_projections from nosedive with forecast data...")
+    enrl_projs <- merge (enrl_projs, prog_NSO_enrl[ , c("SUBJ_CRSE","fresh_proj")], by = "SUBJ_CRSE")
+  } else {
+    enrl_projs$fresh_proj <- 0
+  }
+  
+  enrl_projs %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  
+  continuing_fc <- unlist(enrl_projs[,"target_proj_enrl"])
+  incoming_fc <- unlist(enrl_projs[,"fresh_proj"])
+  total_fc <- continuing_fc + incoming_fc
+                          
+                          
+  
+  # better column names
+  new_summary <- data.frame("TERM" = as.character(target_term), 
+                            "SUBJ_CRSE" = target_course, 
+                            "method"="major", 
+                            "forecast" = total_fc,
+                            "continuing_forecast" = continuing_fc,
+                            "incoming_forecast" = incoming_fc
+                            )
+  
+  
+  
+  message("Enrollment projections:")
+  new_summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  
+
+  message("major forecast complete!\n")
+  
+  add_to_forecast_table(new_summary)
+  
+} 

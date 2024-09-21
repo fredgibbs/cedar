@@ -1,0 +1,41 @@
+---
+#title: "Trends Report"
+output:
+  pdf_document:
+    fig_width: 7
+#date: "`r format(Sys.time(), '%d %B, %Y')`"
+always_allow_html: yes
+params:
+  dept_code: 1
+  dept_name: 1
+  subj_codes: 1
+  prog_name: 1
+  prog_focus: 1
+  prog_names: 1
+  prog_codes: 1
+  term_start: 1
+  term_end: 1
+---
+
+```{r setup, include=FALSE}
+library(kableExtra)
+library(rmarkdown)
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE, message = FALSE, dpi=200, out.height="40%")
+```
+
+\newpage
+
+
+```{r} 
+#load("./hc_level_totals_plot.Rda")
+#hc_level_totals_plot
+```
+
+\newpage
+
+## Enrollments across the College
+```{r} 
+
+kbl(enrl_by_year_totals_w, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=T)
+```
+

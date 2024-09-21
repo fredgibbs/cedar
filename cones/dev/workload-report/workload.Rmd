@@ -1,0 +1,298 @@
+---
+title: "Workload Report"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+  pdf_document:
+    fig_width: 7
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+always_allow_html: yes
+params:
+  dept: "AFST"
+  term: 202410
+  faculty:
+  fac_list: 1
+  tables: 1
+---
+
+```{r setup, include=FALSE,  fig.width = 10, fig.height = 12}
+library(kableExtra)
+library(rmarkdown)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+source("../../includes/mappings.R")
+
+faculty <- params$tables[["workload_w"]] %>% mutate(across(everything(),as.character))
+faculty[is.na(faculty)] <- "0"
+faculty <- faculty %>% rename(Instructor=INST_NAME, `Home Dept` = `Home Organization Desc`)
+faculty$`Academic Title`[faculty$`Academic Title` == "0"] <- "--"
+faculty$`Home Dept`[faculty$`Home Dept` == "0"] <- "--"
+
+dept_fac_all_courses <- params$tables[["dept_fac_all_courses"]]
+dept_courses <- params$tables[["dept_courses"]]
+dept <- params$dept
+
+title_str <- paste0(params$dept, " Workload Report")
+
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE, dpi=200, fig.pos="H",fig.height=11,out.height="100%")
+```
+
+
+
+---
+title: `r dept` Workload Report
+subtitle: " "
+---
+
+<a id="top_anchor"></a>
+
+```{r results="asis", echo=FALSE} 
+if (!is.null(params$faculty)) {
+  
+cat("### Faculty Appointment Data\n")
+
+  table <- kbl(params$faculty,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10)
+
+  print(table)  
+
+  cat("{[back to top](#top_anchor)}")
+  }
+
+```
+
+
+
+### Recent Enrollments
+- LINE: total enrollments across all courses; 
+- BLACK DOTS: average enrollment per term
+- RED DOTS: number of courses
+```{r results="asis", echo=FALSE, fig.width = 8, fig.asp=.6,out.width="90%"} 
+  enrl_summary <- params$table[["enrl_summary"]]
+  
+  ggplot(enrl_summary, aes(x=TERM)) + 
+          geom_line(aes(y=ENRL),group=1) +
+          theme(axis.text.x = element_text(angle = -45, hjust=0.05))
+  
+  ggplot(enrl_summary, aes(x=TERM)) + 
+    geom_point(aes(y=AVG),group=2) + geom_line(aes(y=AVG),group=2) +
+    geom_point(aes(y=NUM),group=3,color="red") + geom_line(aes(y=NUM),group=3,color="red") +
+    theme(axis.text.x = element_text(angle = -45, hjust=0.05))
+  
+  
+```
+<br>
+
+
+
+```{r results="asis", echo=FALSE} 
+if (!is.null(params$fac_list)) {
+  
+cat("### ",dept," course count by ",dept," faculty per term\n")
+
+  core_faculty <- faculty %>% filter (Instructor %in% params$fac_list) %>%   ungroup() %>% select(-c(job_cat,`Home Dept`))
+  
+  table <- kbl(core_faculty,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 12)
+
+  print(table)  
+}
+
+```
+{[back to top](#top_anchor)}
+
+### `r dept` course count by external faculty
+```{r results="asis", echo=FALSE} 
+  aux_faculty <- faculty %>% filter (!Instructor %in% params$fac_list) %>% ungroup() %>% select(-c(job_cat))
+
+  table <- kbl(aux_faculty,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 12)
+
+  print(table)  
+
+```
+
+{[back to top](#top_anchor)}
+
+<hr>
+
+### `r dept` courses by `r dept` faculty
+```{r results="asis", echo=FALSE} 
+
+
+terms <- unique(dept_fac_all_courses$TERM)
+
+for (term in terms) {
+cat(paste0("#### ",term_text[which(num.labs == term)] ,"\n"))
+
+  dept_fac_dept_courses <- dept_fac_all_courses %>% filter (DEPT == params$dept & TERM == term) %>%  ungroup() %>%
+    arrange(TERM,INST_NAME)
+  dept_fac_dept_courses <- dept_fac_dept_courses %>% select(-c(TERM,SUBJ_CRSE,DEPT,DEPARTMENT))
+  
+  table <- kbl(dept_fac_dept_courses,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
+   scroll_box(width = "100%", height = "300px")
+
+
+  print(table)  
+}
+
+```
+{[back to top](#top_anchor)}
+<hr>
+
+### non-`r dept` courses by `r dept` faculty
+```{r results="asis", echo=FALSE} 
+
+terms <- unique(dept_fac_all_courses$TERM)
+
+for (term in terms) {
+cat(paste0("#### ",term_text[which(num.labs == term)] ,"\n"))
+  
+  dept_fac_other_courses <- dept_fac_all_courses %>% filter (DEPT != params$dept & TERM == term)%>% ungroup()
+dept_fac_other_courses <- dept_fac_other_courses %>% select(-c(TERM,DEPT)) %>% arrange(INST_NAME)
+
+  table <- kbl(dept_fac_other_courses,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),  latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
+    scroll_box(width = "100%", height = "300px")
+
+  print(table)  
+}
+```
+{[back to top](#top_anchor)}
+
+<hr>
+
+### All courses by `r dept` faculty by instructor
+```{r results="asis", echo=FALSE} 
+
+names <- sort(unique(dept_fac_all_courses$INST_NAME))
+
+
+for (name in names) {
+cat(paste0("#### ",name,"\n"))
+
+    inst_courses <- dept_fac_all_courses %>% filter (INST_NAME == name) %>% ungroup()
+  inst_courses <- inst_courses %>% select(-c(DEPT,INST_NAME,DEPARTMENT)) %>% arrange(TERM)
+
+  table <- kbl(inst_courses,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10)
+
+  print(table)
+}
+
+```
+
+{[back to top](#top_anchor)}
+
+<hr>
+
+### Gen Ed Courses
+```{r results="asis", echo=FALSE} 
+  gen_ed <- dept_courses %>% filter (gen_ed == TRUE) %>%  
+    select(TERM,SUBJ,CRSE_TITLE,INST_METHOD,INST_NAME,`Academic Title`,ENROLLED,total_enrl,xl_enrl,reqs)
+  
+  table <- kbl(gen_ed,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd",       "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10)
+
+  print(table)  
+
+```
+
+{[back to top](#top_anchor)}
+
+<hr>
+
+### Required Courses
+```{r results="asis", echo=FALSE} 
+  
+  reqs <- dept_courses %>% filter (reqs != "") %>%  select(TERM,SUBJ,CRSE_TITLE,INST_METHOD,INST_NAME,`Academic Title`,ENROLLED,total_enrl,xl_enrl,reqs)
+    
+  table <- kbl(reqs,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10)
+
+  print(table)  
+
+```
+
+{[back to top](#top_anchor)}
+
+<hr>
+
+### COURSES per job category
+```{r results="asis", echo=FALSE, fig.width = 4, fig.asp=.6,out.width="50%"} 
+
+course_pct <- dept_courses %>% group_by(`job_cat`) %>% summarize(COURSES=n(),`TERM MEAN`=COURSES/length(unique(dept_courses$TERM)))
+course_pct <- course_pct %>% rename(TITLE = job_cat)
+
+table <- kbl(course_pct %>% arrange(desc(`TERM MEAN`)),digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 12,position = "float_left")
+
+print(table)
+
+ggplot(course_pct, aes(x="", y=`TERM MEAN`, fill=TITLE)) +
+  geom_bar(stat="identity", width=1, color="white") +
+  coord_polar("y", start=0) +
+  theme_void() + # remove background, grid, numeric labels
+  theme(plot.margin = unit(c(0, 0, 0, 0), "cm"))
+
+
+```
+<br>
+
+{[back to top](#top_anchor)}
+
+<hr>
+
+### STUDENTS per job category
+```{r results="asis", echo=FALSE, fig.width = 4, fig.asp=.6,out.width="50%"} 
+
+  
+  student_pct <- dept_courses %>% group_by(`job_cat`) %>% summarize(STUDENTS=sum(total_enrl),`TERM MEAN`=STUDENTS/length(unique(dept_courses$TERM)))
+  student_pct <- student_pct %>% rename(TITLE = job_cat)
+
+  table <- kbl(student_pct %>% arrange(desc(`TERM MEAN`)),digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 12,position = "float_left")
+  
+  print(table)
+
+  ggplot(student_pct, aes(x="", y=`TERM MEAN`, fill=TITLE)) +
+    geom_bar(stat="identity", width=1, color="white") +
+    coord_polar("y", start=0) +
+    theme_void() # remove background, grid, numeric labels
+    
+```
+
+<br>
+
+{[back to top](#top_anchor)}
+
+<hr>
+
+### All `r dept` courses by non-`r dept` faculty
+
+
+```{r results="asis", echo=FALSE} 
+
+  for (term in terms) {
+    
+    cat(paste0("#### ",term_text[which(num.labs == term)] ,"\n"))
+    
+    brief <- params$tables[["courses_brief"]]
+    brief <- brief %>%  filter (!INST_NAME %in% params$fac_list & TERM == term) %>% select(-c(GEN_ED,REQS))  %>% arrange(TERM,INST_NAME)
+    table <- kbl(brief,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 9)
+    
+    print(table)
+  }
+```
+
+{[back to top](#top_anchor)}
+
+<hr>
+
+### Methodology
+All data comes from UNM MyReports, specifically the Department Enrollment Status Report.
+Some filtering and aggregating makes this report more readable, namely:
+
+- filtering out courses like independent studies, dissertation hours, etc.
+- compressing cross-listed courses into a single row to display both department and crosslist enrollments
+- filtering out summer courses from the workload matrix
+
+Job titles are taken from HRReports, but these are not fully normalized.
+"--" as a value means there is no match in the A&S HR Report (ie their contract comes from another College).
+
+{[back to top](#top_anchor)}
+

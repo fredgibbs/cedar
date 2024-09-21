@@ -1,0 +1,306 @@
+---
+title: "Trends Report"
+output:
+  html_document:
+    df_print: paged
+  pdf_document:
+    fig_width: 7
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+always_allow_html: yes
+params:
+  course: 1
+  term: 1
+  opt: 1
+  tables: 1
+  rmd_file: 1
+  output_dir_base: 1
+  output_filename: 1
+---
+
+```{r setup, include=FALSE,  fig.width = 10, fig.height = 12}
+library(kableExtra)
+library(rmarkdown)
+library(dplyr)
+library(tidyr)
+
+  course <- params$course
+  
+  enrls <- params$tables[["enrls"]]
+  where_to_data <- params$tables[["where_to_data"]]
+  where_from_data <- params$tables[["where_from_data"]]
+  where_at_data <- params$tables[["where_at_data"]]
+  agg_by_class <- params$tables[["agg_by_class"]]
+  agg_by_major <- params$tables[["agg_by_major"]]
+  grade_data <- params$tables[["grade_data"]]
+  forecast_history <- params$tables[["forecast_history"]]
+  forecast_next_term <- params$tables[["forecast_next_term"]]
+
+    
+  #TODO: figure out how to do multiple courses?
+  # wheres file only ever has one class right now
+  # maybe there isn't any need to a report for multiple courses
+  # maybe better to have separate html outputs and a filter widget
+  # how much is each course its own story?
+
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE, dpi=200, fig.height=11,out.height="100%")
+```
+
+---
+title: "Course Report "
+subtitle: " "
+---
+
+### Filtering Options
+```{r  results="asis", echo=FALSE} 
+cat("term: ", opt$term)
+
+cat("<br> part of term: ", opt$pt)
+
+cat("<br> inst method: ", opt$im)
+
+cat("<br> level: ", opt$level,"\n")
+cat(paste0("## ",course , "\n"))
+    #cat("\n")
+    #cat("here is some other text\n")
+
+```
+
+<div style="border:1px solid white">
+<div style="float:left; width:49%">
+```{r fall_enrl, results="asis", echo=FALSE} 
+  
+     cat("\n")
+
+    # filter by term and course
+    enrl_fall <- enrls  %>% filter (SUBJ_CRSE == course ) %>% filter (substring(TERM,5,6) == 80)  %>% 
+      ungroup() %>% slice_head(n=5) %>%  select(c(1,6,7,8,9,10))
+    
+    enrl_spring <- enrls  %>% filter (SUBJ_CRSE == course) %>% filter (substring(TERM,5,6) == 10) %>% 
+      ungroup() %>% slice_head(n=5) %>% select(c(1,6,7,8,9,10))
+
+    
+    cat(paste0("#### ","FALL enrollments \n"))
+    
+    table <- kbl(enrl_fall,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), position="left", full_width=F, font_size = 12)
+
+    print(table)
+```
+</div>
+
+
+
+```{r spring_enrl, results="asis", echo=FALSE} 
+    
+    cat(paste0("#### ","SPRING enrollments \n"))
+    
+    table <- kbl(enrl_spring,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), position="left", full_width=F, font_size = 12)
+
+    print(table)
+
+```    
+</div>
+
+
+<div style="border:1px solid white; clear:both">
+<div style="float:left; width:49%">
+    
+```{r where_spring, results="asis", echo=FALSE} 
+  
+    # filter for course in loop
+    where_from_fall <- where_from_data %>% filter (to_crse == course & term_type == "fall") %>% 
+      arrange (desc(avg_contrib)) %>% ungroup() %>% slice_head(n=5)
+    
+    where_from_spring <- where_from_data %>% filter (to_crse == course & term_type =="spring") %>% 
+      arrange (desc(avg_contrib)) %>% ungroup() %>% slice_head(n=5)
+
+      cat("\n")
+
+    cat(paste0("#### ","SPRING courses students come from \n"))
+    
+    table <- kbl(where_from_spring,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10, position = "float_left")
+
+    print(table)
+```
+</div>
+
+```{r where_fall, results="asis", echo=FALSE} 
+
+    
+        cat(paste0("#### ","FALL courses students come from \n"))
+    
+    table <- kbl(where_from_fall,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10)
+
+    print(table)
+
+  cat("\n")
+
+```
+</div>
+
+
+<div style="border:1px solid white; clear:both">
+<div style="float:left; width:49%">
+      
+```{r where_to_fall, results="asis", echo=FALSE} 
+
+  
+      where_to_fall <- where_to_data %>% filter (from_crse == course & term_type == "fall") %>% 
+      arrange (desc(avg_contrib)) %>% ungroup() %>% slice_head(n=5)
+    
+      where_to_spring <- where_to_data %>% filter (from_crse == course & term_type =="spring") %>% 
+      arrange (desc(avg_contrib)) %>% ungroup() %>% slice_head(n=5)
+
+    
+    cat(paste0("#### ","FALL courses students go to \n"))
+    
+    table <- kbl(where_to_fall,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10,  position = "float_left")
+
+    print(table)
+```
+</div>
+
+```{r where_to_spring, results="asis", echo=FALSE} 
+    
+    cat(paste0("#### ","SPRING courses students go to \n"))
+    
+    table <- kbl(where_to_spring,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10)
+
+    print(table)
+  cat("\n")
+
+```
+</div>
+
+```{r classifications, results="asis", echo=FALSE} 
+
+      # agg_by_class <- agg_by_class %>% filter (from_crse == course & term_type == "fall") %>% 
+      # arrange (desc(avg_contrib)) %>% ungroup() %>% slice_head(n=5)
+      # 
+      # agg_by_major <- agg_by_major %>% filter (from_crse == course & term_type =="spring") %>% 
+      # arrange (desc(avg_contrib)) %>% ungroup() %>% slice_head(n=5)
+
+    agg_by_class_fall <- agg_by_class %>% select(`Student Classification`,ends_with("80"))
+    agg_by_class_spring <- agg_by_class %>% select(`Student Classification`,ends_with("10"))
+    
+    cat(paste0("#### ","Student Classifications in FALL sections \n"))
+    
+    table <- kbl(agg_by_class_fall,digits=2)  %>%   
+      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
+      scroll_box(width = "100%", height = "300px")
+
+    print(table)
+
+
+    cat(paste0("#### ","Student Classifications in SPRING sections \n"))
+    
+    table <- kbl(agg_by_class_spring,digits=2)  %>%   
+      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
+      scroll_box(width = "100%", height = "300px")
+
+    print(table)
+    
+    
+    
+    agg_by_major_fall <- agg_by_major  %>% select (Major,ends_with("80"))
+    agg_by_major_spring <- agg_by_major  %>% select (Major,ends_with("10"))
+    
+    
+    
+    cat(paste0("#### ","% of majors in FALL sections \n"))
+    
+    table <- kbl(agg_by_major_fall,digits=2)  %>%   
+      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
+      scroll_box(width = "100%", height = "300px")
+
+    
+    print(table)
+    
+    cat(paste0("#### ","% of majors in SPRING sections \n"))
+
+    
+    table <- kbl(agg_by_major_spring,digits=2)  %>%   
+      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
+      scroll_box(width = "100%", height = "300px")
+
+    
+    print(table)
+    cat("\n")
+
+  
+  
+  
+    cat(paste0("#### ","Gradebook\n"))
+
+    
+    grade_data <-  grade_data %>%  select(c(`Academic Period Code`,`DFW %`,6:ncol(grade_data)))
+
+    
+    table <- kbl(grade_data,digits=2)  %>% 
+      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+                    latex_options = c("striped","hold_position","condensed"), position="center", full_width=F, font_size = 10) %>% 
+      scroll_box(width = "100%", height = "300px")
+
+    print(table)
+
+  
+      
+    # filter for course in loop
+    forecast_filtered <- forecast_history %>% filter (SUBJ_CRSE == course)
+    
+  
+    forecast_filtered_fall <- forecast_filtered %>% filter (substring(TERM,5,6) == 80)
+    forecast_filtered_spring <- forecast_filtered %>% filter (substring(TERM,5,6) == 10)
+    
+    cat(paste0("#### ","FALL forecast past\n"))
+
+    table <- kbl(forecast_filtered_fall,digits=2)  %>% 
+      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+                    latex_options = c("striped","hold_position","condensed"), position="center", full_width=F)
+
+    print(table)
+
+    
+    cat(paste0("#### ","SPRING forecast past\n"))
+
+    table <- kbl(forecast_filtered_spring,digits=2)  %>% 
+      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+                    latex_options = c("striped","hold_position","condensed"), position="center", full_width=F)
+
+    print(table)
+
+
+        
+        cat(paste0("#### ","Forecast future\n"))
+
+    
+    table <- kbl(forecast_next_term,digits=2)  %>% 
+      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+                    latex_options = c("striped","hold_position","condensed"), position="center", full_width=F)
+
+    print(table)
+
+    
+  
+    # filter for course in loop
+    # enrl_rpt_filtered <- enrl_rpt %>% filter (SUBJ_CRSE == course)
+    
+    # remove SUBJ_CRSE (the first col) now that's it's been displayed as header
+    # enrl_rpt_filtered  <-  enrl_rpt_filtered [,-c(1)]
+    
+    
+    #  cat(paste0("#### ","usher status\n"))
+
+    
+   # table <- kbl(enrl_rpt_filtered,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), position="center", full_width=F)
+
+#  print(table)
+
+  
+  cat("\n <hr>")
+  
+```
+

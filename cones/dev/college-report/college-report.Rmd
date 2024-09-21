@@ -1,0 +1,55 @@
+---
+title: "Trends Report"
+output:
+  pdf_document:
+    fig_width: 7
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+always_allow_html: yes
+params:
+  dept:
+  subj_codes: 
+  program: 
+  program_str: 
+  crosslist: 
+  plot_summer_degrees: FALSE
+  output: no
+---
+
+```{r setup, include=FALSE,  fig.width = 10, fig.height = 12}
+library(kableExtra)
+library(rmarkdown)
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE, message = FALSE, dpi=200, fig.height=11,out.height="100%")
+```
+
+```{r message=TRUE, warning=TRUE, file=c('~/Dropbox/college/r_includes/map_to_subj_code.R')}
+```
+
+```{r message=TRUE, warning=TRUE,  file=c('~/Dropbox/college/r_includes/filter_dept.R')}
+```
+
+---
+title: "Arts & Sciences Trends"
+subtitle: " "
+---
+
+
+```{r, file=c('./majors-c-for-rmd.R','./sch-c-for-rmd.R'),dpi = 300,fig.width=8}
+```
+
+```{r, file=c('./fbt-c-for-rmd.R','./sfr-c-for-rmd.R'),dpi = 300,fig.width=8}
+```
+
+
+\newpage
+
+```{r} 
+#majors_diff_from_college
+```
+
+\newpage
+
+```{r} 
+#num_majors_by_dept
+```
+
+

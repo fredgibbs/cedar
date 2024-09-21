@@ -1,0 +1,99 @@
+---
+title: "Seatfinder Report"
+output:
+  html_document:
+    toc: true  
+    toc_float:
+      collapsed: false
+      smooth_scroll: false    
+  df_print: paged
+  pdf_document:
+    fig_width: 7
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+always_allow_html: yes
+params:
+  term: 1
+  opt: 1
+  courses: 1
+  term_start: 1
+  term_end: 1
+  tables: 1
+  palette: 1
+  rmd_file: 1
+  output_dir_base: 1
+  output_filename: 1
+---
+
+```{r setup, include=FALSE}
+  library(kableExtra)
+  library(rmarkdown)
+  knitr::opts_chunk$set(echo = FALSE,warning = FALSE, message = FALSE, dpi=200, out.height="40%")
+
+  enrls <- params$tables[["enrls"]]
+
+  gen_ed_summary <- params$tables[["gen_ed_summary"]]
+  gen_ed_likely <- params$tables[["gen_ed_likely"]]
+  course_type_summary <- params$tables[["course_type_summary"]]
+  both_terms <- params$tables[["both_terms"]]
+  prev_offered <- params$tables[["prev_offered"]]
+  newly_offered <- params$tables[["newly_offered"]]
+
+
+```
+
+\newpage
+
+
+### Filtering Options
+```{r  results="asis", echo=FALSE} 
+cat("term: ", opt$term)
+
+cat("<br> part of term: ", opt$pt)
+
+cat("<br> inst method: ", opt$im)
+
+cat("<br> level: ", opt$level)
+```
+
+
+
+### Course Type Summary (compared to last year)
+The last column is the difference between this term and last term. A positive number means more seats are available; negative means fewer.
+```{r} 
+kbl(course_type_summary, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=T)
+```
+
+
+### Seats Available by Gen Ed Area
+```{r} 
+kbl(gen_ed_summary, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=T)
+```
+
+### Seats LIKELY Available by Gen Ed Area
+These sections have 0 enrolled but remain active, so likely the cap 0 to delay enrollment.
+```{r} 
+kbl(gen_ed_likely, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=T)
+```
+
+
+<div style="float:left">
+### Offered last year but not now
+```{r} 
+kbl(prev_offered, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=F)
+```
+</div>
+
+<div>
+### Offered now but not last year
+```{r} 
+kbl(newly_offered, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=F)
+```
+</div>
+
+<div style="float:none; clear:both">
+### Courses in common with last year
+The last column is the difference between this term and last term. A positive number means more seats are available; negative means fewer.
+```{r} 
+kbl(both_terms, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=5)
+```
+</div>
