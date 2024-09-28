@@ -27,7 +27,7 @@ get_sfr <- function () {
   message("welcome to get_sfr!")
   
   message("calling headcount to count heads in college...")  
-  headcount_all <- count_heads_in_college()
+  headcount_all <- count_heads_in_college(opt=list())
   
   perm_faculty_count <- get_perm_faculty_count()
   

@@ -157,7 +157,10 @@ if (opt$func == "guide") {
           Available functions: course-report, credit-hours, data-status, dept-report, enrl, enrl-cl, forecast, gradebook, headcount, lookout, rollcall, seatfinder-report, sfr, waitlist.
           Specify -f FUNC (where FUNC is one of the terms above) --guide for instructions on each function, like '-f enrl --guide'")  
   stop("no error")
+} else {
+  message("looking up function: ", opt$func)  
 }
+
 
 
 ############### CREDIT HOURS ############### 
