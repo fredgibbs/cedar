@@ -114,13 +114,13 @@ params$plots[["hc_progs_under_long_minors_plot"]]
 
 ### Graduate Majors Headcount
 ```{r "Graduate Majors Headcount"} 
-params$plots[["hc_progs_grad_majors_plot"]]
+params$plots[["hc_progs_grad_long_majors_plot"]]
 ```
 
 
 ### Graduate Minors Headcount
 ```{r "Graduate Minors Headcount"} 
-params$plots[["hc_progs_grad_minors_plot"]]
+params$plots[["hc_progs_grad_long_minors_plot"]]
 ```
 
 
