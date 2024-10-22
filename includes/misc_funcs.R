@@ -23,7 +23,8 @@ convert_param_to_list <- function(param) {
       print(get(param))
       param_to_list <- as.list(get(param))
     } else {
-      stop("object found, but not it's not a list.")
+      message("named object found, but not it's not a list. attempting to convert param to string and then to list... ")
+      param_to_list <- as.list( as.character(param))
     }
   
     # check for commma list  
