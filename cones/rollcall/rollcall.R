@@ -9,11 +9,12 @@
 get_agg_course_classification_major <- function(students) {
   
   summary <- students %>% group_by(SUBJ_CRSE, `Academic Period Code`, term_type, Major, `Student Classification`,`Short Course Title`) %>% 
+    distinct(`Student ID`,.keep_all=TRUE) %>% 
     summarize(count = n()) %>% 
     arrange(desc(count),SUBJ_CRSE,Major,`Student Classification`,term_type)
   
-  message("course_classification_major:")    
-  summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  # message("course_classification_major:")    
+  # summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   return(summary)    
 }
@@ -23,11 +24,12 @@ get_agg_course_classification_major <- function(students) {
 get_agg_course_classification <- function(students) {
   
   summary <- students %>% group_by(`Academic Period Code`,`Student Classification`,SUBJ_CRSE,`Short Course Title`) %>% 
+    distinct(`Student ID`,.keep_all=TRUE) %>% 
     summarize(count=n()) %>% 
     group_by(`Academic Period Code`, `Student Classification`) 
   
-  message("course_classification:")    
-  summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  # message("course_classification:")    
+  # summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   return(summary)    
 }
@@ -36,109 +38,19 @@ get_agg_course_classification <- function(students) {
 get_agg_course_classification_avg <- function(students) {
   
   summary <- students %>% group_by(`Academic Period Code`,`Student Classification`,SUBJ_CRSE,`Short Course Title`) %>% 
+    distinct(`Student ID`,.keep_all=TRUE) %>% 
     summarize(count=n()) %>% 
     group_by(`Academic Period Code`, `Student Classification`) 
   
-  summary <- summary %>%  group_by(`Student Classification`) %>% 
+  summary <- summary %>%  group_by(`Student Classification`,SUBJ_CRSE,`Short Course Title`) %>% 
     summarize(mean = mean(count))
   
-  message("course_classification_avg:")    
-  summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  #message("course_classification_avg:")    
+  #summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   return(summary)    
 }
 
-
-get_agg_course_major <- function(students) {
-  
-  summary <- students %>% group_by(`Academic Period Code`,`Major`,SUBJ_CRSE,`Short Course Title`) %>% 
-    summarize(count=n()) %>% 
-    arrange(`Academic Period Code`, Major)
-  
-  message("course_major:")    
-  summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-  
-  return(summary)    
-}
-
-
-get_agg_course_major_avg <- function(students) {
-  
-  summary <- students %>% group_by(`Academic Period Code`,`Major`,SUBJ_CRSE,`Short Course Title`) %>% 
-    summarize(count=n()) %>% 
-    arrange(`Academic Period Code`, Major)
-  
-  summary <- summary %>%  group_by(`Major`) %>% 
-    summarize(mean = mean(count)) %>% arrange (desc(mean))
-  
-  message("course_major_avg:")    
-  summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-  
-  return(summary)    
-}
-
-
-get_agg_major <- function(students) {
-  
-  # if counting majors ACROSS COURSES, keep only one record per student
-  students <- students %>% distinct(`Student ID`,`Academic Period Code`, .keep_all=TRUE)
-  
-  # after getting only unique students, it doesn't make sense to get course info across students 
-  # since students are only listed in one course at this point
-  summary <- students %>% group_by(`Academic Period Code`,`Major`,SUBJ_CRSE,`Short Course Title`) %>% 
-    summarize(count=n()) %>% arrange(desc(count),`Academic Period Code`)
-  
-  summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-  
-  # if single term, rank by count; if multi term, rank by term
-  if (nrow(distinct(students,`Academic Period Code`)) > 1) {
-    summary <- students %>% group_by(`Major`,`Academic Period Code`) %>% 
-      summarize(count=n()) %>% group_by(`Major`) %>%  arrange(Major,`Academic Period Code`, .by_group=TRUE) 
-    summary  <- summary %>% mutate(pct_diff = (count / lag(count, order_by=`Academic Period Code`)* 100))
-    
-    summary <- summary %>%  filter(count > 20) %>% arrange(desc(pct_diff), .by_group=TRUE)
-  } 
-  else {
-    summary <- students %>% group_by(`Major`,`Academic Period Code`) %>% 
-      summarize(count=n()) %>% arrange(desc(count),`Academic Period Code`,Major)
-  }
-  
-  message("major:")    
-  summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-  
-  return(summary)    
-}
-
-
-get_agg_major_wide <- function(students) {
-  
-  message("MAJOR_WIDE: summarizing by term, course, major...")
-  
-  # get course enrollments from class lists
-  crse_enrollment  <- calc_cl_enrls(students)
-  
-  # count number of majors in each course
-  agg_by_major <- students %>% group_by(`Academic Period Code`, SUBJ_CRSE,`Short Course Title`,`Major`) %>% 
-    summarize(majors=n()) %>% 
-    arrange(SUBJ_CRSE,desc(majors))# %>% 
-  
-  # combine raw counts of majors with enrollment data to compute students' percent of course
-  merge_sum_enrl <- merge(agg_by_major,crse_enrollment,by=c("Academic Period Code", "SUBJ_CRSE"))
-  merge_sum_enrl <- merge_sum_enrl %>% group_by(`Academic Period Code`,SUBJ_CRSE) %>%  mutate(pct = majors/count*100) %>% 
-    select (-c(majors,count)) %>% 
-    arrange (`Academic Period Code`,desc(pct))
-  
-  agg_by_major_w <- merge_sum_enrl %>% pivot_wider(names_from = `Academic Period Code`, values_from=pct)
-  agg_by_major_w <- agg_by_major_w %>% mutate_if(is.numeric, round, digits=1)
-  agg_by_major_w %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-  
-  summary <- agg_by_major_w
-  
-  message("major_wide:")    
-  summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-  
-  return(summary)    
-}
 
 
 get_agg_classification_wide <- function(students) {
@@ -148,7 +60,8 @@ get_agg_classification_wide <- function(students) {
   # get course enrollments from class lists (in enrl.R)
   crse_enrollment  <- calc_cl_enrls(students)
   
-  agg_by_class <- students %>% group_by(`Academic Period Code`, SUBJ_CRSE,`Short Course Title`,`Student Classification`) %>% 
+  agg_by_class <- students %>% group_by(`Academic Period Code`, SUBJ_CRSE,`Short Course Title`,`Student Classification`) %>%
+    distinct(`Student ID`,.keep_all=TRUE) %>% 
     summarize(class_count=n()) %>% 
     arrange(`SUBJ_CRSE`,desc(class_count)) 
   
@@ -164,11 +77,149 @@ get_agg_classification_wide <- function(students) {
   
   summary <- agg_by_class_w
   
-  message("major_wide:")    
-  summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  #message("major_wide:")    
+  #summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   return(summary)    
 }
+
+
+
+
+
+get_agg_course_major <- function(students) {
+  
+  summary <- students %>% group_by(`Academic Period Code`,`Major`,SUBJ_CRSE,`Short Course Title`) %>% 
+    summarize(count=n()) %>% 
+    arrange(`Academic Period Code`, Major)
+  
+  #message("course_major:")    
+  #summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  
+  return(summary)    
+}
+
+
+get_agg_course_major_avg <- function(students) {
+  
+  summary <- students %>% group_by(`Academic Period Code`,`Major`,SUBJ_CRSE,`Short Course Title`) %>% 
+    summarize(count=n()) %>% 
+    arrange(`Academic Period Code`, Major)
+  
+  summary <- summary %>%  group_by(`Major`) %>% 
+    summarize(mean = mean(count)) %>% arrange (desc(mean))
+  
+  #message("course_major_avg:")    
+  #summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  
+  return(summary)    
+}
+
+
+get_agg_major <- function(students) {
+  
+  message("AGG_MAJOR: summarizing by term, course, major...")
+
+  # get course enrollments from class lists (gets only registered students)
+  crse_enrollment  <- calc_cl_enrls(students)
+  
+  # count number of majors in each course
+  agg_by_major <- students %>% group_by(`Academic Period Code`, SUBJ_CRSE, `Major`) %>% 
+    distinct(`Student ID`,.keep_all=TRUE) %>% 
+    summarize(majors=n()) %>% 
+    arrange(SUBJ_CRSE,desc(majors))
+  
+  # combine raw counts of majors with enrollment data to compute students' percent of course
+  agg_by_major <- merge(agg_by_major,crse_enrollment,by=c("Academic Period Code", "SUBJ_CRSE"))
+  
+  # calculate % of enrollment for different majors
+  agg_by_major <- agg_by_major %>% group_by(`Academic Period Code`,SUBJ_CRSE) %>%  mutate(pct = majors/count*100) %>% 
+    select (-c(majors,count)) %>% 
+    arrange (`Academic Period Code`,desc(pct))
+  
+  return(agg_by_major)    
+}
+
+
+get_agg_major_wide <- function(students) {
+  
+  message("MAJOR_WIDE: summarizing by term, course, major...")
+  
+  agg_major <- get_agg_major(students)
+  
+  agg_by_major_w <- agg_major %>% pivot_wider(names_from = `Academic Period Code`, values_from=pct)
+  agg_by_major_w <- agg_by_major_w %>% mutate_if(is.numeric, round, digits=1)
+  agg_by_major_w %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  
+  #message("major_wide:")    
+  #agg_by_major_w %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  
+  return(agg_by_major_w)    
+}
+
+
+get_agg_major_woc <- function(students) {
+  
+  message("MAJOR_WIDE: summarizing by term, major...")
+  
+  # if counting majors ACROSS COURSES, use distinct IDs keep only one record per student
+  students <- students %>% distinct(`Student ID`,`Academic Period Code`, .keep_all=TRUE)
+  
+  # count number of majors 
+  agg_major_woc <- students %>% group_by(`Academic Period Code`, term_type, `Major`) %>%
+    summarize(majors=n()) %>%
+    arrange(term_type,desc(`Academic Period Code`))# %>%
+  
+  agg_major_woc <- agg_major_woc %>% mutate_if(is.numeric, round, digits=1)
+  
+  #message("agg_major_woc:")
+  #agg_major_woc %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  
+  # 1                 202480 fall      Accounting                     93
+  # 2                 202480 fall      Adv Magnetic Reson Imaging      1
+  # 3                 202480 fall      American Studies               22
+  # 4                 202480 fall      Anesthesia                     15
+  # 5                 202480 fall      Anthropology                  131
+  # 
+  
+  # try to summarize across terms to get trends or dimps (dips and bumps)
+  options(scipen=999)
+  
+  agg_major_woc <- add_term_bins(agg_major_woc,"Academic Period Code")
+  
+  stats <- agg_major_woc %>% group_by(Major) %>% group_modify(~ broom::tidy(lm(majors ~ term_bin, data = .x)))
+  stats <- stats  %>% filter (term == "term_bin") %>% select(Major, estimate) %>%  arrange (desc(estimate))
+  stats %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  
+  
+  return(agg_major_woc)
+}
+
+
+
+
+get_agg_major_woc_wide <- function(students) {
+
+  message("MAJOR_WIDE: summarizing by term, major...")
+
+  # use distinct IDs
+  students <- students %>% distinct(`Student ID`,`Academic Period Code`, .keep_all=TRUE)
+  
+  # count number of majors in each course
+  agg_by_major <- students %>% group_by(`Academic Period Code`, term_type, `Major`) %>%
+    summarize(majors=n()) %>%
+    arrange(term_type,desc(`Academic Period Code`))# %>%
+
+  
+  agg_by_major_w <- agg_by_major %>% pivot_wider(names_from = `Academic Period Code`, values_from=majors)
+  agg_by_major_w <- agg_by_major_w %>% mutate_if(is.numeric, round, digits=1)
+
+  message("major_wide:")
+  agg_by_major_w %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+
+  return(agg_by_major_w)
+}
+
 
 
 
@@ -184,6 +235,8 @@ aggregate_rolls <- function(students,opt) {
   
   message("creating aggregate report by ", agg_param,"...")
   
+  
+  # in general, wide versions display academic years as columns
   
   if (agg_param == "course_classification_major") {
     summary <- get_agg_course_classification_major(students)
@@ -205,6 +258,12 @@ aggregate_rolls <- function(students,opt) {
   }
   else if (agg_param == "major_wide") { # used by course-report 
     summary <- get_agg_major_wide(students)
+  }
+  else if (agg_param == "major_woc") { 
+    summary <- get_agg_major_woc(students)
+  }
+  else if (agg_param == "major_woc_wide") { 
+    summary <- get_agg_major_woc_wide(students)
   }
   else if (agg_param == "classification_wide") {   # used by course-report 
     summary <- get_agg_classification_wide(students)
@@ -232,7 +291,7 @@ aggregate_rolls <- function(students,opt) {
 
 ########### main function ##########
 rollcall <- function (students,opt) {
-  message("Welcome to Rollcall!")
+  message("\n Welcome to Rollcall!")
   
   if (is.null(opt[["aggregate"]])) {
     message("Everything works better with the -a (aggregate) flag: course_classification_major, course_classification, course_major, major, major_wide all.
@@ -241,17 +300,20 @@ rollcall <- function (students,opt) {
   }
   
   # opt <- list()
-  # opt$term <- "202410"
-  # opt$rollcall_agg_by <- "all"
-  # #opt$dept <- ""
-  # opt$course <- "MATH 1230"
+  # opt$term <- NULL
+  # opt$aggregate <- "major_wide"
+  # opt$course <- "ENGL 2210"
+  # 
+  # students <- load_students(opt)
   
   # opt$registration_status <- "Student Registered"
   # #opt$classification <-  'Freshman, 1st Yr, 1st Sem'
   # opt$major <- "Nursing, Pre Business Administration, Pre Psychology, Pre Biology, Undecided, Pre Mechanical Engineering, Pre FDMA, Pre Computer Science"
   
+  
   # TODO: process a course list
   
+  # unless explicitly specified, use only registered students
   if(is.null(opt$registration_status)) {
     opt$registration_status <- "Registered" # this will also catch "Student Registered" per filtering functions
   }
@@ -263,16 +325,10 @@ rollcall <- function (students,opt) {
   # filter courses according to options
   filtered_students <- filter_class_list(students, opt)
   
-  # check to see if we should aggregate results
-  if(!is.null(opt$aggregate)) {
-    agg_rolls <- aggregate_rolls(filtered_students,opt) 
-    message("returning agg_rolls from rollcall...")
-    agg_rolls %>% tibble::as_tibble() %>% print(n = 13, width=Inf)
-    return(agg_rolls) 
-  } 
-  else {
-    message("not aggregating, just listing some results after filtering...")
-    filtered_students %>% tibble::as_tibble() %>% print(n = 25, width=Inf)
-  }
+  # aggregate flag set to all by default
+  agg_rolls <- aggregate_rolls(filtered_students,opt) 
   
+  message("returning agg_rolls from rollcall...")
+  return(agg_rolls) 
+
 }
