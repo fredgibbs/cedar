@@ -25,7 +25,15 @@ fall_to_spring_forecast <- function(students, courses, opt) {
   
   myopt <- opt # preserve original opt, but need to modify for immediate filtering
   myopt[["term"]] <- NULL
-  myopt$summer <- FALSE # this makes sense for the method of looking a term forward or back
+
+  # ignore summer terms unless forecasting for it  
+  if (get_term_type(target_term) == "Summer") {
+    myopt$summer <- TRUE  
+  } else {
+    myopt$summer <- FALSE   
+  }
+  
+
   myopt$aggregate <- "course"
   
   # message("myopts:")

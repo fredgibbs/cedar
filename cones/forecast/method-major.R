@@ -13,14 +13,61 @@ major_forecast <- function(students,opt) {
   
   target_course <- opt[["course"]]
   target_term <- opt[["term"]]
+  
   target_term_type <- get_term_type(target_term)
   message("target term type set to: ",target_term_type)
   
-  conduit_term <- subtract_term(target_term,opt$summer)
+  
+  # see if user has supplied a conduit term besides default of target-1. (for projecting summer from fall...)
+  # note: subtract_term defaults to ignoring summer, which is almost always want to do
+  if (!is.null(opt[["custom_conduit"]]) && target_term == opt[["conduit_for_term"]]) {
+    message("target term matches conduit_for_term; using custom_conduit.")
+    conduit_term <- opt[["custom_conduit"]]  
+  } else {
+    # no special conduits; business as usual
+    conduit_term <- subtract_term(target_term)   
+  }
+  
+  message("conduit term set to ",conduit_term,".")
   
   #subtract one academic year for each target and conduit terms
   prev_target_term <- as.integer(target_term)-100
   prev_conduit_term <- as.integer(conduit_term)-100
+  
+  
+  # determine how conduit enrollments changed from one year to the next
+  message("finding conduit enrollments...")
+  
+  conduits_contributions <- where_from (students,opt)
+  #  SUBJ_CRSE term_type avg_contrib to_crse
+  # ECON 2110 fall              4   HIST 412  
+  
+  # keep only term_type of conduit course
+  conduits_contributions <- conduits_contributions %>% filter (term_type == get_term_type(conduit_term))
+  
+  
+  # get enrollments from prev_conduit and conduit and use lag to see diff
+  myopt <- opt
+  myopt[["course"]] <- as.list(conduits_contributions$SUBJ_CRSE)
+  myopt[["term"]] <- paste0(conduit_term,",",prev_conduit_term)
+  myopt[["aggregate"]] <- "course"
+  
+  # the summarize here combines enrolled col for same SUBJ_CRSE (like topics courses)
+  # note that we can't forecast via conduits if we don't have prior semester enrollments
+  # ie we can't skip a term 
+  conduit_enrls <- get_enrl(courses,myopt) %>% 
+    group_by(SUBJ_CRSE,TERM) %>% 
+    summarize (enrolled = sum(enrolled)) %>% 
+    select(SUBJ_CRSE, TERM, enrolled) %>%  
+    arrange(SUBJ_CRSE)
+  
+  #TODO:  if no conduit data, (ie we're forecasting for summer in the fall), make the conduits be one earlier semester
+  if (nrow( conduit_enrls %>% filter (TERM == conduit_term)) == 0) {
+    message("can't find any enrollment data for true conduit term. Using the closest term...")
+    conduit_term <- subtract_term(conduit_term)
+    prev_conduit_term <- subtract_term(prev_conduit_term)
+  }
+  
 
   message("processing ", target_course, " for ", target_term,".")
   
@@ -52,7 +99,8 @@ major_forecast <- function(students,opt) {
   # this is a nice display of how the number of Major/Classification changed over conduit semesters
   message("convert to wide format, so each row is a major/classification combination and terms are cols: ")
   conduits_wide <- spread(conduits, `Academic Period Code`, n)
-  conduits_wide %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  
+  #conduits_wide %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   
   # make NAs into 0s; first test to see if any NAs exist to avoid error
@@ -85,7 +133,7 @@ major_forecast <- function(students,opt) {
 
   # filter out freshman if forecasting fall course, since those can be better estimated from nosedive
   # for now, we only have nso data for fall 2024; don't use nosedive if forecasting earlier terms
-  if (opt$nso && target_term_type == "Fall" && target_term == 202480) {
+  if (opt$nso && target_term_type == "fall" && target_term == 202480) {
     message("term type detected as Fall 2024..." )
     prev_target_class_count <- prev_target_student_list %>% 
       filter (`Student Classification` != 'Freshman, 1st Yr, 1st Sem') %>% 
@@ -126,15 +174,10 @@ major_forecast <- function(students,opt) {
   prev_term_enrls$proj_enrl <- ifelse(is.finite(prev_term_enrls$proj_enrl), prev_term_enrls$proj_enrl, prev_term_enrls$n)
   prev_term_enrls$proj_enrl2 <- ifelse(is.finite(prev_term_enrls$proj_enrl2), prev_term_enrls$proj_enrl2, prev_term_enrls$n)
   
-  # as a continuation of above, APC is both prev_target and target (provided target is in the past)
-  # i think only the prev_target rows make any sense
-  message("Enrollment projections by classification:")
   
   projections <- prev_term_enrls %>% 
     group_by(`Student Classification`, `Academic Period Code`) %>% 
-    summarize(prev_target_enrl=sum(n), target_proj_enrl=sum(proj_enrl),target_proj_enrl2=sum(proj_enrl2)) %>% 
-    tibble::as_tibble() %>% print(n = 20, width=Inf) 
-  
+    summarize(prev_target_enrl=sum(n), target_proj_enrl=sum(proj_enrl),target_proj_enrl2=sum(proj_enrl2)) 
 
   enrl_projs <- projections %>% group_by(`Academic Period Code`) %>% 
     summarise(target_proj_enrl = sum(target_proj_enrl))
@@ -150,13 +193,24 @@ major_forecast <- function(students,opt) {
     enrl_projs$fresh_proj <- 0
   }
   
-  enrl_projs %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  # as a continuation of above, APC is both prev_target and target (provided target is in the past)
+  # i think only the prev_target rows make any sense
+  #message("Enrollment projections by classification:")
+  #enrl_projs %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
-  continuing_fc <- unlist(enrl_projs[,"target_proj_enrl"])
-  incoming_fc <- unlist(enrl_projs[,"fresh_proj"])
-  total_fc <- continuing_fc + incoming_fc
-                          
-                          
+  
+  if (nrow(enrl_projs) != 0) {
+    message("combining incoming and continuing forecasts...")
+    continuing_fc <- unlist(enrl_projs[,"target_proj_enrl"])
+    incoming_fc <- unlist(enrl_projs[,"fresh_proj"])
+    total_fc <- continuing_fc + incoming_fc
+  } else {
+    message("unable to forecast because no previous target data...")
+    continuing_fc <- 0
+    incoming_fc <- 0
+    total_fc <- 0
+  }                          
+  
   
   # better column names
   new_summary <- data.frame("TERM" = as.character(target_term), 
