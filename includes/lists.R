@@ -26,12 +26,15 @@ cl_math_3 <- list("MATH 1350", "MATH 1430", "MATH 1440")
 cl_comm1000 <- list("COMM 1115", "COMM 1130", "COMM 1140", "COMM 1145", "COMM 1150")
 cl_comm2000 <- list("COMM 2120", "COMM 2121", "COMM 2130")
 
+cl_crits <- as.list(c(cl_engl,cl_chem,cl_biol,cl_fyex,cl_math_1,cl_math_2,cl_math_3,cl_comm1000,cl_comm2000))
+
 
 # define term_list_names 
 tl_falls <- list("202180","202280","202380","202480")
 tl_springs <- list("202110","202210","202310","202410","202510")
-tl_summers <- list("202160","202260","202360","202460","202460")
-tl_recents <- list("202180","202210","202280","202310","202380","202410","202480","202510")
+tl_summers <- list("202260","202360","202460","202560")
+
+tl_recents <- as.list(c(tl_falls,tl_springs,tl_summers))
 
 
 # use prefix dl_ for department lists
