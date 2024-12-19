@@ -11,7 +11,7 @@ Expand the Student Reports folder
 Double Click Department Enrollment Status
 Wait for the Academic Period Code to not be blank
 Select appropriate term and wait 5-10 seconds for the fields to refresh
-Use the two double arrows to select all fields for download (everything else can be left alone)
+For the Sort Fields and the Select Fields boxes, clikc on the two double arrows pointing to the right to select all fields for download (everything else can be left alone)
 Make sure Excel file is output format
 Click Run Report
 Save download (the xls file) to cedar/data/downloads/DESRs
@@ -21,13 +21,18 @@ Rscript parse-DESR.R
 
 CLASS LIST DATA (used for some enrollment reporting and anything that needs student data (lookout, gradebook, credit hours, forecast)
 Log into MyReports
-Click on Class List Guided Adhoc
+Click on the Student tab at the top
+Expand the Student Reports folder
+Double-click on Class_List_Guided_Adhoc
 Select appropriate term
-Use the double arrorws to select all fields for download
+For the Course Sort and Student Detail fields, click the double arrorws to the right to select all fields for download
+For Registration Status, select All
 Make sure Excel file is output format
+Click the Run Report button
 Save download (the xls file) to cedar/data/downloads/class-lists
 On command line, go to cedar/data-parsers
 Rscript parse-class-list.R
+
 
 
 Other data needs to be updated after each semester:
