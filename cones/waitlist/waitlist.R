@@ -63,10 +63,9 @@ inspect_waitlist <- function (students,opt) {
   jm_summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
   message("number of waitlisted students by CLASSIFICATION and NOT registered: ",nrow(waiting))
   
-  message("saving students waiting and NOT registered as waitlist_demand.csv...")
-  write.csv(just_waiting, paste0(cedar_output_dir,"waitlist/waitlist_demand.csv"), row.names=FALSE)
+  message("all done inspecting waitlists!")
   
-  message("all done inspecting waitlist!")
+  # TODO: return list of student totals rather than student list
   
   return(just_waiting)
 }
