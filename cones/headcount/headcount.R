@@ -1,3 +1,18 @@
+# get counts of majors across Colleges to see change over time
+# useful for trying to understanding relationship b/w changing majors and enrollments
+count_majors <- function(opt) {
+  acad_study <- load_academic_study()
+  acad_study <- acad_study %>% distinct(`Academic Period`,ID, .keep_all = TRUE)
+  acad_study <- acad_study %>% filter (`Student Level` == "Undergraduate")
+  acad_study <- acad_study %>% group_by(`Academic Period`,Major)
+  majors <- acad_study %>% summarize (count = n())
+  
+  return(majors)
+}
+
+
+
+
 # count_heads_in_college reports the number of majors and minors
 # it also adds DEPT and PRGM field codes (via map_to_subj_codes) for easy filtering
 
