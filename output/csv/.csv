@@ -1,0 +1,7 @@
+"","term_type","SUBJ_CRSE","TERM","SUBJ","level","CRSE_TITLE","enrolled","cl_total","sections","avg_size","avail","waiting","conduit","major","c_accr","c_cl_accr","m_accr","m_cl_accr","avg_c_accr","avg_m_accr","avg_m_cl_accr","pref_method","usevals","num_sections","diff_fr_prev","recommendation"
+"1","spring","MATH 1215","202110","0","0","0",0,0,0,0,0,0,318.03381814757,0,0,0,0,0,0.52,0.77,0.8,"c",318.03381814757,NA,NA,NA
+"2","spring","MATH 1215","202210","0","0","0",0,0,0,0,0,0,405.012056535427,0,0,0,0,0,0.52,0.77,0.8,"c",405.012056535427,NA,NA,NA
+"3","spring","MATH 1215","202310","0","0","0",0,0,0,0,0,0,364.061841164313,0,0,0,0,0,0.52,0.77,0.8,"c",364.061841164313,NA,NA,NA
+"4","spring","MATH 1215","202410","MATH","lower","1215: Intermediate Algebra",258,318,10,25.8,42,0,339.462077313765,0,1.32,1.07,0,0,0.52,0.77,0.8,"c",339.462077313765,NA,NA,NA
+"5","spring","MATH 1215","202510","MATH","lower","1215: Intermediate Algebra",292,345,13,22.4615384615385,33,55,308.117359714815,338.234473550673,1.06,0.89,1.16,0.98,0.52,0.77,0.8,"c",308.117359714815,10.27,0.27,10
+"6","summer","MATH 1215","202560","MATH","lower","1215: Intermediate Algebra",0,0,0,0,0,0,19.6416475712082,56.2844848310937,0,0,0,0,1,1,1,"c",19.6416475712082,NA,NA,NA

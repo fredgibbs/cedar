@@ -42,7 +42,7 @@ for (file in file_list) {
   new_students <- new_students %>% drop_na(`Academic Year`)
   
   # add column for term_code based on Academic Period column
-  # see lists.R for term_cde and term_text definitions
+  # see lists.R for term_code and term_text definitions
   term_code_lookup <- data.frame(term_code = num.labs, `Academic_Period` = term_text)
   new_students <- (merge(new_students, term_code_lookup, by.x = 'Academic Period', by.y = 'Academic_Period'))
   

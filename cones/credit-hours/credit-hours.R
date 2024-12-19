@@ -1,3 +1,30 @@
+# get stats on how many credit hours students are taking
+get_enrolled_cr <- function(filtered_students,courses,opt) {
+  message("welcome to get_enrolled_cr!")
+  
+  # uncomment for testing
+  # filtered_students <- load_students(opt)
+  # courses <- list('HIST 491',"HIST 492")
+  #opt[["course"]] <- cl_crits
+  
+  #opt <- list()
+  #myopt <- opt
+  
+  # filter students by courses (all terms) and group
+  message("computing summary stats...")
+  filtered_students <- filtered_students %>% distinct(`Student ID`, .keep_all=TRUE) %>% 
+    group_by(`Academic Period Code`, `Total Credits`, term_type)
+  
+  summary <- filtered_students %>% summarize(count = n())
+  
+  summary_wide <- summary %>% pivot_wider(names_from = `Academic Period Code`, values_from = count)
+  
+  message("get_enrolled_cr now returning regstats...")
+  return (summary_wide)
+}
+
+
+
 # This function makes a quick report of EARNED credit hours (based on class lists)
 # expects students is already filtered according to opt params
 get_credit_hours <- function (students) {
