@@ -70,7 +70,7 @@ kbl(gen_ed_summary, digits=2)  %>%   kable_styling(bootstrap_options = c("stripe
 ```
 
 ### Seats LIKELY Available by Gen Ed Area
-These sections have 0 enrolled but remain active, so likely the cap 0 to delay enrollment.
+These sections have 0 seats available, but also 0 enrolled. Likely the cap is 0 to delay enrollment.
 ```{r} 
 kbl(gen_ed_likely, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=T)
 ```
