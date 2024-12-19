@@ -16,6 +16,8 @@ for (file in file_list) {
   # uncomment for studio testing
   # file <- file_list[1]
   
+  message("processing file: ", file, "..." )
+  
   # load existing course data
   message("loading DESR data for previous terms...")
   load(paste0(cedar_data_dir,"/processed/courses_with_final_and_latest_enrollments.Rda")) # loads DF completed_and_ongoing_courses
@@ -35,6 +37,7 @@ for (file in file_list) {
   old_courses <- old_courses %>% filter (TERM != DESR_term)
   
   # filter by campus (abq and online)
+  message("filtering by campus (including ABQ and EA (for online))...")
   new_courses <- new_courses %>% filter (CAMP=="ABQ" | CAMP=="EA") 
   
   # Extract download date from filename, supplied by MyReports
@@ -44,6 +47,7 @@ for (file in file_list) {
   new_courses$as_of_date <- ymd(file_date)
   
   # rename columns for easier reference
+  message("renaming columns for easier reference...")
   new_courses <- rename(new_courses,"CRSE" = "CRSE#")
   new_courses <- rename(new_courses,"SECT" = "SECT#")
   new_courses <- rename(new_courses,"XL_CRSE" = "XL_CRSE#")
@@ -51,6 +55,7 @@ for (file in file_list) {
   new_courses$crse_base <- new_courses$CRSE
   
   # add helper columns for easier display and filtering
+  message("adding helper columns that join existing columns...")
   new_courses <- new_courses %>% unite(SUBJ_CRSE, c("SUBJ", "CRSE"), sep=" ", remove=FALSE)
   new_courses <- new_courses %>% unite(CRSE_SECT, c("CRSE", "SECT"), sep="-", remove=FALSE)
   new_courses <- new_courses %>% unite(CRSE_TITLE, c("CRSE", "SECT_TITLE"), sep=": ", remove=FALSE)
@@ -59,13 +64,15 @@ for (file in file_list) {
   new_courses <- distinct(new_courses)
   
   # find labs via crse number (has an "L" and set new col flag)
+  message("creating course base from lab sections...")
   new_courses$lab <- ifelse ( grepl("[[:alpha:]]", new_courses$crse_base),TRUE,FALSE)
   
   # create new col with only crse NUMBER (no chars)
   new_courses$crse_base[new_courses$lab == TRUE] <- substring(new_courses$crse_base[new_courses$lab == TRUE],1, nchar(new_courses$crse_base[new_courses$lab == TRUE])-1)
   
   # adjust data types
-  new_courses$XL_ENRL[is.na(new_courses$XL_ENRL), ] <- 0
+  message("adjusting data types...")
+  new_courses$XL_ENRL[is.na(new_courses$XL_ENRL)] <- 0
   new_courses$XL_ENRL <- as.integer(new_courses$XL_ENRL)
   new_courses$ENROLLED <- as.integer(new_courses$ENROLLED)
   new_courses$crse_base <- as.integer(new_courses$crse_base)
@@ -77,7 +84,8 @@ for (file in file_list) {
   new_courses$total_enrl <- as.numeric(new_courses$total_enrl)
   
   # add level column for easier filtering
-  new_courses <- new_courses %>%
+  message("adding level field...")
+    new_courses <- new_courses %>%
     mutate(level = case_when(
       crse_base < 300 ~ "lower",
       crse_base >= 1000 ~ "lower",
@@ -87,7 +95,8 @@ for (file in file_list) {
   
   # add gen ed code
   # see includes/mappings.R for lists of courses in each gen ed area
-  new_courses <- new_courses %>%
+    message("add gen_ed_area field...")
+    new_courses <- new_courses %>%
     mutate(gen_ed_area = case_when(
       SUBJ_CRSE %in% gen_ed_1_communication ~ 1,
       SUBJ_CRSE %in% gen_ed_2_math_stat ~ 2,
