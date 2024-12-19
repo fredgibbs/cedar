@@ -45,7 +45,7 @@ dept_report <- function (students,courses,opt) {
   
   # for studio testing...
   #opt <- list()
-  #opt$output_format <- "aspx" # either aspx or html. use aspx for easier loading if moving to onedrive
+  #opt$output <- "html"
   #opt$dept <- "LCL"
   #opt$prog <- ""
   
