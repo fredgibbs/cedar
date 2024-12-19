@@ -148,4 +148,4 @@ gen_ed_7_arts_design <- c("ARCH 1120",
                           "THEA 1110",
                           "THEA 1220")
 
-gen_ed_all <- list("gen_ed_1_communication" = gen_ed_1_communication, gen_ed_2_math_stat, gen_ed_3_phys_nat_sci, gen_ed_4_soc_behav_sci, gen_ed_5_humanities, gen_ed_7_arts_design)
+gen_ed_all <- as.list(c(gen_ed_1_communication, gen_ed_2_math_stat, gen_ed_3_phys_nat_sci, gen_ed_4_soc_behav_sci, gen_ed_5_humanities, gen_ed_7_arts_design))
