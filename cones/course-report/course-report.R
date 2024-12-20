@@ -13,58 +13,82 @@ course_report <- function(students, courses, opt) {
   # students <- load_students(opt)
   # courses <- load_courses(opt)
   # opt <- list()
-  # opt[["course"]] <- "HIST 491"
+  # opt[["course"]] <- "MATH 1130"
   # opt[["term"]] <- 202510
   
   # these should always be set this way
   opt$status <- "A"
   opt$uel <- TRUE
-  opt$summer <- FALSE
   opt$aggregate <- "course"
   
-  print(opt)
-  
-  # create term agnostic opt param
+  # create term agnostic opt param for getting historic enrollments
   myopt <- opt
   myopt[["term"]] <- NULL
   
   # get basic enrollment data for all terms
+  message("getting basic enrollment data for course-report...")
   enrls <- get_enrl(courses,myopt)
+  enrls <- add_term_type_col(enrls,"TERM")
   
-  # load forecast data from forecast table; see forecast.R
-  forecast_data <- get_forecast_data(students,courses,opt)
+  cl_enrls <- calc_cl_enrls(students,reg_status = "all")
   
-  # see if we have at least 3 terms of data to report 
-  # if missing forecast data, forecast!
-  if (nrow(forecast_data) < length(tl_recents)) {
-    message("forecast history too short... retroactively forecasting!")
-    message("setting  opt$term to 'tl_recents' (from includes/lists.R)")
-    myopt$term <- "tl_recents"
-    forecast_summary <- forecast(students,courses,myopt)
-  } else {
-    message("forecast data found for all specified terms!")
+  enrls <- calc_squeezes (enrls,cl_enrls)
+  
+  
+  
+  # load forecast data from forecast table; see forecast-report.R
+  forecast_data <- load_forecasts(myopt)
+  forecast_data <- forecast_data %>% filter (SUBJ_CRSE == myopt[["course"]])
+  
+  forecast_data <- add_term_type_col(forecast_data,"TERM")
+  
+  # use 8 as threshold because the table has major and conduit projections (= to 4 terms)
+  # don't forecast in case we never offer a course that semester, since there's no previous target data
+  if (nrow(enrls %>% filter(term_type == "fall")) > 0 && nrow(forecast_data[forecast_data$term_type=="fall",]) < 6  ) {
+    message("need more fall forecasts. retroactively forecasting!")
+    message("setting  myopt$term to 'tl_falls' (from includes/lists.R)")
+    myopt$term <- "tl_falls"
+    forecast(students,courses,myopt)
+  }
+      
+  if (nrow(enrls %>% filter(term_type == "spring")) > 0 && nrow(forecast_data[forecast_data$term_type=="spring",]) < 6) {
+    message("need more spring forecasts. retroactively forecasting!")
+    message("setting  myopt$term to 'tl_springs' (from includes/lists.R)")
+    myopt$term <- "tl_springs"
+    forecast(students,courses,myopt)
   }
   
+  if (nrow(enrls %>% filter(term_type == "summer")) > 0 && nrow(forecast_data[forecast_data$term_type=="summer",]) < 6) {
+    message("need more summer forecasts. retroactively forecasting!")
+    message("setting  myopt$term to 'tl_summers' (from includes/lists.R)")
+    myopt$term <- "tl_summers"
+    forecast(students,courses,myopt)
+  } 
+  
+  # reset term
+  myopt[["term"]] <- NULL
+  
+  
   # use forecast-report.R to load forecast data with enrollments and accuracy
-  forecast_summary <- calc_forecast_accuracy(courses, myopt)
+  # all filtering for term type, and past vs future terms is done in the Rmd file
+  forecasts <- calc_forecast_accuracy(students, courses, myopt)
   
-  # set history to go up to the term prior to the specified forecast term
-  forecast_history <- forecast_summary %>% filter (TERM <= subtract_term(opt[["term"]]))
-  message("forecast history:")
-  print(forecast_history)
-  
-  # isolate target term's forecast
-  forecast_next_term <- forecast_summary %>% 
-    filter (TERM == opt$term) %>% 
-    select(-c("fts_accr","conduit_accr","major_accr"))
-  
-  forecast_next_term %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  
-  if (opt$nso && get_term_type(opt[["term"]]) == "Fall") {
-    
-    
-    ############### 
-    # use nosedive to find out freshman contribution to course we're reporting on
+  # # set history to go up to the term prior to the specified forecast term
+  # forecast_history <- forecast_summary %>% filter (TERM <= subtract_term(opt[["term"]]))
+  # message("forecast history:")
+  # print(forecast_history)
+  # 
+  # # isolate target term's forecast
+  # forecast_next_term <- forecast_summary %>% 
+  #   filter (TERM == opt$term) %>% 
+  #   select(-c("conduit_accr","major_accr"))
+  # 
+  # forecast_next_term %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
+  # 
+  ############### 
+  # use nosedive to find out freshman contribution to course we're reporting on
+  message("looking for NSO flog and if target term type is fall...")
+  if (opt$nso && get_term_type(opt[["term"]]) == "fall") {
     
     # load NSO data
     NSOers <- load_NSO_data()
@@ -95,8 +119,15 @@ course_report <- function(students, courses, opt) {
     
     forecast_next_term <- merge (forecast_next_term, NSOers_in_course[ , c("SUBJ_CRSE","count")], by = "SUBJ_CRSE")
     forecast_next_term %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
+  } else {
+    message("ignoring nso data.")
   }
   
+  print(myopt)
+  
+  
+  # use regstats to find dimps
+  flagged <-  get_reg_stats(students,courses,myopt)
   
   # run lookout functions to see where students are coming and going from  
   message("getting lookout data...")
@@ -108,6 +139,8 @@ course_report <- function(students, courses, opt) {
   message("getting rollcall data...")
   myopt[["aggregate"]] <- "classification_wide"
   agg_by_class <- rollcall(students,myopt)
+  
+  print(agg_by_class)
   
   myopt[["aggregate"]] <- "major_wide"
   agg_by_major <- rollcall(students,myopt)
@@ -132,8 +165,9 @@ course_report <- function(students, courses, opt) {
                      "agg_by_class" = agg_by_class,
                      "agg_by_major" = agg_by_major,
                      "grade_data" = grade_data,
-                     "forecast_history" = forecast_history,
-                     "forecast_next_term" = forecast_next_term
+                     "forecasts" = forecasts,
+                     "flagged" = flagged
+                     #"forecast_next_term" = forecast_next_term
                    )
   )
   
