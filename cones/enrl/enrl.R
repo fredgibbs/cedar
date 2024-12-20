@@ -1,21 +1,42 @@
 
-calc_cl_enrls <- function(students) {
+# this function is course agnostic, expecting caller will merge with existing DF
+calc_cl_enrls <- function(students,reg_status="registered") {
   
-  message("calculating enrollments from class lists (cl_enrls)...")
+  message("calculating enrollments from class lists (calc_cl_enrls)...")
   
+  # get distinct students (use CRN?)
   cl_enrls <- students %>%
     group_by(`Academic Period Code`, `SUBJ_CRSE`) %>% 
-    distinct(`Student ID`) %>%
-    summarize(count = n())
+    distinct(`Student ID`, .keep_all = TRUE)
+    
+  # process reg_status
+  if (is.character(reg_status)) {
+    if (reg_status == "registered") {
+      cl_enrls <- cl_enrls %>% filter (`Registration Status`== "Registered" | `Registration Status`== "Student Registered")
+    }
+    else if (reg_status == "dropped") {
+      cl_enrls <- cl_enrls %>% filter (`Registration Status Code` %in% c("DR","DG","DW","DD"))
+    }
+  }
+  else if (is.list(reg_status)) {
+    cl_enrls <- cl_enrls %>% filter (`Registration Status Code` %in% reg_status)
+  }
+  
+  # count students  
+  cl_enrls <- cl_enrls %>% summarize(count = n(), .groups="keep")
+  
+  message("calc_cl_enrls returning ",nrow(cl_enrls)," rows.")
   
   return (cl_enrls)
 }
 
 
+
+
 # basic summary summarizes different sections into a single row
 # maintains PT and INST_METHOD
 agg_by_course_type <- function(courses,opt) {
-  message("basic course summary (summarize all course sections into single row):")
+  message("agg_by_course_type: basic course summary (summarize all course sections into single row):")
   summary <- courses %>% group_by(TERM,SUBJ,SUBJ_CRSE,CRSE_TITLE,PT,INST_METHOD,level,gen_ed_area) %>% 
     summarize(.groups="keep", sections=n(),avg_size=median(ENROLLED),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
     select (TERM,SUBJ_CRSE,SUBJ,CRSE_TITLE,PT,INST_METHOD,enrolled,sections,avg_size,avail,waiting,level,gen_ed_area)
@@ -27,10 +48,11 @@ agg_by_course_type <- function(courses,opt) {
 
 
 # basic summary summarizes different sections and variants (method and pt) into a single row
+# by default, compress AOP sections?
 agg_by_course <- function(courses,opt) { 
-  message("basic course summary (summarize all types course sections into single row):")
+  message("agg_by_course: basic course summary (summarize all types of course sections into single row):")
   summary <- courses %>% group_by(TERM,SUBJ,SUBJ_CRSE,CRSE_TITLE,level,gen_ed_area) %>% 
-    summarize(.groups="keep", sections=n(),avg_size=median(ENROLLED),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
+    summarize(.groups="keep", sections=n(),avg_size=mean(ENROLLED),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
     select (TERM,SUBJ_CRSE,SUBJ,CRSE_TITLE,enrolled,sections,avg_size,avail,waiting,level,gen_ed_area)
   #summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
   
@@ -87,8 +109,7 @@ agg_by_college_level <- function(courses,opt) {
 
 ############# aggregate function (for enrollment summaries)
 aggregate_courses <- function(courses,opt) {
-  message("\n","Welcome to aggregate_courses! (in enrl.R)")
-  
+
   agg_by <- opt$aggregate
   
   if (agg_by == "course") {
@@ -113,14 +134,8 @@ aggregate_courses <- function(courses,opt) {
     message("not sure how to aggregate! aggregate param ",agg_by, " not found.")
   }  
   
-  # save file if output flag is set
-  if (opt$output) {
-    message("saving CSV file...")
-    write.csv(summary,file=paste0(cedar_output_dir,"enrl/output.csv"))
-  }
-  
   # return the summary DF
-  message("returning result from aggregate_courses...")  
+  message("done aggregating sections.")  
   return(summary)    
 
 } # end aggregate_courses
@@ -204,9 +219,9 @@ get_enrl <- function (courses,opt) {
   message("\n","welcome to get_enrl!")
   #print(opt)
   
-  # disable output by default
-  if (is.null(opt$output)) {
-    opt$output <- FALSE
+  # disable output by default, in case called from another function
+  if (is.null(opt$csv)) {
+    opt$csv <- FALSE
   }
   
   # default status should be A
@@ -230,7 +245,7 @@ get_enrl <- function (courses,opt) {
     courses <- compress_aop_pairs(courses,opt) # defined in misc_funcs
     
     #courses <- courses %>% select(TERM,CRN,SUBJ_CRSE,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,total_enrl,sect_enrl,pair_enrl)
-    courses <- courses %>% select(TERM,CRN,SUBJ,SUBJ_CRSE,SECT,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,`Academic Title`,ENROLLED,total_enrl,XL_SUBJ,SEATS_AVAIL,sect_enrl,pair_enrl,)
+    courses <- courses %>% select(TERM,CRN,SUBJ,SUBJ_CRSE,SECT,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,`Academic Title`,ENROLLED,total_enrl,XL_SUBJ,SEATS_AVAIL,WAIT_COUNT,sect_enrl,pair_enrl,gen_ed_area)
     
   }
   else {
@@ -248,27 +263,12 @@ get_enrl <- function (courses,opt) {
   courses <- courses %>% distinct() %>% 
     arrange(TERM,SUBJ_CRSE,CRSE_TITLE,INST_METHOD)
   
-  
-  if(is.null(opt$aggregate)) {
-    message("no aggregating requested...")
-    
-    if (opt$output) {
-      message("saving non-aggregated courses as enrl-output.csv... ")
-      write.csv(courses,file=paste0(cedar_output_dir,"enrl/enrl-output.csv"))
-    }
-    
-    return(courses)
-        
+  if(!is.null(opt$aggregate)) {
+    courses <- aggregate_courses(courses,opt)
   } 
-  else if (!is.null(opt$aggregate)) {
-    message("aggregating via aggregate_courses...")
-    summary <- aggregate_courses(courses,opt)
-    message("returning summary from get_enrl with ", nrow(summary) ," rows...")
-    return(summary)  
-  }
-  
-  message("all done in get_enrl!")
-  
 
-  } # end get_enrl function
+  message("all done in get_enrl! returning data from get_enrl with ", nrow(courses) ," rows...\n")
+  return(courses)
+  
+} # end get_enrl function
 
