@@ -3,7 +3,7 @@
 get_all_grades <- function(filtered_students) {
   
   message("filtering out drops from students with grades...")
-  filtered_students <- filtered_students %>% filter (`Registration Status Code`!="DR")
+  filtered_students <- filtered_students %>% filter (substring(`Registration Status Code`,1,1) != "D") 
   
   # calculate grade points from letter grade received and add col to student data 
   # grades_to_points is defined in mappings.R
@@ -14,8 +14,10 @@ get_all_grades <- function(filtered_students) {
 }
 
 # create DF of just students who dropped specified courses(s)
+# DR codes omitted here, for student who drop before drop deadline 
 get_dropped <- function(filtered_students) {
-  dropped <- filtered_students %>% filter (`Registration Status Code`=="DR")
+  drop_codes <- list("DG","DW","DD")
+  dropped <- filtered_students %>% filter (`Registration Status Code` %in% drop_codes) 
   return(dropped)
 }
 
@@ -45,15 +47,20 @@ get_pf_sum <- function(grades,dropped) {
   message("creating summaries for passing, not passing, etc...")
   passed <- grades %>% filter (`Final Grade` %in% passing_grades) %>%  
     group_by(`Academic Period Code`, SUBJ_CRSE, level, `Primary Instructor Last Name`,`Instruction Delivery Mode Code`, `Sub-Academic Period Code` ) %>% 
-    summarize (passed=n())
+    summarize (passed=n(),.groups="keep")
   failed   <- grades %>% filter (!`Final Grade` %in% passing_grades) %>% 
     group_by(`Academic Period Code`, SUBJ_CRSE, level, `Primary Instructor Last Name`,`Instruction Delivery Mode Code`, `Sub-Academic Period Code` ) %>% 
-    summarize (failed=n())
-  dropped_summary   <- dropped %>% group_by(`Academic Period Code`, SUBJ_CRSE, level, `Primary Instructor Last Name`,`Instruction Delivery Mode Code`, `Sub-Academic Period Code` ) %>% 
-    summarize (dropped=n())
+    summarize (failed=n(),.groups="keep")
+  dropped_summary   <- dropped %>% 
+    group_by(`Academic Period Code`, SUBJ_CRSE, level, `Primary Instructor Last Name`,`Instruction Delivery Mode Code`, `Sub-Academic Period Code` ) %>% 
+    summarize (dropped=n(),.groups="keep")
   
-  pf_sum <- merge(passed,failed)
-  pf_sum <- merge(pf_sum,dropped_summary)
+  # create row for each term/course/instructor/method/pt combo
+  pf_sum <- merge(passed,failed,all="TRUE")
+  pf_sum <- merge(pf_sum,dropped_summary,all="TRUE")
+  
+  # replace all NAs with 0s
+  pf_sum <- pf_sum %>% mutate_if(is.numeric, ~replace_na(., 0))
   
   return(pf_sum)
 }
@@ -101,7 +108,7 @@ get_grades_summary_by_course <- function(grades_summary,pf_sum_by_course) {
   # compute DFW %
   grades_summary_by_course <- grades_summary_by_course %>% 
     #mutate (`DFW %`=round(failed/(passed+failed)*100,digits=2), .after = `Primary Instructor Last Name` ) %>% 
-    mutate (`DFW %`=round(failed/(passed+failed)*100,digits=2), .after=`Long Course Title` ) %>% 
+    mutate (`DFW %`=round((dropped+failed)/(dropped+passed+failed)*100,digits=2), .after=`Long Course Title` ) %>% 
     arrange(`Academic Period Code`,SUBJ_CRSE)
   
   message("the master gradebook (w/o instructors): course grades (wide) by course and term:")
@@ -117,8 +124,8 @@ get_course_avg <- function(grades_summary_by_course) {
   # don't summarize with long course title because of variations that muck up aggregate reporting
   grades_summary_by_course_avg <- grades_summary_by_course %>% 
     group_by(SUBJ_CRSE, level) %>% 
-    summarize(passed = sum(passed), failed = sum(failed)) %>% 
-    mutate (`DFW %`=round(failed/(passed+failed)*100,digits=2)) %>% 
+    summarize(passed = sum(passed), failed = sum(failed), dropped = sum(dropped)) %>% 
+    mutate (`DFW %`=round((dropped+failed)/(passed+failed+dropped)*100,digits=2)) %>% 
     arrange(desc(`DFW %`))
   
   message("course averages:")
@@ -132,8 +139,8 @@ get_grades_summary_by_course_term_avg <- function(grades_summary_by_course) {
   
   grades_summary_by_course_term_avg <- grades_summary_by_course %>% 
     group_by(`Academic Period Code`, SUBJ_CRSE, level) %>% 
-    summarize(passed = sum(passed), failed = sum(failed)) %>% 
-    mutate (`DFW %`=round(failed/(passed+failed)*100,digits=2)) %>% 
+    summarize(passed = sum(passed), failed = sum(failed), dropped = sum(dropped)) %>% 
+    mutate (`DFW %`=round((dropped+failed)/(passed+failed+dropped)*100,digits=2)) %>% 
     arrange(`Academic Period Code`,SUBJ_CRSE)
   
   message("course averages per semester:")
@@ -183,24 +190,43 @@ get_grades <- function(students,opt) {
   
   # for studio testing
   # opt <- list()
-  # opt$course <- "BUSA 1110"
-  # opt$dept <- "EPS"
-  # opt$term <- "202260,202360"
-  # opt$gradebook_agg_by <- "course_avg"
-  
+  # students <- load_students(opt)
+  # opt$course <- "AFST 1110"
+  # opt$term <- "202460"
+
   if (is.null(opt$aggregate)) {
-    message("no aggregate param found. setting -a to 'all'...")
+    message("no aggregate param found. setting -a to 'all'.")
     opt$aggregate <- "all"
   }
   
+  course <- opt[["course"]]
+  message("procesing course: ",course)
+  
+  if (!is.null(course) && is.character(course)){
+    # if course set to "existing", use list of courses already in forecast_table.
+    # this is a good way to round out forecasts.
+    if (as.character(course) == "forecasts") {
+      forecast_data <- load_forecasts(list())
+      opt$course <- unique(as.list(forecast_data$SUBJ_CRSE))
+      message("finished processing course as forecasts!")
+    }
+    else if (as.character(course) == "dimps") {
+      opt$course <- get_dimp_courses(students,courses,opt)
+      message("finished processing course as dimps!")
+    }
+  }
+  
+  # filter students from opt params (usually course and term combination)
   message("filtering students from opt params...")
   filtered_students <- filter_class_list(students,opt)
   
-  message("only using data since 2019, after Gen Ed implementation...")
+  message("only using data since 2019, after Gen Ed implementation.")
   filtered_students <- filtered_students %>% filter (`Academic Period Code` >= 201980)
   
-  message("setting Final Grade to `Drop` if registration status code is `DR`...")
+  message("setting Final Grade to `Drop` if registration status code is `DR`.")
   filtered_students <- filtered_students %>% mutate (`Final Grade` = ifelse(`Registration Status Code`=="DR", "Drop", `Final Grade`))
+  
+  # get all grades
   grades <- get_all_grades(filtered_students)
   
   # get LONG view of grades received in each course 
