@@ -1,85 +1,7 @@
 # This set of functions helps forecast enrollment for specified courses and terms
-# The actual methods are in separate files
+# The actual methods for calculation are in separate files
 # Can be run from CEDAR, and is also called from course-report.R
-# REQUIRES students, courses, and opt 
-
-
-# calc_forecast_accuracy loads previously generated forecasting data from the forecasts.Rda file
-# and merges enrollment data with forecast data to display together and compute accuracy of forecasts
-# OPTIONAL param: opt$course for filtering returned data
-
-calc_forecast_accuracy <- function(courses, opt) {
-  message("Welcome to calc_forecast_accuracy!")
-  
-  # uncomment for studio testing
-  # courses <- load_courses(opt)
-  # opt <- list()
-  # opt$course <- 'HIST 491'
-  
-  # load existing forecast data
-  forecast_data <- load_forecasts(opt)
-  
-  if (!is.null(opt$course)) {
-    message("filtering for course...")
-    course_list <- convert_param_to_list(opt$course)
-    forecast_data <- forecast_data %>% filter (SUBJ_CRSE %in% course_list)
-  }
-  
-  if (!is.null(forecast_data) && nrow(forecast_data) == 0) {
-    stop("no forecast data for that course.")  
-  }
-  
-  message("original forecast data:")
-  forecast_data %>% tibble::as_tibble() %>% print(n = 10, width=Inf)
-  
-  # make easier to read with wide format
-  message("pivoting to wide...")
-  forecast_data <- forecast_data %>% select (-c(continuing_forecast,incoming_forecast)) 
-  forecast_data_wide <- forecast_data %>% pivot_wider(names_from = method, values_from = forecast)
-  forecast_data_wide %>% tibble::as_tibble() %>% print(n = 10, width=Inf)
-  
-  
-  # get enrollment data for courses in forecast_data
-  myopt <- opt
-  myopt$aggregate <- "course"
-  myopt[["term"]] <- NULL
-  myopt[["course"]] <- as.list(unique(forecast_data$SUBJ_CRSE))
-  
-  message("getting enrollment data...")
-  enrls <- get_enrl(courses,myopt)
-  
-  message("merging forecast summary data with enrollment summary data...")
-  enrl_w_forecast <- merge (forecast_data_wide, enrls ,by=c("SUBJ_CRSE", "TERM"),all.x=T)
-  print(enrl_w_forecast)
-  
-  message("selecting fields...")
-  forecast_summary <- enrl_w_forecast[, c("TERM","SUBJ","SUBJ_CRSE","level","CRSE_TITLE","enrolled","avail","waiting","fall-to-spring", "conduit", "major")]
-  
-  message("computing accuracy...")
-  forecast_summary <- forecast_summary %>% 
-    mutate (fts_accr = `fall-to-spring`/enrolled, conduit_accr = conduit/enrolled, major_accr = major/enrolled ) 
-  
-  
-  # add term type col
-  forecast_summary <- forecast_summary %>%
-    mutate(term_type = case_when(
-      substring(`TERM`,5,6) == 80 ~ "fall",
-      substring(`TERM`,5,6) == 10 ~ "spring",
-      substring(`TERM`,5,6) == 60 ~ "summer"
-    ))  
-  
-  # if (!is.null(opt$term)) {
-  #   message("filtering for term...")
-  #   forecast_summary <- filter_by_term(forecast_summary,opt$term,"TERM")
-  # }
-  
-  forecast_summary <- forecast_summary %>% arrange(SUBJ_CRSE,term_type,TERM)
-  
-  message("forecast-report done and returning forecast_summary...")
-  return(forecast_summary)
-}
-
-
+# REQUIRES: students, courses, opt 
 
 
 # get_forecast_data loads previously generated forecasting data
@@ -139,8 +61,8 @@ get_forecast_data <- function (students,courses,opt) {
 
 # function to add a new row of data for a course to the forecasts.Rda table
 add_to_forecast_table <- function(new_forecast_row) {
+  message("welcome to add_to_forecast_table!")
   
-  message("adding new row to forecast table...")
   print(new_forecast_row)
   
   # keep table in long format
@@ -151,13 +73,16 @@ add_to_forecast_table <- function(new_forecast_row) {
   target_course <- new_forecast_row[["SUBJ_CRSE"]]
   forecast_method <- new_forecast_row[["method"]]
   
+  # load existing data or create new tibble to hold data
   forecast_data <- load_forecasts(opt)
-  
-  if (exists("forecast_data")) {
-    # remove previous rows w same course/term forecasts
+
+  # if any data in forecast table, remove previous rows w same course/term forecasts
+  if (nrow(forecast_data) > 0) {
+    message("removing old forecasts from target term...")
     forecast_data <- forecast_data %>% filter (!(TERM == as.character(target_term) & SUBJ_CRSE == target_course & method == forecast_method))
     
     # add new forecast row to old forecast data
+    message("adding new row to forecast table...")
     forecast_data <- rbind(forecast_data,new_forecast_row)
   }
   else {
@@ -171,43 +96,21 @@ add_to_forecast_table <- function(new_forecast_row) {
 }
 
 
-########### UNFINISHED
-########## RESET TABLE FUNCTION 
-# load Rda, remove rows for specified course, re-save
-reset_forecast_course <- function(opt) {
-  
-  if (is.null(opt$course)) {
-    stop("Please specify a course (-c or --course).")
-  }
-  
-  # for studio use...
-  opt$course <- "HIST 491"
-  
-  forecast_rda_file <- paste0(cedar_output_dir,"forecast/forecasts.Rda")
-  load(forecast_rda_file) # loads forecast_data
-  forecast_data <- forecast_data %>% filter (SUBJ_CRSE != opt$course)
-  
-  # save new data
-  message("saving forecasts.Rda...")
-  save(forecast_data,file=forecast_rda_file)
-}
-
-
 
 ############### GENERAL FUNCTION START ##################3
 
 forecast <- function(students, courses, opt) {
-  message("welcome to forecast!")
+  message("\n Welcome to FORECAST!")
 
   # load methods
-  source(paste0(cedar_base_dir,"cones/forecast/method-fall-to-spring.R"))
+  #source(paste0(cedar_base_dir,"cones/forecast/method-fall-to-spring.R"))
   source(paste0(cedar_base_dir,"cones/forecast/method-conduit.R"))
   source(paste0(cedar_base_dir,"cones/forecast/method-major.R"))
     
   # these should always be set this way; tell user they are being overridden
-  message("setting opt$uel = TRUE; opt$summer = FALSE; opt$aggregate = TRUE...")
+  message("setting opt$uel = TRUE; opt$aggregate = TRUE...")
   opt$uel <- TRUE
-  opt$summer <- FALSE
+  opt$aggregate <- "course"
   
   # for studio testing...
   # opt <- list()
@@ -216,87 +119,149 @@ forecast <- function(students, courses, opt) {
   # opt$term <- 202410
   
   # opt$course <- "cl_comm1000"
-  # opt$term <- "springs"
+  # opt$term <- "tl_recents"
   
   req_message <- "Required params: -c (course), --t (term)  
     For example: forecast -c 'BIOL 2305' -t 202480"
   
-  # check for required params, and make single courses and terms into lists
-  if (is.null(opt[["course"]])){
+  course <- opt[["course"]]
+  
+  # if no course specified, try to make course_list from opt params
+  if (is.null(course)){
     stop(req_message, call.=FALSE)
   }
+  # if course set to "forecasts", use list of courses already in forecast_table.
+  else if (course == "forecasts") {
+    message("course set to FORECASTS...")
+    forecast_data <- load_forecasts(list())
+    course_list <- unique(as.list(forecast_data$SUBJ_CRSE))
+  }
+  # else if (course == "regstats") {
+  #   message("course set to REGSTATS...")
+  #   # load csv file of all flagged courses
+  #   dimp_courses <- get_dimp_courses(students,courses,opt)
+  #   course_list <- unique(as.list(dimp_courses$SUBJ_CRSE))
+  # }
   
-  if (is.null(opt[["term"]])){
+  # check if given name of .csv file
+  # this allows any function to create and save a csv file on any filtering/finding logic.
+  else if (substring(course,nchar(course)-3,nchar(course)) == ".csv") {
+    message("course set as CSV file...")
+    
+    filename <- paste0(cedar_output_dir,"/csv/",course)
+    message("attempting to load: ", filename)
+    
+    if (file.exists(filename)) {
+      message("loading CSV data...")
+      csv_courses <- read.csv(filename)
+    }
+    else {
+      stop("Sorry, cannot find CSV file.")
+    }
+    
+    # TODO: check for basic SUBJ_CRSE column to provide helpful error message.
+    if(!"SUBJ_CRSE" %in% colnames(csv_courses)) {
+      stop("CSV file loaded, but no SUBJ_CRSE column.")
+    }
+    else {  
+      # convert to list from tibble
+      course_list <- as.list(csv_courses$SUBJ_CRSE)
+      
+      # pretend input param is a list of courses
+      # term should remain as user opt original
+      opt[["course"]] <- course_list
+      
+      message("finished loading CSV file as course list!")
+      print(course_list)
+    }
+  }
+  else { # opt$course not null
+      course_list <- convert_param_to_list(opt[["course"]])
+  }
+  
+  if (is.null(opt[["term"]])) {
     stop(req_message, call.=FALSE)
   }
-  
-  # unless forecasting FOR summer, we usually don't want to include it in calcs
-  if (is.null(opt$summer) ){
-    message("opt$summer is NULL; setting to FALSE...")
-    opt$summer <- FALSE
+  else {
+    # if opt has only single course/term, make it into course list for process loops
+    message("found opt$term...")
+    #TODO: make sure this is a usable term list or error out
+    term_list <- convert_param_to_list(opt[["term"]])
   }
-  
+
+  # if a custom conduit is supplied, there should be is only one term to forecast for
+  if (!is.null(opt[["forecast_custom_conduit"]])) {
+      termstring <- opt[["forecast_custom_conduit"]]
+    # double check we have a pair of terms, one for conduit, and one of term to apply it (otherwise we use usual target-1)
+    if (grepl("[0-9]{6},[0-9]{6}",opt[["forecast_custom_conduit"]])) {
+      # extract start and end term codes
+      
+      opt[["custom_conduit"]] <- substring(termstring, 1,6)
+      opt[["conduit_for_term"]] <- substring(termstring, 8,13)
+    } 
+  } # end custom conduit
+
+# unless forecasting FOR summer, we usually don't want to include it in calcs
+if (is.null(opt$summer) ){
+  message("opt$summer is NULL; setting to FALSE...")
+  opt$summer <- FALSE
+}
+
   # default to all forecasting methods
   if (is.null(opt$forecast_method) ){
-    message ("no forecasting method specified. set --forecast_method to either fall-to-spring, conduit, major, or all. defaulting to all.")
+    message ("no forecasting method specified. set --forecast_method to conduit, major, or all. defaulting to all.")
     forecast_method <- "all"
+  } else {
+    forecast_method <- opt[["forecast_method"]]
   }
   
-  # if opt has only single course/term, make it into course list for process loops
-  course_list <- convert_param_to_list(opt[["course"]])
-  term_list <- convert_param_to_list(opt[["term"]])
   
   # loop through courses, subsetted by year
-  message("about to loop through courses in ", course_list)
+  total_courses <- length(course_list)
+  message("about to loop through ",total_courses ," courses:")
+  print(course_list)
+  counter <- 1
+  
   for (course in course_list) {
+    course <- as.character(course)
+    message("\n FORECAST now processing course ",counter,"of ",total_courses,": ",course,"...")
     
-    # extract dept from course param
-    dept <- subj_to_dept_map[[substring(course, 1, gregexpr(pattern = " ",course)[[1]] - 1 ) ]]
-    message("setting opt$dept to: ", dept)
-    opt$dept <- dept
-    
-    # uncomment for step-thru testing
-    # course <- "COMM 1115"
-    opt[["course"]] <- course
+    # uncomment for studio testing
+    # course <- "CHEM 1120C"
+    myopt <- opt
+    myopt[["course"]] <- course
     
     message("processing course: ", course)
     
     message("about to loop through terms in ", term_list)
     for (term in term_list) {
       
-      # uncomment for step-thru testing
-      # term <- "202410"
-      opt[["term"]] <- term
+      # uncomment for studio testing
+      # term <- "202180"
+      
+      myopt[["term"]] <- term
       
       message("processing term: ", term, "...")
       
-      if (forecast_method == "fall-to-spring" || forecast_method == "all") {
-        sum_row <- fall_to_spring_forecast(students, courses, opt)
-      } 
+      # if (forecast_method == "fall-to-spring" || forecast_method == "all") {
+      #   sum_row <- fall_to_spring_forecast(students, courses, opt)
+      # } 
       
       if(forecast_method == "conduit" || forecast_method == "all") {
-        sum_row <- conduit_forecast(students, courses, opt)
+        sum_row <- conduit_forecast(students, courses, myopt)
       }
 
       if(forecast_method == "major" || forecast_method == "all") {
-        sum_row <- major_forecast(students,opt)
+        sum_row <- major_forecast(students,myopt)
       }  
       
     } # end loop through term list
+    counter <- counter + 1
   } # end loop through course list
   
   message("done looping through terms and courses!")
   
-  # get full report from report func
-  message("\n getting raw forecast data from table...")
-  report <- get_forecast_data(students,courses,opt)
-  
-  # filter for course we're forecasting for and print
-  report %>% tibble::as_tibble() %>% 
-    filter (SUBJ_CRSE == opt[["course"]]) %>% 
-    print(n = nrow(.), width=Inf)
-  
   message("all done in forecast!")
   
-  return(report)
+  return(opt)
   }
