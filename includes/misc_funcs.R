@@ -1,11 +1,13 @@
 # this file provides miscellaneous functions used across CEDAR
 
 convert_param_to_list <- function(param) {
-  message("converting param (",param,") to list...")
+  message("converting param to list...")
+  # message("converting param (",param,") to list...")
   
   # check if actual list already; if so, return it
   if (is.list(param)) {
-    message("using list object...")
+    message("param is already list.")
+    #print(param)
     param_to_list <- param
     return(param_to_list)
   } else {
@@ -15,19 +17,18 @@ convert_param_to_list <- function(param) {
     
   # check if named list (probably defined in includes/lists.R)  
   if (exists(get("param"))) { 
-    message("found ", get("param"), " object.")
-    message("using named list object...")
+    message("found named list (", get("param"), ") object.")
     
     if (is.list(get(param))) {
       message("list type confirmed.")
-      print(get(param))
+      #print(get(param))
       param_to_list <- as.list(get(param))
     } else {
       message("named object found, but not it's not a list. attempting to convert param to string and then to list... ")
       param_to_list <- as.list( as.character(param))
     }
   
-    # check for commma list  
+    # check for comma in list  
   } else if (grepl(",", param)) {
     message("comma string detected...")
     param <- str_replace(param, ", ", ",")
@@ -38,20 +39,20 @@ convert_param_to_list <- function(param) {
     message("simple string object detected...")
     param_to_list <- as.list(param)
   }
-  message("convert_param_to_list returning ",param_to_list)
+  message("convert_param_to_list returning: ",param_to_list)
   return(param_to_list)
 }
 
 
 
 filter_by_term <- function(data,term,term_col_name) {
-  message("filtering by term!")
-  
-  term <- as.character(term)
+  if (!is.list(term)) {
+    term <- as.character(term)
+  }
   
   if (length(term) > 0 || !is.null(term)) { 
     message("processing term param: ", term)
-    message("term_col_name: ", term_col_name)
+    #message("term_col_name: ", term_col_name)
     
     # check for dash to indicate range
     if (grepl("-",term)) {
@@ -59,30 +60,84 @@ filter_by_term <- function(data,term,term_col_name) {
       terms <- unlist(str_split(term,"-"))
       message("terms: ",terms)
       
-      term_str <- paste0(term_col_name," >= ",terms[1], " & ", term_col_name , " <= ",terms[2])
+      # for terms like 202280-
+      if (terms[2] == "") {
+        term_str <- paste0("`",term_col_name,"` >= ",terms[1])
+      }
+      else {
+        term_str <- paste0(term_col_name," >= ",terms[1], " & ", term_col_name , " <= ",terms[2])
+      }
+      
       message("term_str: ",term_str)
       
       data <- data %>% filter (!!rlang::parse_expr(term_str))
-    }
-    else if (opt$term == "fall") {
+    } # end if "-"
+    else if (term == "fall") {
       data <- data %>% filter (substring(get({{term_col_name}}),5,6) == 80)
     } 
-    else if (opt$term == "spring") {
+    else if (term == "spring") {
       data <- data %>% filter (substring(get({{term_col_name}}),5,6) == 10)
     }
-    else if (opt$term == "summer") {
+    else if (term == "summer") {
       data <- data %>% filter (substring(get({{term_col_name}}),5,6) == 60)
     }
     else {  # convert param to list and filter
       term_list <- convert_param_to_list(term)
-      message("filtering ", term_col_name, " by ",term_list)
+      #message("filtering ", term_col_name, " by ",term_list)
       data <- data %>% filter (get(term_col_name) %in% term_list)
     }
   } # end if term is not null
   
+  message("term filtering done. returning ",nrow(data)," rows.")
   return (data)
 }
 
+
+#TODO: extend this course_list to grab a CSV file (created by CEDAR or externally)
+
+# get a course list based on opt params 
+# increasingly useful as more funcs become vectorized and can take a course list
+get_course_list <- function(courses,opt) {
+  
+  # for testing
+  # opt <- list()
+  # opt$aggregate <- "course"
+  # opt$term <- "202160"
+  # opt$level <- "lower"
+  # opt$uel <- TRUE
+
+  # TODO: set standard opts if null
+    
+  enrls <- get_enrl(courses,opt)
+  course_list <- unique(enrls$SUBJ_CRSE)
+  
+  return(course_list)
+}
+
+
+# this function filters a simple SUBJ_CRSE list according to opt params
+# select_courses should be a 1xn tibble or list
+filter_course_list <- function(all_courses,select_courses,opt) {
+  message("welcome to filter_course list")
+  #print(head(all_courses))
+  #print(select_courses)
+  #print(as.list(select_courses))
+  # studio testing...
+  #all_courses <- load_courses(opt)
+  #select_courses <- as_tibble(next_courses$SUBJ_CRSE)
+  
+  # filter all courses to just supplied selected 
+  courses <- all_courses %>% filter (SUBJ_CRSE %in% unlist(select_courses))
+  
+  # get all enrollment data for course to
+  enrls <- get_enrl(courses,opt)
+  
+  # grab just course list
+  course_list <- unique(enrls$SUBJ_CRSE)
+  
+  message("all done in filter_course_list!")
+  return(course_list)
+}
 
 
 # filter out summer from DF
@@ -115,19 +170,26 @@ add_acad_year <- function(df, term_col) {
 
 
 load_forecasts <- function(opt) {
-  # load data
-  message("loading forecast data...")
+  message("welcome to load_forecasts!")
+  
   forecast_rda_file <- paste0(cedar_data_dir,"processed/forecasts.Rda")
+  message("looking for: ",forecast_rda_file,"...")
   
-  load(forecast_rda_file) # loads forecast_data
-
-  if (!exists("forecast_data")) {
-    message("no forecast data available!")  
-  }
-  else {
-  message("processing data...")
-  }
-  
+  if (file.exists(forecast_rda_file)) {
+    message("loading forecast data...")
+    load(forecast_rda_file) # loads forecast_data
+    
+    if (!exists("forecast_data")) {
+      message("no forecast data available!")
+      forecast_data <- tibble()
+    }
+    else {
+      message("processing data...")
+    }
+  } else { # no forecasts.Rda file; return empty tibble
+    forecast_data <- tibble()
+  } 
+  message("returning forecast data...")
   return(forecast_data)
 }
 
@@ -147,7 +209,6 @@ load_courses <- function(opt) {
 }
 
 
-
 load_students <- function(opt) {
 message("loading class list data...")
 students <- read_feather(paste0(cedar_data_dir,"processed/class_list.feather"))
@@ -157,7 +218,6 @@ message("processing data...")
 message("done loading student data.")
 return(students)
 }
-
 
 
 load_academic_study <- function() {
@@ -171,32 +231,77 @@ load_academic_study <- function() {
 }
 
 
-
-subtract_term <- function (term_code, summer=F) {
-  term <- as.integer(substring(term_code,5,6))
-  year <- as.integer(substring(term_code,1,4))
-  
+# add prev term col
+add_prev_term_col <- function (df,term_col_name,summer=F) {
+  message("adding prev_term col...")
   if (summer) {
-    if (term == 80) {
-      term_m1 <- as.integer(paste0(year,"60",sep=""))
-    } 
-    else if (term == 60) {
-      term_m1 <- as.integer(paste0(year,"10",sep=""))
-    } 
-    else if (term == 10) {
-      term_m1 <- as.integer(paste0(year-1,"80",sep=""))
-    }
+    df <- df %>%
+      mutate(prev_term = case_when(
+        substring(get({{term_col_name}}),5,6) == 80 ~ as.integer(get({{term_col_name}})) - 20,
+        substring(get({{term_col_name}}),5,6) == 10 ~ as.integer(get({{term_col_name}})) - 30,
+        substring(get({{term_col_name}}),5,6) == 60 ~ as.integer(get({{term_col_name}})) - 50
+      ))
+  } else {
+  df <- df %>%
+    mutate(prev_term = case_when(
+      substring(get({{term_col_name}}),5,6) == 80 ~ as.integer(get({{term_col_name}})) - 170,
+      substring(get({{term_col_name}}),5,6) == 10 ~ as.integer(get({{term_col_name}})) - 30,
+      substring(get({{term_col_name}}),5,6) == 60 ~ as.integer(get({{term_col_name}})) - 50
+    ))
   }
-  else if (!summer) {
-    if (term == 80) {
-      term_m1 <- as.integer(paste0(year,"10",sep=""))
-    } else {
-      term_m1 <- as.integer(paste0(year-1,"80",sep=""))
-    }
-  }
-
-  return(term_m1)
+  return (df)
 }
+
+
+add_next_term_col <- function (df,term_col_name,summer=F) {
+  message("adding prev_term col...")
+  if (summer) {
+    df <- df %>%
+      mutate(next_term = case_when(
+        substring(get({{term_col_name}}),5,6) == 80 ~ as.integer(get({{term_col_name}})) + 30,
+        substring(get({{term_col_name}}),5,6) == 10 ~ as.integer(get({{term_col_name}})) + 50,
+        substring(get({{term_col_name}}),5,6) == 60 ~ as.integer(get({{term_col_name}})) + 20
+      ))
+  } else {
+    df <- df %>%
+      mutate(next_term = case_when(
+        substring(get({{term_col_name}}),5,6) == 80 ~ as.integer(get({{term_col_name}})) + 30,
+        substring(get({{term_col_name}}),5,6) == 10 ~ as.integer(get({{term_col_name}})) + 70,
+        substring(get({{term_col_name}}),5,6) == 60 ~ as.integer(get({{term_col_name}})) + 20
+      ))
+  }
+  return (df)
+}
+
+
+
+
+# find the previous semester code
+# default to ignoring summer in calcs
+subtract_term <- function (term_code, summer = FALSE) {
+  
+  # separate year and semester code from given term code
+  year <- as.integer(substring(term_code,1,4))
+  term <- as.integer(substring(term_code,5,6))
+  
+  if (term == 80) {
+    if (summer) {
+      prev_term <- as.integer(paste0(year,"60"))
+    }
+    else {
+      prev_term <- as.integer(paste0(year,"10"))
+    }
+  } 
+  else if (term == 60) {
+    prev_term <- as.integer(paste0(year,"10"))
+  } 
+  else if (term == 10) {
+    prev_term <- as.integer(paste0(year-1,"80"))
+  }
+  
+  return(prev_term)
+  
+} # end subtract_term
 
 
 # determine next term code; default is to ignore summer terms
@@ -227,15 +332,46 @@ add_term <- function (term_code,summer=F) {
 }
 
 
+# add term type col
+add_term_type_col <- function (df,term_col_name) {
+  message("adding term type col...")
+  df <- df %>%
+    mutate(term_type = case_when(
+      substring(get({{term_col_name}}),5,6) == 80 ~ "fall",
+      substring(get({{term_col_name}}),5,6) == 10 ~ "spring",
+      substring(get({{term_col_name}}),5,6) == 60 ~ "summer"
+    ))  
+  return (df)
+}
+
 
 # determine term type from term code
 get_term_type <- function (term_code) {
   term_type <- case_when(
-    substring(term_code,5,6) == 80 ~ "Fall",
-    substring(term_code,5,6) == 10 ~ "Spring",
-    substring(term_code,5,6) == 60 ~ "Summer"
+    substring(term_code,5,6) == 80 ~ "fall",
+    substring(term_code,5,6) == 10 ~ "spring",
+    substring(term_code,5,6) == 60 ~ "summer"
   )
   return (term_type)
+}
+
+
+
+# useful for creating linear models over time
+add_term_bins <- function(df,term_col_name) {
+  
+  # remove summer from termcode list
+  #bins <- num.labs[!grepl('60', num.labs)]
+  
+  bins <- num.labs
+  
+  # add basic time series for term codes
+  df <- df %>% mutate (term_bin = match(get({{term_col_name}}),bins))
+  min_bin <- min(df$term_bin)
+  
+  df <- df %>% mutate (term_bin = term_bin - min_bin + 1)
+  
+  return(df)
 }
 
 
@@ -246,7 +382,6 @@ term_code_to_str <- function (term_code) {
 }
 
 
-# create dataframe for merging data. way faster than the term_code_to_str lookup function
 # see lists.R for num.labs (term codes, like 202410) and term_text (Spring 2024) definitions
 # this can be used by merging this DF with any MyReports DF with only names instead of codes
 # example: merged <- (merge(term_code_lookup, table_w_term_text, by = 'term_code'))
@@ -269,31 +404,25 @@ code_to_date <- function(term) {
 }
 
 
-
-# TODO: phase out in favor of dataframe approach
-# define function to help parse term codes
-# for instance, converts Spring 2023 to 202310
-term_to_code <- function(term) {
-  
-  parts <- unlist(str_split(term," "))
-  year <- parts[[2]]
-  semester <- parts[1]
-  
-  sem_code <- case_when(
-    semester == "Fall" ~ "80",
-    semester == "Spring" ~ "10",
-    semester == "Summer" ~ "60"
-  )
-  
-  term_code <- unlist(paste(year,unlist(sem_code),sep=""))
-  
-  return(term_code)
+# extract dept from course param
+get_dept_from_course <- function (course) {
+  dept <- subj_to_dept_map[[substring(course, 1, gregexpr(pattern = " ",course)[[1]] -1 ) ]]
+  message("returning dept: ", dept)
+  return(dept)
 }
 
 
 
 compress_aop_pairs <- function (courses,opt) {
   message("compressing AOP courses into single row...")
+  
+  # for testing...
+  # courses <- load_courses(opt)
+  # opt <- list()
+  # opt[["course"]] <- "CCST 2110"
+  # opt[["term"]] <- "202460"
+  # courses <-  filter_DESRs(courses,opt)
+  # 
   
   # for clarity, combine aop and twin courses into single entry
   # test to see if we're filtering by dept
@@ -303,10 +432,13 @@ compress_aop_pairs <- function (courses,opt) {
   courses_aop <- courses %>% filter (INST_METHOD == "MOPS")
   
   # AOP sections don't necessarily have a partner, so remove those without one
+  # TODO: handle case of AOP course having partner, but not being crosslisted
+  # might be able to check on course title
   courses_aop <- courses_aop %>% filter (XL_CODE != "0")
   
   # get pairs of aop and twin section
-  aop_pairs <- courses_aop %>% filter (XL_CODE %in% courses_aop$XL_CODE) %>% distinct(CRN, .keep_all = TRUE) %>% 
+  aop_pairs <- courses_aop %>% filter (XL_CODE %in% courses_aop$XL_CODE) %>% 
+    distinct(CRN, .keep_all = TRUE) %>% 
     group_by(TERM,XL_CODE)
   
   # to collapse the aop and online section into one row, get each section's enrollment
@@ -314,10 +446,10 @@ compress_aop_pairs <- function (courses,opt) {
   
   # arrange by inst_method, and take first row of group
   aop_single <- aop_pairs %>% arrange(INST_METHOD) %>% filter (row_number() == 1)
-  message("aop sections:")
-  print(aop_single)
+  # message("aop sections:")
+  # print(aop_single)
   
-  if (opt$output) {
+  if (opt$csv) {
     message("saving aop_summary.csv...")
     filename <- paste0(cedar_output_dir,"enrl/aop_summary.csv")
     write.csv(aop_single,file=filename)
@@ -334,10 +466,10 @@ compress_aop_pairs <- function (courses,opt) {
   # add all single rows
   courses <- rbind(courses,aop_single)
   
+  message("returning compressed aop rows...")
+  
   return(courses)
 } # end compress_aop_pairs
-
-
 
 
 merge_hr_data <- function (courses) {
@@ -376,18 +508,25 @@ merge_hr_data <- function (courses) {
 create_report <- function(opt, d_params) {
   message("welcome to create_report!")
   
-  if (!is.null(opt$output_format)) {
-    message("setting output format to ",opt$output_format)
-    prefix <- ifelse (opt$output_format=="aspx","aspx/","html/")
-    suffix <- ifelse (opt$output_format=="aspx","-report.aspx","-report.html")
+  output <- opt$output
+  
+  if (!is.null(output)) {
+    message("setting output format to: ", output)
+    prefix <- ifelse (output=="aspx","aspx/","html/")
+    suffix <- ifelse (output=="aspx","-report.aspx",".html")
   } else {
     message("defaulting to HTML output...")
     prefix <- "html/"
-    suffix <- "-report.html"
+    suffix <- ".html"
   }
   
   # TRICKY! the paths for the output file are relative to the Rmd file, not the current working directory.
-  output_filename <- paste0(d_params$output_dir_base,prefix,d_params$output_filename,suffix)
+  if (opt[["onedrive"]]) {
+    output_filename <- paste0(cedar_onedrive_dir,"/",d_params$output_filename,".aspx")
+  } 
+  else {
+    output_filename <- paste0(d_params$output_dir_base,prefix,d_params$output_filename,suffix)
+  }
   
   message("working dir: ",getwd())
   message("output file set to: ", output_filename)
