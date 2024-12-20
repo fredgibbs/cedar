@@ -5,7 +5,7 @@ check_num_rows <- function(courses) {
 
 
 filter_DESRs <- function(courses, opt) {
-  message("\n","Welcome to filter_DESRs! Filtering DESRs with supplied options...")
+  message("Filtering DESRs with supplied options...")
   check_num_rows(courses)
   
   if (!length(opt)){
@@ -72,6 +72,7 @@ filter_DESRs <- function(courses, opt) {
   if (!is.null(opt[["course"]])) {
     message("filtering by course...")
     param_to_list <- convert_param_to_list(opt[["course"]])
+    #message(param_to_list)
     courses <- courses %>% filter (SUBJ_CRSE %in% param_to_list)
     check_num_rows(courses)
   }
@@ -151,13 +152,13 @@ filter_DESRs <- function(courses, opt) {
     check_num_rows(courses)
   }
   
-  # check summer filtering flag
-  if (!is.null(opt$summer) && opt$summer == FALSE) {
-    message("filtering out summer...")
-    courses <- courses %>% filter (!str_detect(as.character(TERM), "60"))
-    check_num_rows(courses)
-  }
-  
+  # # check summer filtering flag
+  # if (!is.null(opt$summer) && opt$summer == FALSE) {
+  #   message("filtering out summer...")
+  #   courses <- courses %>% filter (!str_detect(as.character(TERM), "60"))
+  #   check_num_rows(courses)
+  # }
+  # 
 
   # crosslist processing
   if (!is.null(opt$crosslist)) {
@@ -169,7 +170,6 @@ filter_DESRs <- function(courses, opt) {
 
   # term filter
   if (length(opt[["term"]]) > 0 || !is.null(opt[["term"]])) { 
-    message("processing term param: ", opt[["term"]])
     courses <- filter_by_term(courses,opt[["term"]],"TERM")
     check_num_rows(courses)  
   } 
@@ -215,7 +215,7 @@ filter_DESRs <- function(courses, opt) {
   # dedupe based on CRN
   courses <- courses %>% distinct(CRN,.keep_all = TRUE)
     
-  message("done filtering DESRs. selecting fields and returning ",nrow(courses)," courses...")
+  message("done filtering DESRs. returning ",nrow(courses)," courses...\n")
   
   #courses <- courses %>% select (TERM,CRN,DEPT,SUBJ,CRSE,SUBJ_CRSE,level,SECT,CRSE_TITLE,INST_METHOD,PT,PRIM_INST_LAST,INST_NAME, `Academic Title`,job_cat,`Home Organization Desc`,ENROLLED,total_enrl,TOTAL_HOURS,XL_SUBJ,XL_CRSE,XL_CRN, XL_ENRL,XL_CODE,WAIT_COUNT,SEATS_AVAIL,crse_base) %>% arrange(TERM,SUBJ,crse_base, SECT, INST_NAME)
   
