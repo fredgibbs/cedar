@@ -129,12 +129,12 @@ filter_class_list <- function(students, opt) {
   }
   
   
-  # summer filtering
-  if (!is.null(opt$summer) && opt$summer == FALSE) {
-    message("filtering out summer...")
-    students <- students %>% filter (!str_detect(as.character(`Academic Period Code`), "60"))
-  }
-  
+  # # summer filtering
+  # if (!is.null(opt$summer) && opt$summer == FALSE) {
+  #   message("filtering out summer...")
+  #   students <- students %>% filter (!str_detect(as.character(`Academic Period Code`), "60"))
+  # }
+  # 
   # term filter
   if (length(opt[["term"]]) > 0 || !is.null(opt[["term"]])) { 
     message("processing term param: ", opt[["term"]])
