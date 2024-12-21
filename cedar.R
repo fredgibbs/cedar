@@ -18,9 +18,72 @@ load_funcs <- function() {
   
   source("cones/enrl/enrl.R")
   source("cones/headcount/headcount.R")
+  source("cones/degrees/degrees.R")
+  source("cones/credit-hours/credit-hours.R")
+  source("cones/sfr/sfr.R")
+  
   source("cones/waitlist/waitlist.R")
+  source("cones/gradebook/gradebook.R")
   source("cones/lookout/lookout.R")
+  source("cones/nosedive/nosedive.R") 
+  source("cones/rollcall/rollcall.R")
+  
+  source("cones/dept-report/dept-report.R")
+  source("cones/course-report/course-report.R")
+  
+  source("cones/regstats/regstats.R")
+  source("cones/forecast/forecast.R")
+  source("cones/forecast-report/forecast-report.R")
+  
 }
+
+# output_data is going to be a df/tibble or list
+process_output <- function(output_data,filename) {
+  message("welcome to process_output!")
+  
+  output_list <- list()
+  
+  if (is_tibble(output_data)) {
+    message("incoming output_data is tibble.")
+    output_list[[filename]] <- output_data
+  } 
+  else if (is.list(output_data )) {
+    output_list <- output_data
+  }
+    
+  # print(output_list)  
+  
+  # process each element of list
+  for (i in 1: length(output_list)) {
+    cur_name <- names(output_list)[i]
+    # print(cur_name)
+    cur_item <- as_tibble(output_list[[i]])
+    # message("count: ", i )
+    # print(names(output_list))
+    # message("list element name: ", cur_name)
+    # message("current element:")
+    # print(cur_item)
+    
+    # if arrange param set, use it
+    if (!is.null(opt[["arrange"]])) {
+      arrange_col <- opt[["arrange"]]
+      facet <- facet %>%  arrange(get({{arrange_col}}) )
+    }
+    
+    # output to terminal
+    cur_item %>% tibble::as_tibble() %>% print(n = nrow(cur_item), width=Inf)
+    
+    # save file if output flag is set
+    if (!is.null(opt[["output"]]) && opt[["output"]] == "csv") {
+      message("saving CSV file...")
+      filename <- paste0(cedar_output_dir,"csv/",cur_name,".csv")  
+      message("filename set to: ",filename)
+      write.csv(cur_item, file = filename)
+    }
+  }
+  message("all done in process_output!\n")
+}
+
 
 options("width"=300)
 option_list = list(
@@ -101,7 +164,10 @@ option_list = list(
   make_option(c("--status"), type="character", default="A", 
               help="status [default = %default]", metavar="character"), 
   
-  make_option(c("--summer"), default=TRUE, action="store_true",
+  make_option(c("--regstatus"), type="character",
+              help="status [default = %default]", metavar="character"), 
+  
+  make_option(c("--summer"), default=FALSE, action="store_true",
               help="include summer terms"),
   
   make_option(c("--title"), type="character", 
@@ -117,23 +183,27 @@ option_list = list(
               help="exclude | compress :: exclude removes XLed courses; compress flattens all XLed sections into one, and uses subject code of the largest section", metavar="character"),
   
   
-  #TODO: standardize agg_by inputs and behavior
   # non-filtering options used with various flags
   make_option(c("-a", "--aggregate"), type="character",
               help="aggreagte: specify how; see guide for function for options.", metavar="character"),
   
-  make_option(c("--output"), default=FALSE, action="store_true",
-              help="create CSV files of output (very spotty implementation)"), 
+  make_option(c("--arrange"), type="character",
+              help="arrange: specify a column name to arrange by.", metavar="character"),
+
+  make_option(c("--output"), type="character",
+              help="csv, html, aspx"), 
   
   make_option(c("--nso"), default=FALSE, action="store_true",
               help="use nso data for forecasting"), 
   
   make_option(c("--forecast_method"), 
-              help="forecasting method to use: fall-to-spring, conduit, major, report", metavar="character"),
+              help="forecasting method to use: conduit, major, all", metavar="character"),
   
-  make_option(c("--output_format"), type="character", default="html", 
-              help="for use with dept-reports. use html for general use or aspx if loading to onedrive", metavar="character")
+  make_option(c("--forecast_conduit_term"), 
+              help="term to use as basis for projections if not deafult of term before target term", metavar="character"),
   
+  make_option(c("--onedrive"),  default=FALSE, action="store_true",
+              help="us to automatically save file to ondrive directory as specified in config.R", metavar="character")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
@@ -181,7 +251,6 @@ if (opt$func == "credit-hours") {
     stop("no error")
   }
   
-  source("cones/credit-hours/credit-hours.R")
   
   students <- load_students(opt)  
   filtered_students <- filter_class_list(students, opt)
@@ -214,29 +283,93 @@ if (opt$func == "course-report") {
     stop("no error")
   }
   
-  source("cones/course-report/course-report.R")
-  source("cones/forecast/forecast.R")
-  source("cones/gradebook/gradebook.R")
-  source("cones/credit-hours/credit-hours.R")
-  source("cones/nosedive/nosedive.R")
-  source("cones/rollcall/rollcall.R")
+  # load data 
+  courses <- load_courses(opt)
+  students <- load_students(opt)
   
   # if no term specified, use next term
   if (is.null(opt[["term"]])) {
+    # TODO: handle summer, both from --summer opt param and default
     next_term <- add_term(cedar_current_term)
     message("no opt$term param found. setting opt$term to: ",next_term)
     opt[["term"]] <- next_term
   }  
   
-  # extract dept from course param
-  dept <- subj_to_dept_map[[substring(opt$course, 1, gregexpr(pattern = " ",opt$course)[[1]] -1 ) ]]
-  message("setting opt$dept to: ", dept)
-  opt$dept <- dept
+  # process course param
+  message("processing course param...")
+  course <- opt[["course"]]
   
-  courses <- load_courses(opt)
-  students <- load_students(opt)
-  course_report(students,courses,opt)
+  # handle special case of getting courses from forecast table  
+  if (course == "forecasts") {
+    message("creating course reports for courses in forecasts table...")
+
+    # temp for redoing course reports based on courses in forecast-data
+    forecast_data <- load_forecasts(opt)
+    course_list <- as.list(unique(forecast_data$SUBJ_CRSE))
+    opt[["course"]] <- course_list
+    
+    # filter by target term so we don't create reports for old forecasting concerns
+    message("filtering forecast_courses for target term: ",opt[["term"]]  ,"...")
+    #print(opt)
+    course_list <- filter_course_list(courses, course_list, opt)
+    
+  } # end if courses = forecasts
+  # check for name of csv file
+  else if (substring(course,nchar(course)-3,nchar(course)) == ".csv") {
+    message("course set as CSV file...")
+    
+    filename <- paste0(cedar_output_dir,"/csv/",course)
+    message("attempting to load: ", filename)
+    
+    if (file.exists(filename)) {
+      message("loading CSV data...")
+      csv_courses <- read.csv(filename)
+    }
+    else {
+      stop("Sorry, cannot find CSV file.")
+    }
+    
+    # check for basic SUBJ_CRSE column to provide helpful error message.
+    if(!"SUBJ_CRSE" %in% colnames(csv_courses)) {
+      stop("CSV file loaded, but no SUBJ_CRSE column.")
+    }
+    else {  
+      # convert to list from tibble
+      course_list <- as.list(csv_courses$SUBJ_CRSE)
+      
+      # pretend input param is a list of courses
+      # term should remain as user opt original
+      opt[["course"]] <- course_list
+      
+      message("finished loading CSV file as course list!")
+      print(course_list)
+    }
+  } # end if csv file
+  else { 
+    message("regular opt param found.")
+    course_list <- convert_param_to_list(course)
+  } # opt$course not null
+  
+  
+  # loop through course_list 
+  total_courses <- length(course_list)
+  message("about to loop through ",total_courses ," courses:")
+  print(course_list)
+  counter <- 1
+  
+  # save exisiting opt params, including default term set earlier
+  myopt <- opt
+  myopt[["aggregate"]] <- "course"
+  myopt[["nso"]] <- FALSE
+  
+  for (course in course_list) {
+    myopt[["course"]] <- course
+    message("\n now processing course ",counter," of ",total_courses,": ",course,"...")
+    create_course_report(students,courses,myopt)
+    counter <- counter + 1
+  } # end course loop
 }
+
 
 
 ############### DATA STATUS  ############### 
@@ -266,15 +399,9 @@ if (opt$func == "dept-report") {
     quit()
   }
   
-  source("cones/dept-report/dept-report.R")
-  source("cones/credit-hours/credit-hours.R")
-  source("cones/degrees/degrees.R")
-  source("cones/gradebook/gradebook.R")
-  source("cones/sfr/sfr.R")
-  
   students <- load_students(opt)
   courses <- load_courses(opt)
-  dept_report(students,courses,opt)
+  create_dept_report(students,courses,opt)
 }
 
 
@@ -312,21 +439,60 @@ if (opt$func == "enrl") {
   }
   
   courses <- load_courses(opt)
+  #students <- load_students(opt)
+  
   get_enrl_out <- get_enrl(courses,opt)
-  message("results from get_enrl:")
-  get_enrl_out %>% tibble::as_tibble() %>% print(n=nrow(get_enrl_out), width=Inf)
+  process_output(get_enrl_out,"enrl/enrollments.csv")
 }
+
 
 
 
 ############### FORECAST ############### 
 if (opt$func == "forecast") {
   
-  # if not supplying sufficient parameters, default to basic reporting
-  if (is.null(opt$forecast_method) && is.null(opt$course)) {
-    message("setting opt$forecast_method  to 'method'...")
-    opt$forecast_method <- "report"
+  if (!is.null(opt[["forecast_conduit_term"]]) && is.null(opt[["term"]])) {
+    stop("You must specify a target term (-t) if you specify a conduit term.")
+  } 
+  
+  # if course, but no term, default to recent terms
+  if (is.null(opt$term) && !is.null(opt$course)) {
+    message("defaulting opt$term  to 'tl_recents'...")
+    opt[["term"]] <- "tl_recents"
   }
+  
+  if (opt$guide){
+    message("Forecasting 
+      Required params: -c (course) AND  -t (term).
+            Both can be either single values, comma-separated strings, or named lists.  
+            Course can also be 'existing', which uses courses in forecast table,
+              OR 'dimps', which looks for courses of concern.
+            
+            Output is basic forecast data for methods specified.
+            
+            ")
+    quit()
+  }
+  
+  # load data
+  courses <- load_courses(opt)
+  students <- load_students(opt)
+  
+  # forecast
+  # opt params get modified here, so return the new ones for the forecast accuracy filtering
+  # there is no other output after forecasting (it could be forecast_data)
+  opt <- forecast(students,courses,opt)
+  
+  # since it's almost always useful to see results right away, calc and show accuracy and recommendations
+  forecast_data <- calc_forecast_accuracy(students,courses,opt)
+  process_output(forecast_data,"forecasts") #.csv is added in process_output
+  
+}
+
+
+
+############### FORECAST REPORT ############### 
+if (opt$func == "forecast-report") {
   
   # if course, but no term, default to recent terms
   if (is.null(opt$term) && !is.null(opt$course)) {
@@ -335,42 +501,27 @@ if (opt$func == "forecast") {
   }
   
   if (opt$guide){
-    message("Forecasting 
-      Required params: -c (course) AND  -t (term).
+    message("Forecast-report 
+      Optional params: -c (course) AND  -t (term).
             Both can be either single values, comma-separated strings, or named lists.  
-            Output data is basic forecast data for methods specified.
             ")
     quit()
   }
   
-  source("cones/forecast/forecast.R")
-  source("cones/nosedive/nosedive.R") 
-  source("cones/rollcall/rollcall.R") 
-  
-  # load courses
+  # load data
   courses <- load_courses(opt)
+  students <- load_students(opt)
   
-  # if method is report, calc accuracy
-  if (!is.null(opt$forecast_method)) {
-    if (opt$forecast_method == "report") {
-      forecast_data <- calc_forecast_accuracy(courses,opt)
-      forecast_data %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)
-    }
+  # display forecast report for opt params
+  forecast_data <- calc_forecast_accuracy(students,courses,opt)
+  
+  # calc and show accuracy and recommendations
+  process_output(as_tibble(forecast_data),"forecasts")
+  
+  # check for output flog 
+  if (!is.null(opt[["output"]]) && (opt[["output"]] == "html" || opt[["output"]] == "aspx")) {
+    create_forecast_report(forecast_data, opt)
   }
-   else {
-     # load students
-     students <- load_students(opt)
-     
-     # forecast
-     forecast_out <- forecast(students,courses,opt)
-     
-     # display forecast report for opt params
-     forecast_data <- calc_forecast_accuracy(courses,opt)
-     forecast_data %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)
-     
-   }
-  
-  
 }
 
 
@@ -399,10 +550,10 @@ if (opt$func == "gradebook") {
   # 3 202210                 HIST 1105 lower Making History         9.52     2    10     2     1     0     1     0     2     0     0     1     2     19      2       3
   # 
   
-  source("cones/gradebook/gradebook.R")
   students <- load_students(opt)
-  grades_out <- get_grades(students,opt)  
-  grades_out %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
+  grades_out <- get_grades(students,opt)
+  process_output(grades_out,"csv/grades.csv")
+
 }
 
 
@@ -469,16 +620,32 @@ if (opt$func == "lookout") {
 
 ########### NOSEDIVE ##############
 if (opt$func == "nosedive") {
-  source("cones/nosedive/nosedive.R")
-  source("cones/forecast/forecast.R")
-  
-  # load class list data  
+
+  # load data  
   courses <- load_courses(opt)
   students <- load_students(opt)
   
   nosedive_out <- nosedive(courses, students, opt)  
 }
 
+
+########### REGSTAT ##############
+if (opt$func == "regstats") {
+  source("cones/regstats/regstats.R")
+  
+  # load class list data  
+  courses <- load_courses(opt)
+  students <- load_students(opt)
+
+  regstat_out <- get_reg_stats(students, courses, opt)
+  process_output(regstat_out,"") # don't need to supply csv name since we'll use list names
+  
+  # check for output flog 
+  if (!is.null(opt[["output"]]) && (opt[["output"]] == "html" || opt[["output"]] == "aspx")) {
+    create_regstat_report(regstat_out, opt)
+  }
+ 
+}
 
 ########### ROLLCALL ##############
 if (opt$func == "rollcall") {
@@ -496,10 +663,9 @@ if (opt$func == "rollcall") {
     stop("no error")
   }
   
-  source("cones/rollcall/rollcall.R")
   students <- load_students(opt)
-  rollcall_out <- rollcall(students, opt)  
-  rollcall_out  %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  rollcall_out <- rollcall(students, opt)
+  process_output(rollcall_out,"rollcall") # saves to csv/rollcall.csv
 }
 
 
@@ -515,17 +681,18 @@ if (opt$func == "seatfinder-report") {
     stop("no error")
   }
   source("cones/seatfinder-report/seatfinder-report.R")
+  students <- load_students(opt)
   courses <- load_courses(opt)
-  seatfinder_report(courses,opt)  
+  create_seatfinder_report(students,courses,opt)  
 }
 
 
 
 ############### WAITLIST  ############### 
 if (opt$func == "waitlist") {
-  if (opt$guide == TRUE || is.null(opt$course)) {
+  if (opt$guide == TRUE || (is.null(opt$course) && is.null(opt$term)) ) {
     message ("
-            waitlist uses specified filter params to find the number of students waitlisted for a course who are not also registered.
+            waitlist finds the number of students waitlisted for a course who are not also registered.
             Usually, filter by a specific course and term, like:
             -f waitlist -c 'ENGL 1110' -t 202480
             
@@ -536,7 +703,8 @@ if (opt$func == "waitlist") {
   
   students <- load_students(opt)
   waitlist_out <- inspect_waitlist(students,opt)
-  waitlist_out %>% tibble::as_tibble() %>% print(n=nrow(waitlist_out), width=Inf)
+
+  process_output(waitlist_out,"waitlist") # saves to csv/waitlist.csv
 }
 
 
@@ -557,16 +725,6 @@ if (opt$func == "fee-report") {
   courses <- load_courses(opt)
   fee_report(courses, opt)  
 }
-
-
-############### SUMMER REPORT (under development) ##########
-# currently requires a dept param 
-
-if (opt$func == "summer-report") {
-  courses <- load_courses(opt)
-  students <- load_students(opt)
-  create_summer_report(courses,students,opt)
-} #end summer report
 
 
 ########### WORKLOAD REPORT (under development) ##############
