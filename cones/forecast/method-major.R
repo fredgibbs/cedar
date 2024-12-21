@@ -75,19 +75,27 @@ major_forecast <- function(students,opt) {
   
   # TODO: all instances of getting student list, then class count, should be done all at once w/o term filtering
   
+  exclude_reg_codes <- c("DR","DD")
+  
   # get all distinct students in previous conduit term
   # since we're counting majors, we need DISTINCT students across ALL classes.
   # TODO: better to use academic study guided ad hoc report (no course duplication...)?
-  prev_conduit_student_list <- students %>% filter (`Academic Period Code` == prev_conduit_term ) %>% 
-    select(`Academic Period Code`,`Student ID`,`Major`,`Student Classification`) %>% distinct()
+  prev_conduit_student_list <- students %>% 
+    filter (`Academic Period Code` == prev_conduit_term ) %>% 
+    filter(!`Registration Status Code` %in% exclude_reg_codes) %>% 
+    select(`Academic Period Code`,`Student ID`,`Major`,`Student Classification`) %>% 
+    distinct()
   
   # tally students in previous conduit term by majors and classifications
   prev_conduit_class_count <- prev_conduit_student_list %>% group_by() %>%  
     count(`Academic Period Code`,Major, `Student Classification`)
   
   # get number of majors in conduit_term
-  conduit_student_list <- students %>% filter (`Academic Period Code` == conduit_term ) %>% 
-    select(`Academic Period Code`,`Student ID`,Major,`Student Classification`) %>% distinct()
+  conduit_student_list <- students %>% 
+    filter (`Academic Period Code` == conduit_term ) %>% 
+    filter(!`Registration Status Code` %in% exclude_reg_codes) %>% 
+    select(`Academic Period Code`,`Student ID`,Major,`Student Classification`) %>% 
+    distinct()
   
   # tally students in previous target term by majors and classifications  
   conduit_class_count <- conduit_student_list %>% group_by() %>%  
@@ -123,15 +131,18 @@ major_forecast <- function(students,opt) {
   
   # Now that we know how conduits have changed in composition, see what prev_target was like for our course
   # get courses/enrollments from prev_target_term and apply pct diff to conduit_term enrollments
-  prev_target_student_list <- students %>% filter (`Academic Period Code` == prev_target_term & SUBJ_CRSE == target_course) %>%  
-    select(`Academic Period Code`,`Student ID` ,Major,`Student Classification`)  %>% distinct()
+  prev_target_student_list <- students %>% 
+    filter (`Academic Period Code` == prev_target_term & SUBJ_CRSE == target_course) %>%
+    filter(!`Registration Status Code` %in% exclude_reg_codes) %>% 
+    select(`Academic Period Code`,`Student ID` ,Major,`Student Classification`)  %>% 
+    distinct()
   
   # count total students in previous conduit term (ie collapse students into majors and classifications)
   prev_target_class_count <- prev_target_student_list %>% group_by() %>% 
     count(`Academic Period Code`,Major, `Student Classification`)
   
 
-  # filter out freshman if forecasting fall course, since those can be better estimated from nosedive
+  # filter out freshman if forecasting for fall, since those can be better estimated from nosedive
   # for now, we only have nso data for fall 2024; don't use nosedive if forecasting earlier terms
   if (opt$nso && target_term_type == "fall" && target_term == 202480) {
     message("term type detected as Fall 2024..." )
