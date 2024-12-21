@@ -6,8 +6,9 @@
 # OPTIONAL: output-format: html (default) or aspx
 
 # TODO: create loops to manage and accept course and term lists for batch processing
+# some already in cedar.R; need to separate processing from actual report call as with forecast, regstats, etc
 
-course_report <- function(students, courses, opt) {
+create_course_report <- function(students, courses, opt) {
   
   # for studio testing...
   # students <- load_students(opt)
@@ -29,12 +30,6 @@ course_report <- function(students, courses, opt) {
   message("getting basic enrollment data for course-report...")
   enrls <- get_enrl(courses,myopt)
   enrls <- add_term_type_col(enrls,"TERM")
-  
-  cl_enrls <- calc_cl_enrls(students,reg_status = "all")
-  
-  enrls <- calc_squeezes (enrls,cl_enrls)
-  
-  
   
   # load forecast data from forecast table; see forecast-report.R
   forecast_data <- load_forecasts(myopt)
@@ -123,11 +118,19 @@ course_report <- function(students, courses, opt) {
     message("ignoring nso data.")
   }
   
-  print(myopt)
+  # message("myopt: ")
+  # print(myopt)
   
-  
-  # use regstats to find dimps
+  # use regstats to find flagged courses
   flagged <-  get_reg_stats(students,courses,myopt)
+  
+  # get class list enrollment data for more thorough reporting
+  filtered_students <- students %>% filter_class_list(myopt)
+  enrl_cl_data <- calc_squeezes(filtered_students,courses,myopt)
+  enrl_cl_data <- enrl_cl_data %>% ungroup() %>% select(c(TERM,SUBJ_CRSE,drops, mean_drops, squeeze))
+  #print(enrl_cl_data)
+  enrls <- merge (enrls, enrl_cl_data, by=c("SUBJ_CRSE","TERM"))
+  #print(enrls)
   
   # run lookout functions to see where students are coming and going from  
   message("getting lookout data...")
@@ -139,8 +142,7 @@ course_report <- function(students, courses, opt) {
   message("getting rollcall data...")
   myopt[["aggregate"]] <- "classification_wide"
   agg_by_class <- rollcall(students,myopt)
-  
-  print(agg_by_class)
+  # print(agg_by_class)
   
   myopt[["aggregate"]] <- "major_wide"
   agg_by_major <- rollcall(students,myopt)
