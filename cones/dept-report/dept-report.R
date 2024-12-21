@@ -34,7 +34,7 @@ set_payload <- function (dept_code, prog_focus) {
 
 
 ################ main function ################
-dept_report <- function (students,courses,opt) {
+create_dept_report <- function (students,courses,opt) {
   message("Welcome to dept_report!")
   
   # convert dept param to dept_list for processing
