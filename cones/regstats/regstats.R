@@ -92,8 +92,11 @@ get_high_fall_sophs <- function (students,courses,opt) {
   myopt[["term"]] <- "fall"
   rollcall_out <- rollcall(students,myopt)
   
+  print(rollcall_out)
+  
   # 100 is a bit arbitrary; not sure how to calc would what be a better threshold
   rollcall_out <- rollcall_out %>% filter(mean > 100)
+  
   
   # grab just SUBJ_CRSE col
   high_fall_sophs <- unique(rollcall_out$SUBJ_CRSE)
@@ -192,15 +195,15 @@ get_reg_data <- function(filtered_students,opt) {
 get_dimp_concerns <- function(regstats,thresholds,sign) {
   #print(regstats)
   if (sign=="plus") {
-    concerns <- regstats %>%  mutate(z = (count - mean) / sd, impact =  abs((count - mean))) %>% 
-      filter (impact > thresholds[["min_impact"]])  %>% 
+    concerns <- regstats %>%  mutate(pct_sd = (count - mean) / sd, impacted =  (count - (mean + sd))) %>% 
+      filter (impacted > thresholds[["min_impacted"]])  %>% 
       filter (count > thresholds[["min_count"]]) %>% 
-      filter (z > thresholds[["z"]])
+      filter (pct_sd > thresholds[["min_pct_sd"]])
   } else if (sign =="minus") {
-    concerns <- regstats %>%  mutate(z = (mean - count) / sd, impact =  abs((count - mean))) %>% 
-      filter (impact > thresholds[["min_impact"]])  %>% 
+    concerns <- regstats %>%  mutate(pct_sd = (mean - count) / sd, impacted =  ((mean - sd) - count)) %>% 
+      filter (impacted > thresholds[["min_impacted"]])  %>% 
       filter (count > thresholds[["min_count"]]) %>% 
-      filter (z > thresholds[["z"]])
+      filter (pct_sd > thresholds[["min_pct_sd"]])
   }
   
   return(concerns)
@@ -210,7 +213,7 @@ get_dimp_concerns <- function(regstats,thresholds,sign) {
 get_dimp_bumps <- function(regstats,thresholds) {
   bumps <- regstats %>% filter (substring(`Registration Status Code`,1,1) == "R") 
   bumps <- get_dimp_concerns(bumps,thresholds,"plus")
-  bumps <-  bumps %>% arrange (desc(impact))
+  bumps <-  bumps %>% arrange (desc(impacted))
   
   return (bumps)
 }
@@ -218,8 +221,10 @@ get_dimp_bumps <- function(regstats,thresholds) {
 
 get_dimp_dips <- function(regstats,thresholds) {
   dips <- regstats %>% filter (substring(`Registration Status Code`,1,1) == "R") 
+  message("DIPS")
+  print(dips)
   dips <- get_dimp_concerns(dips,thresholds,"minus")
-  dips <-  dips %>% arrange (impact)
+  dips <-  dips %>% arrange (impacted)
   
   return (dips)
 }
@@ -228,7 +233,7 @@ get_dimp_dips <- function(regstats,thresholds) {
 get_dimp_drops <- function(regstats,thresholds) {
   drops <- regstats %>% filter (substring(`Registration Status Code`,1,1) == "D") 
   drops <- get_dimp_concerns(drops,thresholds,"plus")
-  drops <-  drops %>% arrange (desc(impact))
+  drops <-  drops %>% arrange (desc(impacted))
   
   return(drops)
 }
@@ -304,21 +309,14 @@ get_reg_stats <- function(students,courses,opt) {
   squeezes <- calc_squeezes(filtered_students, filtered_courses, myopt)
   flagged[["squeezes"]] <- filter_squeezes(squeezes, thresholds, opt)
   
-  # courses from previous two years of term type
-  flagged[["prev_courses"]] <- get_prev_courses(students, courses, myopt)
-  
-  # gather SUBJ_CRSE col into separate element  
+  # gather SUBJ_CRSE col into separate list  
   message("gathering flagged courses...")
   flagged_courses <- list()
   for (flag in flagged) {
     print(flag)
     flagged_courses <- append(flagged_courses, flag$SUBJ_CRSE)  
   }
-  
-  # keep separate since we don't need to forecast for this all the time
-  flagged[["high_fall_sophs"]] <- get_high_fall_sophs(students, courses, myopt)
-  
-    
+
   # keep only unique courses
   message("removing duplicate courses...")
   flagged_courses <- unique(flagged_courses)
@@ -339,6 +337,10 @@ get_reg_stats <- function(students,courses,opt) {
   
   # save thresholds for adding to report
   flagged[["thresholds"]] <- thresholds 
+  
+  # keep separate since we don't need to forecast for this all the time
+  flagged[["high_fall_sophs"]] <- get_high_fall_sophs(students, courses, myopt)
+  flagged[["prev_courses"]] <- get_prev_courses(students, courses, myopt)
   
   
   # output to terminal 
