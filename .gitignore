@@ -2,7 +2,3 @@
 .Rhistory
 /data/
 /includes/config.R
-/output/**
-!/output/**
-!/output/**/.gitkeep
-/output/**/.DS_Store
