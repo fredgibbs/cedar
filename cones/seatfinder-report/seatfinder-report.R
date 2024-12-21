@@ -83,20 +83,8 @@ get_course_type_summary <- function (f_courses,opt) {
 }
 
 
-# UNFINISHED
-get_high_waitlist <- function (f_courses,opt) {
-  f_courses <- normalize_inst_method(f_courses)
-  
-  summary <- f_courses %>% group_by(SUBJ_CRSE,CRSE_TITLE,PT,method,level,gen_ed_area,TERM)
-  
-  # compare summary to last term
-  summary <- summary %>% arrange(desc(WAIT_COUNT))
-
-}
-
-
 ###################################
-seatfinder_report <- function (students,courses,opt) {  
+create_seatfinder_report <- function (students,courses,opt) {  
   
   ########## for studio testing
   # opt <- list()
