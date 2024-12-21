@@ -135,6 +135,7 @@ forecast <- function(students, courses, opt) {
     message("course set to FORECASTS...")
     forecast_data <- load_forecasts(list())
     course_list <- unique(as.list(forecast_data$SUBJ_CRSE))
+    opt[["course"]] <- course_list
   }
   # else if (course == "regstats") {
   #   message("course set to REGSTATS...")
@@ -159,7 +160,7 @@ forecast <- function(students, courses, opt) {
       stop("Sorry, cannot find CSV file.")
     }
     
-    # TODO: check for basic SUBJ_CRSE column to provide helpful error message.
+    # check for basic SUBJ_CRSE column to provide helpful error message.
     if(!"SUBJ_CRSE" %in% colnames(csv_courses)) {
       stop("CSV file loaded, but no SUBJ_CRSE column.")
     }
