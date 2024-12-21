@@ -273,7 +273,7 @@ reset_forecast_course <- function(opt) {
 ############### GENERAL FUNCTION START ##################
 # this function generates a report, and first computes accuracy stats
 
-report_forecasts <- function(forecast_data, opt) {
+create_forecast_report <- function(forecast_data, opt) {
   message("welcome to forecast-report!")
 
   # for studio testing...
