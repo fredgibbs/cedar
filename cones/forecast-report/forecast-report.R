@@ -205,8 +205,8 @@ calc_forecast_accuracy <- function(students,courses, opt) {
   # if within .3 of integer, round up or down to it.
   # otherwise section recommendation to -1 to flag for further analysis
   forecast_summary <- forecast_summary %>% mutate (recommendation = 
-                                                     ifelse(ceiling(rec_sections) -  rec_sections < .3, ceiling(rec_sections), 
-                                                            ifelse(rec_sections - floor(rec_sections) < .3, floor(rec_sections), -100)
+                                                     ifelse(ceiling(rec_sections) -  rec_sections < cedar_regstats_thresholds[["section_proximity"]], ceiling(rec_sections), 
+                                                            ifelse(rec_sections - floor(rec_sections) < cedar_regstats_thresholds[["section_proximity"]], floor(rec_sections), -100)
                                                             )
                                                    )
   
