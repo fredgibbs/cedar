@@ -442,7 +442,7 @@ if (opt$func == "enrl") {
   #students <- load_students(opt)
   
   get_enrl_out <- get_enrl(courses,opt)
-  process_output(get_enrl_out,"enrl/enrollments.csv")
+  process_output(get_enrl_out,"enrollments")
 }
 
 
