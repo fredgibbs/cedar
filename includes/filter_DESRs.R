@@ -210,7 +210,7 @@ filter_DESRs <- function(courses, opt) {
   }
   
   # set default groupings for output
-  courses <- courses %>% group_by(TERM,SUBJ_CRSE,CRSE_TITLE,INST_NAME)
+  courses <- courses %>% group_by(TERM,SUBJ_CRSE,CRSE_TITLE,PT,INST_METHOD,level,INST_NAME)
   
   # dedupe based on CRN
   courses <- courses %>% distinct(CRN,.keep_all = TRUE)
