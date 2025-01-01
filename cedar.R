@@ -48,6 +48,7 @@ process_output <- function(output_data,filename) {
     output_list[[filename]] <- output_data
   } 
   else if (is.list(output_data )) {
+    message("incoming output_data is list.")
     output_list <- output_data
   }
     
@@ -70,15 +71,17 @@ process_output <- function(output_data,filename) {
       facet <- facet %>%  arrange(get({{arrange_col}}) )
     }
     
-    # output to terminal
-    cur_item %>% tibble::as_tibble() %>% print(n = nrow(cur_item), width=Inf)
-    
-    # save file if output flag is set
+    # if output csv flag set, print 20 rows and save file 
     if (!is.null(opt[["output"]]) && opt[["output"]] == "csv") {
+      cur_item %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
       message("saving CSV file...")
       filename <- paste0(cedar_output_dir,"csv/",cur_name,".csv")  
       message("filename set to: ",filename)
       write.csv(cur_item, file = filename)
+    }
+    else {
+      # print all rows to terminal
+      cur_item %>% tibble::as_tibble() %>% print(n = nrow(cur_item), width=Inf)  
     }
   }
   message("all done in process_output!\n")
@@ -200,7 +203,7 @@ option_list = list(
               help="forecasting method to use: conduit, major, all", metavar="character"),
   
   make_option(c("--forecast_conduit_term"), 
-              help="term to use as basis for projections if not deafult of term before target term", metavar="character"),
+              help="term to use as basis for projections if not deafult conduit of term before target term", metavar="character"),
   
   make_option(c("--onedrive"),  default=FALSE, action="store_true",
               help="us to automatically save file to ondrive directory as specified in config.R", metavar="character")
@@ -516,7 +519,7 @@ if (opt$func == "forecast-report") {
   forecast_data <- calc_forecast_accuracy(students,courses,opt)
   
   # calc and show accuracy and recommendations
-  process_output(as_tibble(forecast_data),"forecasts")
+  process_output(forecast_data,"none")
   
   # check for output flog 
   if (!is.null(opt[["output"]]) && (opt[["output"]] == "html" || opt[["output"]] == "aspx")) {
