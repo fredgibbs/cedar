@@ -1,6 +1,6 @@
 ###################### MAJOR METHOD ##########################
 # Instead of just looking at course enrollments as the CONDUIT method does,
-# this MAJOR method looks at how MAJORS changed from prev conduit term to conduit term (ie last two semesters)
+# this MAJOR method looks at how MAJORS changed from prev conduit term to conduit term 
 # (the conduit term is just the term before the target term)
 # Then, apply the change in majors percentage to prev_target_term enrollments
 # compute how much that will contribute to target term enrollment based composition of majors in target course
@@ -227,9 +227,9 @@ major_forecast <- function(students,opt) {
   new_summary <- data.frame("TERM" = as.character(target_term), 
                             "SUBJ_CRSE" = target_course, 
                             "method"="major", 
-                            "forecast" = total_fc,
-                            "continuing_forecast" = continuing_fc,
-                            "incoming_forecast" = incoming_fc
+                            "forecast" = round(total_fc,digits=0),
+                            "continuing_forecast" = round(continuing_fc,digits=0),
+                            "incoming_forecast" = round(incoming_fc,digits=0)
                             )
   
   

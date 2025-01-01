@@ -180,7 +180,7 @@ conduit_forecast <- function(students,courses,opt) {
   }
   
   # continuning and incoming columns used by major method, so need to be consistent with columns
-  new_summary <- data.frame(target_term, target_course, "conduit", proj, 0, 0)
+  new_summary <- data.frame(target_term, target_course, "conduit", round(proj,digits=0), 0, 0)
   names(new_summary)<-c("TERM","SUBJ_CRSE","method","forecast","continuing_forecast","incoming_forecast")
   
   # add to forecast table 
