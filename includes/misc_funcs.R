@@ -449,12 +449,6 @@ compress_aop_pairs <- function (courses,opt) {
   # message("aop sections:")
   # print(aop_single)
   
-  if (opt$csv) {
-    message("saving aop_summary.csv...")
-    filename <- paste0(cedar_output_dir,"enrl/aop_summary.csv")
-    write.csv(aop_single,file=filename)
-  }
-  
   # since compressing two sections into one, change ENROLLED to mimic total_enrl
   # otherwise, compressing effectively deletes the non-aop section enrollment
   aop_single <- aop_single %>% mutate (ENROLLED = total_enrl)
