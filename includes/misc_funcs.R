@@ -417,12 +417,11 @@ compress_aop_pairs <- function (courses,opt) {
   message("compressing AOP courses into single row...")
   
   # for testing...
-  # courses <- load_courses(opt)
-  # opt <- list()
-  # opt[["course"]] <- "CCST 2110"
-  # opt[["term"]] <- "202460"
-  # courses <-  filter_DESRs(courses,opt)
-  # 
+   # courses <- load_courses(opt)
+   # opt <- list()
+   # #opt[["course"]] <- "BIOL 2305"
+   # opt[["term"]] <- "202210"
+   # courses <-  filter_DESRs(courses,opt)
   
   # for clarity, combine aop and twin courses into single entry
   # test to see if we're filtering by dept
