@@ -15,7 +15,7 @@ create_course_report <- function(students, courses, opt) {
   # courses <- load_courses(opt)
   # opt <- list()
   # opt[["course"]] <- "MATH 1130"
-  # opt[["term"]] <- 202510
+  # #opt[["term"]] <- 202510
   
   # these should always be set this way
   opt$status <- "A"
@@ -35,7 +35,8 @@ create_course_report <- function(students, courses, opt) {
   forecast_data <- load_forecasts(myopt)
   forecast_data <- forecast_data %>% filter (SUBJ_CRSE == myopt[["course"]])
   
-  forecast_data <- add_term_type_col(forecast_data,"TERM")
+  forecast_data <- add_term_type_col(forecast_data,"TERM") 
+  
   
   # use 8 as threshold because the table has major and conduit projections (= to 4 terms)
   # don't forecast in case we never offer a course that semester, since there's no previous target data
@@ -65,23 +66,14 @@ create_course_report <- function(students, courses, opt) {
   
   
   # use forecast-report.R to load forecast data with enrollments and accuracy
-  # all filtering for term type, and past vs future terms is done in the Rmd file
-  forecasts <- calc_forecast_accuracy(students, courses, myopt)
+  forecasts <- calc_forecast_accuracy(students, courses, myopt) # returns a list with short and long versions
+  forecasts <- forecasts[["forecast_short"]]
+  forecasts <- forecasts %>% select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))
   
-  # # set history to go up to the term prior to the specified forecast term
-  # forecast_history <- forecast_summary %>% filter (TERM <= subtract_term(opt[["term"]]))
-  # message("forecast history:")
-  # print(forecast_history)
-  # 
-  # # isolate target term's forecast
-  # forecast_next_term <- forecast_summary %>% 
-  #   filter (TERM == opt$term) %>% 
-  #   select(-c("conduit_accr","major_accr"))
-  # 
-  # forecast_next_term %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  # 
+  
   ############### 
-  # use nosedive to find out freshman contribution to course we're reporting on
+  # UNFINISHED: use nosedive to find out freshman contribution to course we're reporting on
+  ###############
   message("looking for NSO flog and if target term type is fall...")
   if (opt$nso && get_term_type(opt[["term"]]) == "fall") {
     
@@ -118,19 +110,17 @@ create_course_report <- function(students, courses, opt) {
     message("ignoring nso data.")
   }
   
-  # message("myopt: ")
-  # print(myopt)
-  
   # use regstats to find flagged courses
   flagged <-  get_reg_stats(students,courses,myopt)
   
   # get class list enrollment data for more thorough reporting
   filtered_students <- students %>% filter_class_list(myopt)
-  enrl_cl_data <- calc_squeezes(filtered_students,courses,myopt)
-  enrl_cl_data <- enrl_cl_data %>% ungroup() %>% select(c(TERM,SUBJ_CRSE,drops, mean_drops, squeeze))
-  #print(enrl_cl_data)
-  enrls <- merge (enrls, enrl_cl_data, by=c("SUBJ_CRSE","TERM"))
-  #print(enrls)
+  
+  # get squeezes, already merged with enrl_cl_data already merged with enrl data
+  enrls <- calc_squeezes(filtered_students,courses,myopt) # calls calc_cl_enrls and returns all regstats info
+
+  # message("merging forecast summary data with enrollment summary data...")
+  # enrl_w_forecast <- merge (enrl_w_forecast, cl_enrls, by.x=c("SUBJ_CRSE", "TERM","term_type"), by.y=c("SUBJ_CRSE", "Academic Period Code","term_type") ,all.x=T)
   
   # run lookout functions to see where students are coming and going from  
   message("getting lookout data...")
@@ -142,7 +132,6 @@ create_course_report <- function(students, courses, opt) {
   message("getting rollcall data...")
   myopt[["aggregate"]] <- "classification_wide"
   agg_by_class <- rollcall(students,myopt)
-  # print(agg_by_class)
   
   myopt[["aggregate"]] <- "major_wide"
   agg_by_major <- rollcall(students,myopt)
