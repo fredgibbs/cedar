@@ -25,12 +25,11 @@ cedar_registration_underway <- FALSE
 cedar_regstats_thresholds <- list()
 cedar_regstats_thresholds[["sd_buffer"]] <- 1 # % of standard deviation before flagging as concern
 cedar_regstats_thresholds[["min_count"]] <- 20 # min number of students in a course before we flag as a concern
-cedar_regstats_thresholds[["min_impacted"]] <- 50 # min difference b/w enrollment and mean (= number of students affected) 
+cedar_regstats_thresholds[["min_impacted"]] <- 20 # min difference b/w enrollment and mean (= number of students affected) 
 cedar_regstats_thresholds[["min_pct_sd"]] <- 1.2 # percent of students outside the mean compared to standard deviation
-cedar_regstats_thresholds[["min_mean_attr"]] <- 20 # min mean attrition before a course is considered squeezed
 cedar_regstats_thresholds[["min_squeeze"]] <- .5 # squeeze is ratio of avail seats to  mean attrition
 cedar_regstats_thresholds[["min_wait"]] <- 20 # min number of students on waitlist before being flagged
-cedar_regstats_thresholds[["section_proximity"]] <- .3 # how close to integer before rounding for recommended sections? closer to .5 reduces -100s
+cedar_regstats_thresholds[["section_proximity"]] <- .3 # how close to integer before rounding up/down for recommended sections? closer to .5 reduces -100s
 
 cedar_report_palette <- "Spectral"
 
