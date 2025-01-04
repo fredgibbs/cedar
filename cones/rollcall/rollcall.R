@@ -58,7 +58,10 @@ get_agg_classification_wide <- function(students) {
   message("CLASSIFICATION_WIDE: summarizing by term, course, classification...")
   
   # get course enrollments from class lists (in enrl.R)
-  crse_enrollment  <- calc_cl_enrls(students)
+  reg_summary <- calc_cl_enrls(students)
+  crse_enrollment <- reg_summary %>% select(c(SUBJ_CRSE,`Academic Period Code`,term_type,registered))
+  
+  
   
   agg_by_class <- students %>% group_by(`Academic Period Code`, SUBJ_CRSE,`Short Course Title`,`Student Classification`) %>%
     distinct(`Student ID`,.keep_all=TRUE) %>% 
@@ -67,8 +70,8 @@ get_agg_classification_wide <- function(students) {
   
   # merge with course enrollments to calc percent from each classification
   merge_sum_enrl <- merge(agg_by_class,crse_enrollment,by=c("Academic Period Code", "SUBJ_CRSE"))
-  merge_sum_enrl <- merge_sum_enrl %>% group_by(`Academic Period Code`,SUBJ_CRSE) %>%  mutate(pct = class_count/count*100) %>% 
-    select (-c(class_count,count)) %>% 
+  merge_sum_enrl <- merge_sum_enrl %>% group_by(`Academic Period Code`,SUBJ_CRSE) %>%  mutate(pct = class_count/registered*100) %>% 
+    select (-c(class_count,registered)) %>% 
     arrange (`Academic Period Code`,desc(pct))
   
   agg_by_class_w <- merge_sum_enrl %>% pivot_wider(names_from = `Academic Period Code`, values_from=pct)
@@ -121,7 +124,9 @@ get_agg_major <- function(students) {
   message("AGG_MAJOR: summarizing by term, course, major...")
 
   # get course enrollments from class lists (gets only registered students)
-  crse_enrollment  <- calc_cl_enrls(students)
+  reg_summary <- calc_cl_enrls(students)
+  crse_enrollment <- reg_summary %>% select(c(SUBJ_CRSE,`Academic Period Code`,term_type,registered))
+  
   
   # count number of majors in each course
   agg_by_major <- students %>% group_by(`Academic Period Code`, SUBJ_CRSE, `Major`) %>% 
@@ -133,8 +138,8 @@ get_agg_major <- function(students) {
   agg_by_major <- merge(agg_by_major,crse_enrollment,by=c("Academic Period Code", "SUBJ_CRSE"))
   
   # calculate % of enrollment for different majors
-  agg_by_major <- agg_by_major %>% group_by(`Academic Period Code`,SUBJ_CRSE) %>%  mutate(pct = majors/count*100) %>% 
-    select (-c(majors,count)) %>% 
+  agg_by_major <- agg_by_major %>% group_by(`Academic Period Code`,SUBJ_CRSE) %>%  mutate(pct = majors/registered*100) %>% 
+    select (-c(majors,registered)) %>% 
     arrange (`Academic Period Code`,desc(pct))
   
   return(agg_by_major)    
