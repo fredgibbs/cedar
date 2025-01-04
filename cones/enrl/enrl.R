@@ -1,33 +1,84 @@
 
 # this function is course agnostic, expecting caller will merge with existing DF
-calc_cl_enrls <- function(students,reg_status="registered") {
+# return a row for each course in students list, 
+# with a count and mean for each registration status code
+
+calc_cl_enrls <- function(students,reg_status=NULL) {
+  
+  # students <- load_students(opt)
+  # #reg_status <- c("DR")
+  # reg_status <- NULL
+  
+  reg_stats_summary <- tibble()
   
   message("calculating enrollments from class lists (calc_cl_enrls)...")
   
-  # get distinct students (use CRN?)
+  # get distinct rows within courses
+  # using SUBJ_CRSE to lump all sections topics courses together
   cl_enrls <- students %>%
     group_by(`Academic Period Code`, `SUBJ_CRSE`) %>% 
     distinct(`Student ID`, .keep_all = TRUE)
+  
+  # count students in each term by reg status code
+  cl_enrls <- cl_enrls %>% group_by (SUBJ_CRSE,`Registration Status Code`,`Academic Period Code`, term_type) %>% 
+    summarize(count = n(), .groups="keep") 
+  
+  # calc mean reg codes per course and term type
+  cl_enrls <- cl_enrls %>% group_by (SUBJ_CRSE,term_type,`Registration Status Code`) %>% 
+    mutate(mean = round(mean(count),digits=1))
+  
+  
+  if (is.null(reg_status)) {
     
-  # process reg_status
-  if (is.character(reg_status)) {
-    if (reg_status == "registered") {
-      cl_enrls <- cl_enrls %>% filter (`Registration Status`== "Registered" | `Registration Status`== "Student Registered")
-    }
-    else if (reg_status == "dropped") {
-      cl_enrls <- cl_enrls %>% filter (`Registration Status Code` %in% c("DR","DG","DW","DD"))
-    }
+    cl_enrls <- cl_enrls %>% group_by(SUBJ_CRSE,`Academic Period Code`, term_type)
+    
+    reg_stats_summary <- cl_enrls %>% filter(`Registration Status Code`== "RE" | `Registration Status Code`== "RS")  %>%
+      summarize(registered = sum(count))
+    
+    de <- cl_enrls %>% filter (`Registration Status Code` %in% c("DR")) %>%
+      summarize(dr_early = sum(count))
+    reg_stats_summary <- merge(reg_stats_summary, de, all=T)
+    
+    
+    dl <- cl_enrls %>% filter (`Registration Status Code` %in% c("DG","DW","DD")) %>%
+      summarize(dr_late = sum(count))
+    reg_stats_summary <- merge(reg_stats_summary, dl, all=T)
+    
+    
+    da <- cl_enrls %>% filter (`Registration Status Code` %in% c("DR","DG","DW","DD")) %>%
+      summarize(dr_all = sum(count))
+    reg_stats_summary <- merge(reg_stats_summary, da, all=T)
+    
+
+    cl_total <- cl_enrls %>% 
+      summarize(cl_total = sum(count))
+    reg_stats_summary <- merge(reg_stats_summary, cl_total, all=T)
+    
+        
+    # remove NAs from merging
+    reg_stats_summary[is.na(reg_stats_summary)] <- 0
+    
+    
+    # regroup without APC
+    reg_stats_summary <- reg_stats_summary %>% group_by(SUBJ_CRSE, term_type)
+    
+    # get means across term_types
+    reg_stats_summary <- reg_stats_summary %>% mutate(de_mean = round(mean(dr_early),digits=2))
+    reg_stats_summary <- reg_stats_summary %>% mutate(dl_mean = round(mean(dr_late),digits=2))
+    reg_stats_summary <- reg_stats_summary %>% mutate(da_mean = round(mean(dr_all),digits=2))
+    
+    
   }
-  else if (is.list(reg_status)) {
-    cl_enrls <- cl_enrls %>% filter (`Registration Status Code` %in% reg_status)
+  # if given list of reg codes, filter for those
+  else if (!is.null(reg_status) && is.list(reg_status)) {
+    reg_stats_summary <- cl_enrls %>% filter (`Registration Status Code` %in% reg_status)
   }
   
-  # count students  
-  cl_enrls <- cl_enrls %>% summarize(count = n(), .groups="keep")
   
-  message("calc_cl_enrls returning ",nrow(cl_enrls)," rows.")
   
-  return (cl_enrls)
+  message("calc_cl_enrls returning ",nrow(reg_stats_summary)," rows.")
+  
+  return (reg_stats_summary)
 }
 
 
@@ -52,7 +103,7 @@ agg_by_course_type <- function(courses,opt) {
 agg_by_course <- function(courses,opt) { 
   message("agg_by_course: basic course summary (summarize all types of course sections into single row):")
   summary <- courses %>% group_by(TERM,SUBJ,SUBJ_CRSE,CRSE_TITLE,level,gen_ed_area) %>% 
-    summarize(.groups="keep", sections=n(),avg_size=mean(ENROLLED),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
+    summarize(.groups="keep", sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
     select (TERM,SUBJ_CRSE,SUBJ,CRSE_TITLE,enrolled,sections,avg_size,avail,waiting,level,gen_ed_area)
   #summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
   
@@ -219,23 +270,14 @@ get_enrl <- function (courses,opt) {
   message("\n","welcome to get_enrl!")
   #print(opt)
   
-  # disable output by default, in case called from another function
-  if (is.null(opt$csv)) {
-    opt$csv <- FALSE
-  }
-  
-  # default status should be A
+  # default status should be A for active courses
   if (is.null(opt$status)) {
     opt$status <- "A"
   }
   
   # filter courses according to options
   courses <- filter_DESRs(courses, opt)
-  courses <- courses %>% group_by(TERM,SUBJ,CRSE_TITLE,PT,INST_METHOD,level)
 
-  # makes sure we have distinct courses after filtering
-  courses <- courses %>%  distinct(TERM,CRN,.keep_all=TRUE)
-  
   # add academic year field
   courses <- add_acad_year (courses, "TERM")
   
