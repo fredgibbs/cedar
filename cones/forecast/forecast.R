@@ -126,7 +126,7 @@ forecast <- function(students, courses, opt) {
   
   course <- opt[["course"]]
   
-  # if no course specified, try to make course_list from opt params
+  # process course flag
   if (is.null(course)){
     stop(req_message, call.=FALSE)
   }
@@ -137,13 +137,6 @@ forecast <- function(students, courses, opt) {
     course_list <- unique(as.list(forecast_data$SUBJ_CRSE))
     opt[["course"]] <- course_list
   }
-  # else if (course == "regstats") {
-  #   message("course set to REGSTATS...")
-  #   # load csv file of all flagged courses
-  #   dimp_courses <- get_dimp_courses(students,courses,opt)
-  #   course_list <- unique(as.list(dimp_courses$SUBJ_CRSE))
-  # }
-  
   # check if given name of .csv file
   # this allows any function to create and save a csv file on any filtering/finding logic.
   else if (substring(course,nchar(course)-3,nchar(course)) == ".csv") {
@@ -176,10 +169,11 @@ forecast <- function(students, courses, opt) {
       print(course_list)
     }
   }
-  else { # opt$course not null
+  else { # opt$course not null; make course_list from course param
       course_list <- convert_param_to_list(opt[["course"]])
   }
   
+  # process term param
   if (is.null(opt[["term"]])) {
     stop(req_message, call.=FALSE)
   }
@@ -191,12 +185,11 @@ forecast <- function(students, courses, opt) {
   }
 
   # if a custom conduit is supplied, there should be is only one term to forecast for
-  if (!is.null(opt[["forecast_custom_conduit"]])) {
-      termstring <- opt[["forecast_custom_conduit"]]
+  if (!is.null(opt[["forecast_conduit_term"]])) {
+      termstring <- opt[["forecast_conduit_term"]]
     # double check we have a pair of terms, one for conduit, and one of term to apply it (otherwise we use usual target-1)
-    if (grepl("[0-9]{6},[0-9]{6}",opt[["forecast_custom_conduit"]])) {
+    if (grepl("[0-9]{6},[0-9]{6}",opt[["forecast_conduit_term"]])) {
       # extract start and end term codes
-      
       opt[["custom_conduit"]] <- substring(termstring, 1,6)
       opt[["conduit_for_term"]] <- substring(termstring, 8,13)
     } 
