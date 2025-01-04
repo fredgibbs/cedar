@@ -13,11 +13,9 @@ calc_squeezes <- function(filtered_students,filtered_courses,opt) {
   message("enrls from CALC_SQUEEZES")
   print(enrls)
   
-  # get enrollments including all drops (DR, DG, DW, DD)
-  cl_drops <- calc_cl_enrls(filtered_students, reg_status = list("DG","DW","DD"))
-  cl_drops <- cl_drops %>% rename(drops = count)
-  print(cl_drops)
-  
+  # get registration status
+  cl_drops <- calc_cl_enrls(filtered_students)
+
   # merge drop data w course data
   squeezes <- merge(enrls,cl_drops,by.x=c("TERM","SUBJ_CRSE"),by.y=c("Academic Period Code","SUBJ_CRSE"),all.x=TRUE )
   
@@ -28,10 +26,10 @@ calc_squeezes <- function(filtered_students,filtered_courses,opt) {
   squeezes <- na.omit(squeezes)
   
   # find mean drops across term types
-  squeezes <- squeezes %>% group_by (SUBJ_CRSE,term_type) %>% mutate(mean_drops = mean(drops))
+  # squeezes <- squeezes %>% group_by (SUBJ_CRSE,term_type) %>% mutate(mean_drops = mean(drops))
 
-  # find "squeeze" amount -- the ratio of available seats to mean drops
-  squeezes <- squeezes %>% mutate(squeeze = avail/mean_drops)
+  # find "squeeze" amount -- the ratio of available seats to mean drops (all drops, not just late)
+  squeezes <- squeezes %>% mutate(squeeze = round(avail/da_mean,digits=2))
   message("all done in calc_squeezes.")
   return(squeezes)
 }
@@ -99,38 +97,11 @@ get_high_fall_sophs <- function (students,courses,opt) {
   
   
   # grab just SUBJ_CRSE col
-  high_fall_sophs <- unique(rollcall_out$SUBJ_CRSE)
+  high_fall_sophs <- tibble(SUBJ_CRSE = unique(rollcall_out$SUBJ_CRSE))
   
   message("all done getting high fall sophs!")
   
   return(as_tibble(high_fall_sophs))
-}
-
-
-get_prev_courses <- function (students,courses,opt) {
-  
-  myopt <- set_defaults(opt)
-  
-  # create term string of last two term types from target term
-  message("making course list from last two of semester types...")
-  term2 <- as.integer(opt[["term"]]) - 100
-  term1 <- term2 - 100
-  myopt[["term"]] <- paste0(term1,",",term2)
-  myopt[["aggregate"]] <- "course"
-  myopt[["uel"]] <- TRUE
-  myopt[["course"]] <- NULL # don't propagate dimps from orig params
-  
-  
-  # get courses and enrollments for last two term types (like summers, if summer forecasting)
-  # this filters for the implied term pair, so no good for computing general enrollment stats
-  message("myopt for getting previous enrollments:")
-  print(myopt)
-  prev_courses <- get_enrl(courses,myopt)
-  
-  # grab just SUBJ_CRSE col
-  # prev_courses <- unique(enrls$SUBJ_CRSE)
-  
-  return(prev_courses)
 }
 
 
@@ -181,7 +152,7 @@ get_reg_data <- function(filtered_students,opt) {
   filtered_students <- filtered_students %>% group_by(`Academic Period Code`,SUBJ_CRSE,`Registration Status Code`,term_type)
   summary_by_term <- filtered_students %>% summarize(count = n(), .groups="keep")
   summary_by_term <- summary_by_term %>% group_by(SUBJ_CRSE,term_type,`Registration Status Code`)
-  summary <- summary_by_term %>% summarize (mean = mean(count), sd = sd(count), .groups="keep")
+  summary <- summary_by_term %>% summarize (mean = round(mean(count),digits=2), sd = round(sd(count),digits=2), .groups="keep")
   
   regstats <- merge(summary_by_term,summary, by=c("SUBJ_CRSE","Registration Status Code","term_type"))
   
@@ -195,12 +166,12 @@ get_reg_data <- function(filtered_students,opt) {
 get_dimp_concerns <- function(regstats,thresholds,sign) {
   #print(regstats)
   if (sign=="plus") {
-    concerns <- regstats %>%  mutate(pct_sd = (count - mean) / sd, impacted =  (count - (mean + sd))) %>% 
+    concerns <- regstats %>%  mutate(pct_sd = round((count - mean) / sd,digits=2), impacted =  round((count - (mean + sd)),digits=2)) %>% 
       filter (impacted > thresholds[["min_impacted"]])  %>% 
       filter (count > thresholds[["min_count"]]) %>% 
       filter (pct_sd > thresholds[["min_pct_sd"]])
   } else if (sign =="minus") {
-    concerns <- regstats %>%  mutate(pct_sd = (mean - count) / sd, impacted =  ((mean - sd) - count)) %>% 
+    concerns <- regstats %>%  mutate(pct_sd = round((mean - count) / sd,digits=2), impacted =  round((mean - sd) - count,digits=2)) %>% 
       filter (impacted > thresholds[["min_impacted"]])  %>% 
       filter (count > thresholds[["min_count"]]) %>% 
       filter (pct_sd > thresholds[["min_pct_sd"]])
@@ -317,22 +288,18 @@ get_reg_stats <- function(students,courses,opt) {
     flagged_courses <- append(flagged_courses, flag$SUBJ_CRSE)  
   }
 
-  # keep only unique courses
-  message("removing duplicate courses...")
-  flagged_courses <- unique(flagged_courses)
+  # for now, filter for A&S
+  message("filtering for lower A&S courses...")
+  myopt[["level"]] <- "lower"
+  myopt[["college"]] <- "AS"
+  myopt[["course"]] <- NULL
+  flagged_courses <- filter_course_list(courses, flagged_courses, myopt)
   
-  # filter by opt params to be more selective in what to forecast for
-  flagged_courses <- filter_course_list(courses,flagged_courses,opt)
-  
-  # convert to tibble from list
-  message("converting to tibble...")
-  flagged_courses <- as_tibble(flagged_courses)
-  flagged_courses <- flagged_courses %>% rename(SUBJ_CRSE = value)
-  
-  
-  message("flagged_courses has ",nrow(flagged_courses)," rows:")
-  print(flagged_courses)
-  
+  # convert to tibble with unique values
+  message("converting to unique SUBJ_CRSE values to tibble...")
+  flagged_courses <- tibble(SUBJ_CRSE = unique(flagged_courses))
+  message("filtered flagged_courses has ",nrow(flagged_courses)," rows:")
+
   flagged[["all_flagged_courses"]] <- flagged_courses 
   
   # save thresholds for adding to report
@@ -340,8 +307,7 @@ get_reg_stats <- function(students,courses,opt) {
   
   # keep separate since we don't need to forecast for this all the time
   flagged[["high_fall_sophs"]] <- get_high_fall_sophs(students, courses, myopt)
-  flagged[["prev_courses"]] <- get_prev_courses(students, courses, myopt)
-  
+
   
   # output to terminal 
   message("courses with enrollment dips:")
