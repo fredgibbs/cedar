@@ -96,7 +96,7 @@ create_seatfinder_report <- function (students,courses,opt) {
   message("\n","welcome to seatfinder!")
   
   # set opt 
-  message ("seatfinder always uses the exclude list, counts only active courses, and aggregates section enrollments...")
+  message ("seatfinder always uses the exclude list, excludes AOP courses, includes only active courses, and aggregates section enrollments by course_type...")
   opt$uel <- TRUE
   opt$status <- "A"
   opt$aggregate <- "course_type"
