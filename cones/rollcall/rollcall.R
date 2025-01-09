@@ -59,7 +59,7 @@ get_agg_classification_wide <- function(students) {
   
   # get course enrollments from class lists (in enrl.R)
   reg_summary <- calc_cl_enrls(students)
-  crse_enrollment <- reg_summary %>% select(c(SUBJ_CRSE,`Academic Period Code`,term_type,registered))
+  crse_enrollment <- reg_summary %>% ungroup() %>% select(c(SUBJ_CRSE,`Academic Period Code`,registered))
   
   
   
@@ -125,7 +125,7 @@ get_agg_major <- function(students) {
 
   # get course enrollments from class lists (gets only registered students)
   reg_summary <- calc_cl_enrls(students)
-  crse_enrollment <- reg_summary %>% select(c(SUBJ_CRSE,`Academic Period Code`,term_type,registered))
+  crse_enrollment <- reg_summary %>% ungroup() %>% select(c(SUBJ_CRSE,`Academic Period Code`,registered))
   
   
   # count number of majors in each course
