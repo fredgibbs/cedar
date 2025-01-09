@@ -41,7 +41,7 @@ library(tidyr)
   dips <- flagged[["dips"]]
   bumps <- flagged[["bumps"]]
   
-    
+  title <- paste0(substring(forecasts$SUBJ_CRSE[1],1,4)," ",forecasts$CRSE_TITLE[1])
   
   
   #TODO: figure out how to do multiple courses?
@@ -55,7 +55,7 @@ knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE, dpi=200, fig
 
 
 ---
-title: "`r paste0(forecasts$SUBJ[1],": ",forecasts$CRSE_TITLE[1])`"
+title: "`r title` "
 subtitle: "Course Report"
 ---
 
