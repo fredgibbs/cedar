@@ -85,17 +85,43 @@ calc_cl_enrls <- function(students,reg_status=NULL) {
 
 
 # basic summary summarizes different sections into a single row
+
 # maintains PT and INST_METHOD
 agg_by_course_type <- function(courses,opt) {
   message("agg_by_course_type: basic course summary (summarize all course sections into single row):")
   summary <- courses %>% group_by(TERM,SUBJ,SUBJ_CRSE,CRSE_TITLE,PT,INST_METHOD,level,gen_ed_area) %>% 
-    summarize(.groups="keep", sections=n(),avg_size=median(ENROLLED),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
+    summarize(.groups="keep", sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
     select (TERM,SUBJ_CRSE,SUBJ,CRSE_TITLE,PT,INST_METHOD,enrolled,sections,avg_size,avail,waiting,level,gen_ed_area)
   
     #summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
 
   return(summary)
 }
+
+
+# maintains INST_METHOD
+agg_by_course_method <- function(courses,opt) {
+  message("agg_by_course_type: basic course summary (summarize all course sections into single row):")
+  summary <- courses %>% group_by(TERM,SUBJ,SUBJ_CRSE,CRSE_TITLE,INST_METHOD,level,gen_ed_area) %>% 
+    summarize(.groups="keep", sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
+    select (TERM,SUBJ_CRSE,SUBJ,CRSE_TITLE,INST_METHOD,enrolled,sections,avg_size,avail,waiting,level,gen_ed_area)
+  
+  #summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
+  
+  return(summary)
+}
+
+# only INST_METHOD
+agg_by_method <- function(courses,opt) {
+  summary <- courses %>% group_by(TERM,SUBJ,INST_METHOD,level,gen_ed_area) %>% 
+    summarize(.groups="keep", sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
+    select (TERM,SUBJ,INST_METHOD,enrolled,sections,avg_size,avail,waiting,level,gen_ed_area)
+  
+  #summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
+  
+  return(summary)
+}
+
 
 
 # basic summary summarizes different sections and variants (method and pt) into a single row
@@ -114,7 +140,7 @@ agg_by_course <- function(courses,opt) {
 agg_by_course_term <- function(courses,opt) { 
   message("agg_by_course_term:")
   summary <- courses %>% group_by(SUBJ,SUBJ_CRSE,CRSE_TITLE,level,gen_ed_area) %>% 
-    summarize(.groups="keep", sections=n(),avg_size=median(ENROLLED),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
+    summarize(.groups="keep", sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
     select (SUBJ_CRSE,SUBJ,CRSE_TITLE,enrolled,sections,avg_size,avail,waiting,level,gen_ed_area)
   #summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
   
@@ -135,7 +161,7 @@ agg_by_course_term <- function(courses,opt) {
 agg_by_dept_level <- function(courses,opt) { 
   message("summarizing across DEPT and LEVEL:")
   summary <- courses %>% group_by(acad_year,TERM,DEPT,level) %>% 
-    summarize(sections=n(),avg_size=median(ENROLLED),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
+    summarize(sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
     arrange(acad_year,DEPT,factor(level,levels=c("lower","upper","grad","total")),enrolled)
   
   summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
@@ -148,7 +174,7 @@ agg_by_dept_level <- function(courses,opt) {
 agg_by_college_level <- function(courses,opt) { 
   # group only by academic year to get college totals
   summary <- courses %>% group_by(TERM,`COLLEGE_DESC`,level) %>% 
-    summarize(sections=n(),avg_size=median(ENROLLED),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
+    summarize(sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
     arrange(TERM,factor(level,levels=c("lower","upper","grad","total")),enrolled)
   
   summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
@@ -166,10 +192,18 @@ aggregate_courses <- function(courses,opt) {
   if (agg_by == "course") {
     summary <- agg_by_course(courses,opt)
   }
+  if (agg_by == "method") {
+    summary <- agg_by_method(courses,opt)
+  }
+  
   else if (agg_by == "course_type") {
     summary <- agg_by_course_type(courses,opt) 
   }
-  else if (agg_by == "course_term") {
+  else if (agg_by == "course_method") {
+    summary <- agg_by_course_method(courses,opt) 
+  }
+  
+    else if (agg_by == "course_term") {
     summary <- agg_by_course_term(courses,opt) 
   }
   else if (agg_by == "dept") {
