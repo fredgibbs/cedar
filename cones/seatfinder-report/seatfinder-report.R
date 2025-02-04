@@ -6,7 +6,7 @@ get_courses_diff <- function (f_courses,opt,d_params) {
   
   # aggregate enrollments across courses (f_courses is already aggregated, so sections here are total courses)
   summary <- f_courses %>% group_by(TERM,SUBJ_CRSE,PT,method,level,gen_ed_area) %>% 
-    summarize(.groups="keep", sections=n(),avg_size=mean(ENROLLED),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT))
+    summarize(.groups="keep", sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT))
   
   # select only gen ed courses and relevant fields
   course_names <- f_courses %>% ungroup() %>% 
@@ -126,7 +126,8 @@ create_seatfinder_report <- function (students,courses,opt) {
                    "tables" = list()
   )
   
-  # filter courses according to options AND always WITHOUT AOP sections (the twin section is fine)
+  # filter courses according to options
+  # ALWAYS WITHOUT AOP sections (the twin section is fine)
   f_courses <- filter_DESRs(courses,opt) %>% filter (INST_METHOD != "MOPS")
   
   #normalize instructor method--replace ENH,0,HYB with f2f

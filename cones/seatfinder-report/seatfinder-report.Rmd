@@ -2,7 +2,7 @@
 title: "Seatfinder Report"
 output:
   html_document:
-    toc: true  
+    toc: false  
     toc_float:
       collapsed: false
       smooth_scroll: false    
@@ -27,6 +27,8 @@ params:
 ```{r setup, include=FALSE}
   library(kableExtra)
   library(rmarkdown)
+  library(DT)
+
   knitr::opts_chunk$set(echo = FALSE,warning = FALSE, message = FALSE, dpi=200, out.height="40%")
 
   enrls <- params$tables[["enrls"]]
@@ -53,47 +55,90 @@ cat("<br> part of term: ", opt$pt)
 cat("<br> inst method: ", opt$im)
 
 cat("<br> level: ", opt$level)
-```
 
+```
 
 
 ### Course Type Summary (compared to last year)
 The last column is the difference between this term and last term. A positive number means more seats are available; negative means fewer.
 ```{r} 
-kbl(course_type_summary, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=T)
+
+datatable(course_type_summary,class = 'cell-border stripe')
+
+# kbl(course_type_summary, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=T)
+
+
+
 ```
+
+---
 
 
 ### Seats Available by Gen Ed Area
 ```{r} 
-kbl(gen_ed_summary, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=T)
+  gen_ed_summary <- gen_ed_summary %>% select(TERM,gen_ed_area,SUBJ_CRSE,CRSE_TITLE,PT,INST_METHOD,enrolled,sections,avg_size,avail,waiting,`DFW %`)
+  
+  colnames(gen_ed_summary) <- c("TERM","GE_AREA","SUBJ_CRSE","CRSE_TITLE", "PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT","DFW %")
+
+datatable(gen_ed_summary,class = 'cell-border stripe') 
+# kbl(gen_ed_summary, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=T)
 ```
+
+---
 
 ### Seats LIKELY Available by Gen Ed Area
 These sections have 0 seats available, but also 0 enrolled. Likely the cap is 0 to delay enrollment.
-```{r} 
-kbl(gen_ed_likely, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=T)
+```{r}
+  gen_ed_likely <- gen_ed_likely %>% select(TERM,gen_ed_area,SUBJ_CRSE,CRSE_TITLE,PT,INST_METHOD,enrolled,sections,avg_size,avail,waiting,`DFW %`)
+  
+  colnames(gen_ed_likely) <- c("TERM","GE_AREA","SUBJ_CRSE","CRSE_TITLE", "PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT","DFW %")
+
+datatable(gen_ed_likely,class = 'cell-border stripe') 
+
+# kbl(gen_ed_likely, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=T)
 ```
 
+---
 
-<div style="float:left">
 ### Offered last year but not now
 ```{r} 
-kbl(prev_offered, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=F)
-```
-</div>
 
-<div>
+  prev_offered <- prev_offered %>% select(TERM,gen_ed_area,SUBJ_CRSE,CRSE_TITLE,PT,method,enrolled,sections,avg_size,avail,waiting)
+  
+  colnames(prev_offered) <- c("TERM","GE_AREA","SUBJ_CRSE","CRSE_TITLE", "PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT")
+
+
+datatable(prev_offered,class = 'cell-border stripe') 
+
+# kbl(prev_offered, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=F)
+```
+
+---
+
 ### Offered now but not last year
 ```{r} 
-kbl(newly_offered, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=F)
-```
-</div>
 
-<div style="float:none; clear:both">
-### Courses in common with last year
-The last column is the difference between this term and last term. A positive number means more seats are available; negative means fewer.
-```{r} 
-kbl(both_terms, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=5)
+  newly_offered <- newly_offered %>% select(TERM,gen_ed_area,SUBJ_CRSE,CRSE_TITLE,PT,method,enrolled,sections,avg_size,avail,waiting)
+  
+  colnames(newly_offered) <- c("TERM","GE_AREA","SUBJ_CRSE","CRSE_TITLE", "PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT")
+
+
+datatable(newly_offered,class = 'cell-border stripe') 
+# kbl(newly_offered, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=F)
 ```
-</div>
+
+---
+
+### Courses in common with last year
+The last column is the difference between end-of-term enrollments this term and last year. A positive number means more seats are available; negative means fewer.
+```{r} 
+  both_terms <- both_terms %>% select(TERM,gen_ed_area,SUBJ_CRSE,CRSE_TITLE,PT,method,enrolled,sections,avg_size,avail,waiting, enrl_diff_from_last_year)
+  
+  colnames(both_terms) <- c("TERM","GE_AREA","SUBJ_CRSE","CRSE_TITLE", "PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT","ENRL_DIFF")
+
+
+datatable(both_terms,class = 'cell-border stripe') 
+
+# kbl(both_terms, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=5)
+```
+

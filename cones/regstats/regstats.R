@@ -236,12 +236,10 @@ get_reg_stats <- function(students,courses,opt) {
   
   # if no course specified, use all lower division AS courses
   if (is.null(opt$course)) {
-    #message("setting opt$course  to 'cl_crits'...")
-    #opt[["course"]] <- "cl_crits"
-    message("no course specified. defaulting to AS lower-division courses.")
-    myopt[["course"]] <- NULL
-    myopt[["level"]] <- "lower"
-    myopt[["college"]] <- "AS"
+    # message("no course specified. defaulting to AS lower-division courses.")
+    # myopt[["course"]] <- NULL
+    # myopt[["level"]] <- "lower"
+    # myopt[["college"]] <- "AS"
     course_list <- as.list(get_course_list(courses,myopt))
   } 
   else {
@@ -250,6 +248,7 @@ get_reg_stats <- function(students,courses,opt) {
     
     # TODO: use lower thresholds for specific course reporting?
   }
+  
   
   # do course filtering early, but not term
   message("filtering COURSES by course_list...")
@@ -348,8 +347,18 @@ create_regstat_report <- function(flagged, opt) {
   
   message("rendering regstats report...")
   
+  good_opts <- c("college","course","term","pt","im")
+  message("setting filename based on params...")
+  output_filename <- "regstats"
+  
+    for (i in 1:length(opt)) {
+      message(names(opt[i]))
+      if (names(opt[i]) %in% good_opts) {
+        output_filename <- paste0(output_filename,"-",opt[i])    
+      }
+  }
+  
   # set output data
-  output_filename <- paste0("regstats-",opt[["term"]])
   d_params$output_filename <- output_filename
   d_params$rmd_file <- "cones/regstats/regstats-report.Rmd"
   d_params$output_dir_base <- paste0(cedar_output_dir,"regstats-reports/")

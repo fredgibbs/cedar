@@ -23,6 +23,8 @@ library(kableExtra)
 library(rmarkdown)
 library(dplyr)
 library(tidyr)
+library(DT)
+
 
 flagged <- params$tables[["flagged"]]
 
@@ -47,68 +49,64 @@ for (i in 1:length(thresholds)) {
 ```
 
 
+### Column Explanations
 
-```{r flagged, results="asis", echo=FALSE} 
+<style>
+td {
+border: 1px solid black;
+padding: 1rem;
+}
+</style>
 
-    cat(paste0("#### ","Courses with longer WAITING LIST than usual\n"))
-    
-    table <- kbl(waits,digits=2)  %>%   
-      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 11) %>% 
-      scroll_box(width = "100%", height = "300px")
-
-    print(table)
-
-    
-        cat(paste0("#### ","Courses with many sophomores in the fall\n"))
-    
-    table <- kbl(high_fall_sophs,digits=2)  %>%   
-      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 11) %>% 
-      scroll_box(width = "100%", height = "300px")
-
-    print(table)
+```{r table2, echo=FALSE, message=FALSE, warnings=FALSE, results='asis'}
 
 
-    cat(paste0("#### ","Courses with a bit of a SQUEEZEl\n"))
-    
-    table <- kbl(squeezes,digits=2)  %>%   
-      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 11) %>% 
-      scroll_box(width = "100%", height = "300px")
-
-    print(table)
-
-
-    
-    cat(paste0("#### ","More DROPS than usual\n"))
-    
-    table <- kbl(drops,digits=2)  %>%   
-      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 12) %>% 
-      scroll_box(width = "100%", height = "300px")
-
-    print(table)
-
-
-   cat(paste0("#### ","Bigger enrollment DIP than usual\n"))
-    
-    table <- kbl(dips,digits=2)  %>%   
-      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 12) %>% 
-      scroll_box(width = "100%", height = "300px")
-
-    print(table)
-    
-    
-  cat(paste0("#### ","Bigger enrollment BUMP than usual\n"))
-
-    table <- kbl(bumps,digits=2)  %>%   
-      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 12) %>% 
-      scroll_box(width = "100%", height = "300px")
-
-    print(table)
-  
+tabl <- "
+| Column Name   | Explanation                                                     |
+| -----------:  | :-------------------------------------------------------------- | 
+| enrolled      | student enrollment via latest retrieved DESR                    | 
+| avg_size      | average section size                                            | 
+| dr_early      | early drops (before census)                   |
+| dr_late       | late drops (after census)                     | 
+| dr_all        | all drops                                     |
+| cl_total      | total registrants for course, including those who have dropped |
+| squeeze       | ratio of available seats to mean drops (closer to zero -> less wiggle room) |
+| impacted      | rough number of students outside SD |
+"
+cat(tabl) # output the table in a format good for HTML/PDF/docx conversion
 ```
+
+(de_mean, dl_mean, da_mean: mean early, late, and total drops for this course per semester type)
+
+
+### Courses with longer WAITING LIST than usual
+```{r echo=FALSE} 
+    datatable(waits,class = 'cell-border stripe')
+```
+
+### Courses with a bit of a SQUEEZE
+```{r echo=FALSE} 
+  squeezes <- squeezes %>% select(TERM,SUBJ_CRSE,CRSE_TITLE,enrolled,sections,avg_size,avail,waiting,gen_ed_area,de_mean,dl_mean,da_mean,squeeze)
+  
+  colnames(squeezes) <- c("TERM","SUBJ_CRSE","CRSE_TITLE","ENRL","SECTS","SECT_SIZE","AVAIL","WAIT","GE_AREA","DE_MEAN","DL_MEAN","DA_MEAN","SQUEEZE")
+    
+  datatable(squeezes,class = 'cell-border stripe')
+```
+
+### More DROPS than usual
+```{r echo=FALSE} 
+    datatable(drops,class = 'cell-border stripe')
+```
+
+### Bigger enrollment DIP than usual
+```{r echo=FALSE} 
+    datatable(dips,class = 'cell-border stripe')
+```
+
+
+### Bigger enrollment BUMP than usual
+```{r echo=FALSE} 
+    datatable(bumps,class = 'cell-border stripe')
+```
+
 
