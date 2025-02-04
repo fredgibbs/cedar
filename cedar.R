@@ -57,7 +57,8 @@ process_output <- function(output_data,filename) {
   # process each element of list
   for (i in 1: length(output_list)) {
     cur_name <- names(output_list)[i]
-    # print(cur_name)
+    message(cur_name)
+    
     cur_item <- as_tibble(output_list[[i]])
     # message("count: ", i )
     # print(names(output_list))
@@ -68,12 +69,15 @@ process_output <- function(output_data,filename) {
     # if arrange param set, use it
     if (!is.null(opt[["arrange"]])) {
       arrange_col <- opt[["arrange"]]
-      facet <- facet %>%  arrange(get({{arrange_col}}) )
+      cur_item <- cur_item %>%  arrange(get({{arrange_col}}) )
     }
     
-    # if output csv flag set, print 20 rows and save file 
+    # if output csv flag set, print 5 rows as sample and save file 
     if (!is.null(opt[["output"]]) && opt[["output"]] == "csv") {
-      cur_item %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+      
+      message(cur_name)
+      cur_item %>% tibble::as_tibble() %>% print(n = 5, width=Inf)
+      
       message("saving CSV file...")
       filename <- paste0(cedar_output_dir,"csv/",cur_name,".csv")  
       message("filename set to: ",filename)
@@ -384,8 +388,10 @@ if (opt$func == "data-status") {
   }
   source("cones/data-status/data-status.R")
   
-  # no return value; everything is terminal output
-  get_data_status(opt)
+  data_status_out <- get_data_status(opt)
+  
+  process_output(data_status_out,"data_status") #.csv is added in process_output
+  
   
   # TODO: make status able to return values for display in various reports
 }
