@@ -6,7 +6,8 @@ pacman::p_load(tidyverse, readxl, fs, data.table, lubridate,feather)
 
 message("Welcome to parse-class-list!")
 
-# load basic includes 
+# load basic includes; manually set working dir if testing in RStudio
+# setwd('~/Dropbox/cedar/data-parsers')
 source("load-parser-includes.R")
 
 # get list of files in downdloads folder and process one by one
@@ -26,6 +27,10 @@ for (file in file_list) {
   message("loaded ",nrow(new_students) ," rows.")
   
   message("excel file loaded. processing data...")
+  
+  # TODO check to see if expected number of columns
+  # setdiff(names(old_students),names(new_students))
+  # setdiff(names(new_students),names(old_students))
   
   # get term code from new file and remove data of same term from previous data
   message("removing old data with term of new file...")
@@ -91,7 +96,7 @@ for (file in file_list) {
   
   # get rid of unnecessary fields
   # TODO: probably many more could be removed to improve effiency
-  new_students <- new_students %>% select (-c(`Student First Name`,`Student Last Name`,`Confidentiality Indicator`,`Student Email Address`,`Student Preferred First Name`,`Student NetID`,`Street Line 1`,`Street Line 2`,`City`,`County`,`Zip Code`,`Nation`,`Phone Number`,`Visa Type`))
+  new_students <- new_students %>% select (-c(`Student First Name`,`Student Last Name`,`Confidentiality Indicator`,`Student Email Address`,`Student Preferred First Name`,`Student NetID`,`Street Line 1`,`Street Line 2`,`City`,`County`,`Zip Code`,`Nation`,`Phone Number`,`Visa Type`,`Student Population Code`,`Student Population`))
   
   # remove dupes after reducing number of fields from original data
   new_students <- new_students %>% distinct()
