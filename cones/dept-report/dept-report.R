@@ -108,7 +108,7 @@ create_dept_report <- function (students,courses,opt) {
     d_params <- get_grades_for_dept_report(students,opt,d_params)
     
     ####### ENROLLMENT
-    d_params <- get_enrl_for_dept_report(courses, opt, d_params)
+    d_params <- get_enrl_for_dept_report(courses, d_params)
     
     ####### SFRs
     d_params <- get_sfr_data_for_dept_report(d_params)

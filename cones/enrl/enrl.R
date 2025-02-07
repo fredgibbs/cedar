@@ -227,11 +227,12 @@ aggregate_courses <- function(courses,opt) {
 
 
 
-get_enrl_for_dept_report <- function(courses, opt, d_params) {
+get_enrl_for_dept_report <- function(courses, d_params) {
   
   message("welcome to get_enrl_for_dept_report!")  
   
-  myopt <- opt
+  myopt <- list()
+  myopt$dept <- d_params[["dept_code"]]
   myopt$aggregate <- "course_term"
   myopt$x <- "compress"
   myopt$uel <- TRUE 
