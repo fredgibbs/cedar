@@ -15,7 +15,7 @@ file_list <- dir_ls(paste0(cedar_data_dir,'/downloads/degrees/'))
 
 for (file in file_list) {
   # uncomment for studio testing
-  #file <- file_list[1]
+  file <- file_list[1]
   
   # load existing course data
   message("loading degree data for previous terms...")
@@ -29,11 +29,17 @@ for (file in file_list) {
   
   message("excel file loaded. processing data...")
   
-  # remove old enrollment data for term of current DESR 
+  # check for col differences
+  #setdiff(names(old_degrees),names(new_degrees))
+  #setdiff(names(new_degrees),names(old_degrees))
+
+  
+  # TODO: below assumes we only have a single term, which may not be true.
+  # remove old enrollment data
   # replace it with new data from most recent DESR
-  message("filtering out current term data from old data...")
-  file_term <- unique(new_degrees$`Academic Period Code`)
-  old_degrees <- old_degrees %>% filter (`Academic Period Code` != file_term)
+  #message("filtering out current term data from old data...")
+  #file_term <- unique(new_degrees$`Academic Period Code`)
+  #old_degrees <- old_degrees %>% filter (`Academic Period Code` != file_term)
   
   # Extract download date from filename, supplied by MyReports
   file_date <- str_extract(file, "[0-9]{4}[0-9]{2}[0-9]{2}")
@@ -45,10 +51,10 @@ for (file in file_list) {
   
   message("done processing latest degrees data.") 
   
-  # Fold new data into original courses.Rda (courses_from_completed_terms.Rda)
+  # Fold new data into original data
   # skip if resetting the Rda file
-  message("Adding new degrees data to previous degrees data...")
-  degrees <- rbind(old_degrees, new_degrees)
+  #message("Adding new degrees data to previous degrees data...")
+  #degrees <- rbind(old_degrees, new_degrees)
   
   # uncomment for resetting Rda file (but don't reset unless we can get all old data from MyReports)
   degrees <- new_degrees
