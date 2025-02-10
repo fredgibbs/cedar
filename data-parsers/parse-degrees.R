@@ -41,17 +41,17 @@ for (file in file_list) {
   
   message("excel file loaded.")
   
-  # TODO: check for col differences
+  # TODO: check for col differences between old and new data
+  # not necessary now b/c standard procedure is to get ALL term data
   #setdiff(names(old_degrees),names(new_degrees))
   #setdiff(names(new_degrees),names(old_degrees))
   
   
-  # TODO: below assumes we only have a single term, which may not be true.
-  # remove old enrollment data
-  # replace it with new data from most recent DESR
-  #message("filtering out current term data from old data...")
-  #file_term <- unique(new_degrees$`Academic Period Code`)
-  #old_degrees <- old_degrees %>% filter (`Academic Period Code` != file_term)
+  # replace old data with new data from most recent graduates report
+  message("filtering out current term data from old data...")
+  file_terms <- unique(new_degrees$`Academic Period Code`)
+  old_degrees <- old_degrees %>% filter (!`Academic Period Code` %in% file_terms)
+  
   
   # Extract download date from filename, supplied by MyReports
   message("gathering download date from filename...")
