@@ -1,7 +1,6 @@
 load_funcs <- function(cedar_base_dir) {
   message("loading CEDAR cones...")
   setwd(cedar_base_dir)
-  source("includes/config.R")
   
   source("includes/mappings.R")
   source("includes/lists.R")
