@@ -5,6 +5,9 @@ get_all_grades <- function(filtered_students) {
   message("filtering out drops from students with grades...")
   filtered_students <- filtered_students %>% filter (substring(`Registration Status Code`,1,1) != "D") 
   
+  # get distinct IDs in each course
+  filtered_students <- filtered_students %>% distinct(`Student ID`,SUBJ_CRSE, .keep_all=TRUE)
+  
   # calculate grade points from letter grade received and add col to student data 
   # grades_to_points is defined in mappings.R
   message("merging grade points...")
@@ -84,9 +87,10 @@ get_pf_sum_by_course <- function(pf_sum) {
 get_grades_summary_by_course <- function(grades_summary,pf_sum_by_course) {
   message("getting grades summary by course...")
   
-  # summarize WITHOUT INSTRUCTOR
+  # summarize WITHOUT INSTRUCTOR and WITHOUT COURSE TITLE (to group all topics titles together)
+  # TODO: could add a grades_summary_by_course_topic if needed
   grades_summary_by_course  <- grades_summary %>% 
-    group_by(`Academic Period Code`, SUBJ_CRSE, level, `Long Course Title`,`Final Grade`) %>% 
+    group_by(`Academic Period Code`, SUBJ_CRSE, level,`Final Grade`) %>% 
     summarize (total = sum(count))
   
   message("re-ordering grades...")
@@ -108,7 +112,7 @@ get_grades_summary_by_course <- function(grades_summary,pf_sum_by_course) {
   # compute DFW %
   grades_summary_by_course <- grades_summary_by_course %>% 
     #mutate (`DFW %`=round(failed/(passed+failed)*100,digits=2), .after = `Primary Instructor Last Name` ) %>% 
-    mutate (`DFW %`=round((dropped+failed)/(dropped+passed+failed)*100,digits=2), .after=`Long Course Title` ) %>% 
+    mutate (`DFW %`=round((dropped+failed)/(dropped+passed+failed)*100,digits=2), .after=`SUBJ_CRSE` ) %>% 
     arrange(`Academic Period Code`,SUBJ_CRSE)
   
   message("the master gradebook (w/o instructors): course grades (wide) by course and term:")
