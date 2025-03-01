@@ -86,9 +86,9 @@ cat(tabl) # output the table in a format good for HTML/PDF/docx conversion
 
 ### Courses with a bit of a SQUEEZE
 ```{r echo=FALSE} 
-  squeezes <- squeezes %>% select(TERM,SUBJ_CRSE,CRSE_TITLE,enrolled,sections,avg_size,avail,waiting,gen_ed_area,de_mean,dl_mean,da_mean,squeeze)
+  squeezes <- squeezes %>% select(TERM,SUBJ_CRSE,enrolled,sections,avg_size,avail,waiting,gen_ed_area,de_mean,dl_mean,da_mean,squeeze)
   
-  colnames(squeezes) <- c("TERM","SUBJ_CRSE","CRSE_TITLE","ENRL","SECTS","SECT_SIZE","AVAIL","WAIT","GE_AREA","DE_MEAN","DL_MEAN","DA_MEAN","SQUEEZE")
+  colnames(squeezes) <- c("TERM","SUBJ_CRSE","ENRL","SECTS","SECT_SIZE","AVAIL","WAIT","GE_AREA","DE_MEAN","DL_MEAN","DA_MEAN","SQUEEZE")
     
   datatable(squeezes,class = 'cell-border stripe')
 ```
