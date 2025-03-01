@@ -4,38 +4,6 @@
 #install.packages("pacman", repos='http://cran.us.r-project.org')
 pacman::p_load(tidyverse, readxl,rvest,fs,data.table, optparse, feather, plotly)
 
-load_funcs <- function() {
-  source("includes/config.R")
-  source("includes/mappings.R")
-  source("includes/lists.R")
-  source("includes/excluded_courses.R")
-  source("includes/gen_ed_courses.R")
-  
-  source("includes/misc_funcs.R")
-  
-  source("includes/filter_class_list.R")
-  source("includes/filter_DESRs.R")
-  
-  source("cones/enrl/enrl.R")
-  source("cones/headcount/headcount.R")
-  source("cones/degrees/degrees.R")
-  source("cones/credit-hours/credit-hours.R")
-  source("cones/sfr/sfr.R")
-  
-  source("cones/waitlist/waitlist.R")
-  source("cones/gradebook/gradebook.R")
-  source("cones/lookout/lookout.R")
-  source("cones/nosedive/nosedive.R") 
-  source("cones/rollcall/rollcall.R")
-  
-  source("cones/dept-report/dept-report.R")
-  source("cones/course-report/course-report.R")
-  
-  source("cones/regstats/regstats.R")
-  source("cones/forecast/forecast.R")
-  source("cones/forecast-report/forecast-report.R")
-  
-}
 
 # output_data is going to be a df/tibble or list
 process_output <- function(output_data,filename) {
@@ -225,7 +193,8 @@ message("starting timer...")
 start.time <- Sys.time()
 
 message("loading external functions...")
-load_funcs()
+source("includes/load_funcs.R")
+load_funcs("./")
 
 
 ########### PROCESS SPECIFIED FUNCTION  REQUEST  ##############
