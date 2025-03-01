@@ -365,7 +365,7 @@ create_regstat_report <- function(flagged, opt) {
   
   # set output data
   d_params$output_filename <- output_filename
-  d_params$rmd_file <- "cones/regstats/regstats-report.Rmd"
+  d_params$rmd_file <- paste0(cedar_base_dir,"Rmd/regstats-report.Rmd")
   d_params$output_dir_base <- paste0(cedar_output_dir,"regstats-reports/")
   
   create_report(opt,d_params)
