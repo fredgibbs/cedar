@@ -90,6 +90,6 @@ for (file in file_list) {
     
     message("xlsx file archived.")
   } # end if archiving data files
-} # end process excel file
+} # end process excel file(s)
 
 message("all done!")

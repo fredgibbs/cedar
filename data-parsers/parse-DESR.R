@@ -12,17 +12,30 @@ source("load-parser-includes.R")
 message("getting list of downloaded files...")
 file_list <- dir_ls(paste0(cedar_data_dir,'downloads/DESRs'))
 
+if (length(file_list) == 0) {
+  message("no downloaded files found in: ",cedar_data_dir,'downloads/DESRs.')
+}
+
 for (file in file_list) {
   # uncomment for studio testing
   # file <- file_list[1]
   
   message("processing file: ", file, "..." )
   
-  # load existing course data
-  message("loading DESR data for previous terms...")
-  load(paste0(cedar_data_dir,"/processed/courses_with_final_and_latest_enrollments.Rda")) # loads DF completed_and_ongoing_courses
-  old_courses <- completed_and_ongoing_courses
-  message("loaded ",nrow(old_courses) ," rows.")
+  # recognize if rebuilding database by detecting no file
+  message("loading previous data...")
+  oldfile <- paste0(cedar_data_dir,"processed/courses_with_final_and_latest_enrollments.Rda")
+  if (file.exists(oldfile)) {
+    load(oldfile)
+    old_courses <- completed_and_ongoing_courses
+    message("loaded ",nrow(old_courses) ," rows.")
+    rebuild <- FALSE
+  }
+  else {
+    message("no previous data found.")
+    old_courses <- tibble()
+    rebuild <- TRUE
+  }
   
   message("loading latest DESR...")
   new_courses <- read_xlsx(file)
@@ -32,13 +45,11 @@ for (file in file_list) {
   
   # remove old enrollment data for term of current DESR 
   # replace it with new data from most recent DESR
-  message("filtering out current term data from old data...")
-  DESR_term <- unique(new_courses$TERM)
-  old_courses <- old_courses %>% filter (TERM != DESR_term)
-  
-  # filter by campus (abq and online)
-  message("filtering by campus (including ABQ and EA (for online))...")
-  new_courses <- new_courses %>% filter (CAMP=="ABQ" | CAMP=="EA") 
+  if (!rebuild) {
+    message("filtering out current term data in old data...")
+    DESR_term <- unique(new_courses$TERM)
+    old_courses <- old_courses %>% filter (TERM != DESR_term)
+  }
   
   # Extract download date from filename, supplied by MyReports
   file_date <- str_extract(file, "[0-9]{4}[0-9]{2}[0-9]{2}")
@@ -93,6 +104,10 @@ for (file in file_list) {
       crse_base >= 300 & crse_base < 500 ~ "upper"
     ))  
   
+    # add term_type col based on Academic_Period_Code
+    message("creating term type field...")
+    new_courses <- add_term_type_col (new_courses, "TERM")
+    
   # add gen ed code
   # see includes/mappings.R for lists of courses in each gen ed area
     message("add gen_ed_area field...")
@@ -116,21 +131,20 @@ for (file in file_list) {
   
   message("done processing latest DESR.") 
   
-  # Fold new data into original courses.Rda (courses_from_completed_terms.Rda)
-  # skip if resetting the Rda file
-  message("Adding new DESR data to previous DESR data (most recent enrollments only)...")
-  completed_and_ongoing_courses <- rbind(old_courses, new_courses)
-  
-  
-  # uncomment for resetting Rda file (but don't reset unless we can get all old data from MyReports)
-  # completed_and_ongoing_courses <- new_courses
+  # if not rebuilding, fold new data into original courses.Rda (courses_from_completed_terms.Rda)
+  if (!rebuild) {
+    message("Adding new DESR data to previous DESR data...")
+    completed_and_ongoing_courses <- rbind(old_courses, new_courses)
+  } else {
+    completed_and_ongoing_courses <- new_courses
+  }
   
   message("saving Rda file of completed and ongoing enrollments (by semester)...")
   save(completed_and_ongoing_courses,file=paste0(cedar_data_dir,"processed/courses_with_final_and_latest_enrollments.Rda"))
   #write.csv(completed_and_ongoing_courses,paste0(cedar_data_dir,"processed/courses_with_final_and_latest_enrollments.csv"))
   
   
-  # IF data archiving enabled, archive downloaded file to archive folder (from config.R)
+  # if data archiving enabled, archive downloaded file to archive folder (from config.R)
   if (!is.null(cedar_data_archive_dir)) {
     message("moving .xlsx file to archive folder...")
     
