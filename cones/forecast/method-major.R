@@ -8,7 +8,7 @@
 # This function only handles a single course and term at a time. 
 # Current logic is likely to work better for spring than fall for LD courses
 
-major_forecast <- function(students,opt) {
+major_forecast <- function(students, courses, opt) {
   message("welcome to major_forecast! (in forecast.R)")
   
   target_course <- opt[["course"]]
@@ -53,8 +53,7 @@ major_forecast <- function(students,opt) {
   myopt[["aggregate"]] <- "course"
   
   # the summarize here combines enrolled col for same SUBJ_CRSE (like topics courses)
-  # note that we can't forecast via conduits if we don't have prior semester enrollments
-  # ie we can't skip a term 
+  # NOTE: we can't forecast via conduits if we don't have prior semester enrollments
   conduit_enrls <- get_enrl(courses,myopt) %>% 
     group_by(SUBJ_CRSE,TERM) %>% 
     summarize (enrolled = sum(enrolled)) %>% 
