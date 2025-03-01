@@ -13,7 +13,7 @@ library(bslib)
 library(tidyverse)
 library(feather)
 
-source("includes/config.R")
+source("includes/shiny_config.R")
 source("includes/load_funcs.R")
 load_funcs(cedar_base_dir)
 
