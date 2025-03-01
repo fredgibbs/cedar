@@ -9,60 +9,51 @@ output:
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 always_allow_html: yes
 params:
-  course: 1
-  term: 1
   opt: 1
-  tables: 1
+  course_data: 1
   rmd_file: 1
   output_dir_base: 1
   output_filename: 1
 ---
 
-```{r setup, include=FALSE,  fig.width = 10, fig.height = 12}
-library(kableExtra)
-library(rmarkdown)
-library(dplyr)
-library(tidyr)
+```{r setup, fig.width = 10, fig.height = 12}
+  library(kableExtra)
+  library(rmarkdown)
+  library(dplyr)
+  library(tidyr)
 
-  course <- params$course
+  opt <- params[["opt"]]
+  course <- opt[["course"]]
+  term <-opt[["term"]]
   
-  enrls <- params$tables[["enrls"]]
-  where_to_data <- params$tables[["where_to_data"]]
-  where_from_data <- params$tables[["where_from_data"]]
-  where_at_data <- params$tables[["where_at_data"]]
-  agg_by_class <- params$tables[["agg_by_class"]]
-  agg_by_major <- params$tables[["agg_by_major"]]
-  grade_data <- params$tables[["grade_data"]]
-  forecasts <- params$tables[["forecasts"]]
-  flagged <- params$tables[["flagged"]]
+  course_data <- params[["course_data"]]
+  enrls <- course_data[["enrls"]]
+  where_to_data <- course_data[["where_to"]]
+  where_from_data <- course_data[["where_from"]]
+  where_at_data <- course_data[["where_at"]]
+  agg_by_class <- course_data[["rollcall_by_class"]]
+  agg_by_major <- course_data[["rollcall_by_major"]]
+  grade_data <- course_data[["grades"]]
+  forecasts <- course_data[["forecasts"]]
   
-  
+  flagged <- course_data[["reg_stats_flagged"]]
   drops <- flagged[["drops"]]
   dips <- flagged[["dips"]]
   bumps <- flagged[["bumps"]]
   
-  title <- paste0(substring(forecasts$SUBJ_CRSE[1],1,4)," ",forecasts$CRSE_TITLE[1])
-  
-  
-  #TODO: figure out how to do multiple courses?
-  # wheres file only ever has one class right now
-  # maybe there isn't any need to a report for multiple courses
-  # maybe better to have separate html outputs and a filter widget
-  # how much is each course its own story?
-
-knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE, dpi=200, fig.height=11,out.height="100%")
+  knitr::opts_chunk$set(echo = TRUE,warning = TRUE, message = TRUE, dpi=200,fig.height=11,out.height="100%")
 ```
 
 
 ---
-title: "`r title` "
+title: "`r course` "
 subtitle: "Course Report"
 ---
 
 
 #### Filtering Options
 ```{r  results="asis", echo=FALSE} 
-cat("term: ", opt$term)
+cat("term: ", term)
 
 cat("<br> part of term: ", opt$pt)
 
@@ -126,7 +117,7 @@ cat("<br> level: ", opt$level,"\n")
 
     table <- kbl(drops,digits=2)  %>%   
       kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 12) 
+                    latex_options = c("striped","hold_position","condensed"), position="left", full_width=F, font_size = 12) 
 
     print(table)
 
@@ -139,7 +130,7 @@ cat("<br> level: ", opt$level,"\n")
    
     table <- kbl(dips,digits=2)  %>%   
       kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 12) 
+                    latex_options = c("striped","hold_position","condensed"), position="left", full_width=F, font_size = 12) 
 
     print(table)
     
@@ -150,7 +141,7 @@ cat("<br> level: ", opt$level,"\n")
 
     table <- kbl(bumps,digits=2)  %>%   
       kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 12) 
+                    latex_options = c("striped","hold_position","condensed"), position="left", full_width=F, font_size = 12) 
 
     print(table)
     
@@ -244,13 +235,16 @@ cat("<br> level: ", opt$level,"\n")
     
     cat(paste0("#### ","% of classifications in FALL sections \n"))
     
-    table <- kbl(agg_by_class_fall,digits=2)  %>%   
-      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
-      scroll_box(width = "100%", height = "300px")
-
-    print(table)
-
+    if (ncol(agg_by_class_fall) > 3) {
+      table <- kbl(agg_by_class_fall,digits=2)  %>%   
+        kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+                      latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
+        scroll_box(width = "100%", height = "300px")
+      
+      print(table)
+    }
+    
+    if (ncol(agg_by_class_spring) > 3) {
 
     cat(paste0("#### ","% of classifications in SPRING sections \n"))
     
@@ -260,17 +254,19 @@ cat("<br> level: ", opt$level,"\n")
       scroll_box(width = "100%", height = "300px")
 
     print(table)
+    }
     
-    
-    cat(paste0("#### ","% of classifications in SUMMER sections \n"))
-    
-    table <- kbl(agg_by_class_summer,digits=2)  %>%   
-      kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                    latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
-      scroll_box(width = "100%", height = "300px")
-
-    print(table)
-    
+    if (ncol(agg_by_class_summer) > 3) {
+      
+      cat(paste0("#### ","% of classifications in SUMMER sections \n"))
+      
+      table <- kbl(agg_by_class_summer,digits=2)  %>%   
+        kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+                      latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
+        scroll_box(width = "100%", height = "300px")
+      
+      print(table)
+    }    
 ```
 
 ```{r majors, results="asis", echo=FALSE} 
@@ -281,6 +277,7 @@ cat("<br> level: ", opt$level,"\n")
     agg_by_major_summer <- agg_by_major  %>% select (Major,ends_with("60"))
 
     
+    if (ncol(agg_by_major_fall) > 3) {
     
     cat(paste0("#### ","% of majors in FALL sections \n"))
     
@@ -291,7 +288,11 @@ cat("<br> level: ", opt$level,"\n")
 
     
     print(table)
+    }
     
+    
+        if (ncol(agg_by_major_spring) > 3) {
+
     cat(paste0("#### ","% of majors in SPRING sections \n"))
 
     
@@ -302,8 +303,10 @@ cat("<br> level: ", opt$level,"\n")
 
     
     print(table)
+        }
     
-    
+    if (ncol(agg_by_major_summer) > 3) {
+
         
     cat(paste0("#### ","% of majors in SUMMER sections \n"))
 
@@ -315,7 +318,7 @@ cat("<br> level: ", opt$level,"\n")
 
     
     print(table)
-    
+    }
     
     cat("\n")
 
@@ -383,33 +386,6 @@ cat("<br> level: ", opt$level,"\n")
     print(table)
 
 
-        
-    #     cat(paste0("#### ","Forecast future\n"))
-    # 
-    # 
-    # table <- kbl(forecast_future,digits=2)  %>% 
-    #   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-    #                 latex_options = c("striped","hold_position","condensed"), position="center", full_width=F)
-    # 
-    # print(table)
-
-    
-  
-    # filter for course in loop
-    # enrl_rpt_filtered <- enrl_rpt %>% filter (SUBJ_CRSE == course)
-    
-    # remove SUBJ_CRSE (the first col) now that's it's been displayed as header
-    # enrl_rpt_filtered  <-  enrl_rpt_filtered [,-c(1)]
-    
-    
-    #  cat(paste0("#### ","usher status\n"))
-
-    
-   # table <- kbl(enrl_rpt_filtered,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), position="center", full_width=F)
-
-#  print(table)
-
-  
   cat("\n <hr>")
   
 ```
