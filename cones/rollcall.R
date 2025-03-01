@@ -62,8 +62,10 @@ get_agg_classification_wide <- function(students) {
   crse_enrollment <- reg_summary %>% ungroup() %>% select(c(SUBJ_CRSE,`Academic Period Code`,registered))
   
   
-  
-  agg_by_class <- students %>% group_by(`Academic Period Code`, SUBJ_CRSE,`Short Course Title`,`Student Classification`) %>%
+  # get number of students in each course by classification
+  # do not get CRSE_TITLE or Short Title to aggregate topics courses
+  # TODO: count only REGISTERED students?
+  agg_by_class <- students %>% group_by(`Academic Period Code`, SUBJ_CRSE,`Student Classification`) %>%
     distinct(`Student ID`,.keep_all=TRUE) %>% 
     summarize(class_count=n()) %>% 
     arrange(`SUBJ_CRSE`,desc(class_count)) 

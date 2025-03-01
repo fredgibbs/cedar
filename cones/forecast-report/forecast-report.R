@@ -101,7 +101,7 @@ calc_forecast_accuracy <- function(students,courses, opt) {
   
   # get DESR enrollment data for courses in forecast_data
   myopt <- opt
-  myopt$aggregate <- "course"
+  myopt$aggregate <- "subj_crse"
   #myopt$aop <- "compress" # not working with null term?
   myopt[["term"]] <- NULL # remove any term filtering for now to get all enrollments
   myopt[["course"]] <- as.list(unique(forecast_data$SUBJ_CRSE))
@@ -115,7 +115,7 @@ calc_forecast_accuracy <- function(students,courses, opt) {
   enrl_w_forecast <- add_term_type_col(enrl_w_forecast,"TERM")
   
   # fill in missing values if not matched in merge (without term dependence)
-  selected <- enrls %>% ungroup() %>% select (c(SUBJ_CRSE,CRSE_TITLE,level,gen_ed_area)) %>% distinct(SUBJ_CRSE, .keep_all = T)
+  selected <- enrls %>% ungroup() %>% select (c(SUBJ_CRSE,level,gen_ed_area)) %>% distinct(SUBJ_CRSE, .keep_all = T)
   enrl_w_forecast <- rows_patch(enrl_w_forecast, selected, by=c("SUBJ_CRSE") )
   
   # filter students according to courses in forecast table
@@ -294,9 +294,9 @@ calc_forecast_accuracy <- function(students,courses, opt) {
   # use thresholds for adjusting computed recommendations
   # forecast_summarhy <- process_recommendations(forecast_summary)
   
-  forecast_summary_short <- forecast_summary %>% ungroup() %>% select(SUBJ_CRSE,TERM,CRSE_TITLE,enrolled,cl_total,de_mean,dl_mean,sections,avg_size,avail,conduit,major,pref_enrl_method,pref_cl_method,use_enrl_vals,use_cl_vals,avg_enrl_accr,avg_cl_accr,rec_enrl_sections,rec_cl_sections,diff_fr_prev_cl,diff_fr_prev_enrl)
+  forecast_summary_short <- forecast_summary %>% ungroup() %>% select(SUBJ_CRSE,TERM,enrolled,cl_total,de_mean,dl_mean,sections,avg_size,avail,conduit,major,pref_enrl_method,pref_cl_method,use_enrl_vals,use_cl_vals,avg_enrl_accr,avg_cl_accr,rec_enrl_sections,rec_cl_sections,diff_fr_prev_cl,diff_fr_prev_enrl)
   
-  forecast_summary <- forecast_summary %>% ungroup() %>% select(SUBJ_CRSE,TERM,CRSE_TITLE,enrolled,cl_total,dr_early,de_mean,dr_late,dl_mean,sections,avg_size,avail,conduit,conduit_wo_dr,c_enrl_accr,avg_c_enrl_accr, c_dr_enrl_accr, avg_c_dr_enrl_accr,c_cl_accr, avg_c_cl_accr, c_dr_cl_accr, avg_c_dr_cl_accr, major, major_wo_dr, m_enrl_accr, avg_m_enrl_accr, m_dr_enrl_accr, avg_m_dr_enrl_accr, m_cl_accr, avg_m_cl_accr, m_dr_cl_accr, avg_m_dr_cl_accr,pref_enrl_method,pref_cl_method,use_enrl_vals,use_cl_vals,avg_enrl_accr,avg_cl_accr,rec_enrl_sections,rec_cl_sections,diff_fr_prev_enrl,diff_fr_prev_cl)
+  forecast_summary <- forecast_summary %>% ungroup() %>% select(SUBJ_CRSE,TERM,enrolled,cl_total,dr_early,de_mean,dr_late,dl_mean,sections,avg_size,avail,conduit,conduit_wo_dr,c_enrl_accr,avg_c_enrl_accr, c_dr_enrl_accr, avg_c_dr_enrl_accr,c_cl_accr, avg_c_cl_accr, c_dr_cl_accr, avg_c_dr_cl_accr, major, major_wo_dr, m_enrl_accr, avg_m_enrl_accr, m_dr_enrl_accr, avg_m_dr_enrl_accr, m_cl_accr, avg_m_cl_accr, m_dr_cl_accr, avg_m_dr_cl_accr,pref_enrl_method,pref_cl_method,use_enrl_vals,use_cl_vals,avg_enrl_accr,avg_cl_accr,rec_enrl_sections,rec_cl_sections,diff_fr_prev_enrl,diff_fr_prev_cl)
   
   payload <- list()
   payload[["forecast_short"]] <- forecast_summary_short

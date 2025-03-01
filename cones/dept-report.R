@@ -121,7 +121,7 @@ create_dept_report <- function (students,courses,opt) {
     }
     
     d_params$output_filename <- output_filename
-    d_params$rmd_file <- "cones/dept-report/dept-report.Rmd"
+    d_params$rmd_file <-  paste0(cedar_base_dir,"Rmd/dept-report.Rmd")
     d_params$output_dir_base <- paste0(cedar_output_dir,"dept-reports/")
     
     # create report (defined in misc_funcs.R)

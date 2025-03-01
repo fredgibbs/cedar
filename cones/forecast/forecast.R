@@ -246,7 +246,7 @@ if (is.null(opt$summer) ){
       }
 
       if(forecast_method == "major" || forecast_method == "all") {
-        sum_row <- major_forecast(students,myopt)
+        sum_row <- major_forecast(students, courses, myopt)
       }  
       
     } # end loop through term list

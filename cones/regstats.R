@@ -1,11 +1,15 @@
 
 # filtered_students should be term agnostic, but limited to opt params or defaults for courses
 calc_squeezes <- function(filtered_students,filtered_courses,opt) {
+  
+  # for testing...
+  #filtered_courses <- courses
+  
   message("finding enrollment squeezes...")
   
   # get final enrollments; need to use get_enrl to get final number of available seats
   myopt <- opt
-  myopt[["aggregate"]] <- "course"
+  myopt[["aggregate"]] <- "subj_crse"
   myopt[["uel"]] <- "true"
   myopt[["term"]] <- NULL # need enrollments across all terms for mean calcs
   
@@ -23,7 +27,8 @@ calc_squeezes <- function(filtered_students,filtered_courses,opt) {
   squeezes <- add_term_type_col(squeezes,"TERM")
   
   # remove NAs if we're getting data for future terms with NA drops
-  squeezes <- na.omit(squeezes)
+  # will remove rows with NA for gen_ed; need to fix this
+  # squeezes <- na.omit(squeezes)
   
   # find mean drops across term types
   # squeezes <- squeezes %>% group_by (SUBJ_CRSE,term_type) %>% mutate(mean_drops = mean(drops))
@@ -106,7 +111,7 @@ get_high_fall_sophs <- function (students,courses,opt) {
 
 
 # single out bumps to forecast for where_to courses 
-get_after_bumps <- function (bumps,courses,opt) {
+get_after_bumps <- function (bumps, students, courses) {
   
   bumps <- bumps$SUBJ_CRSE
   after_bumps <- c()
@@ -273,7 +278,7 @@ get_reg_stats <- function(students,courses,opt) {
   flagged[["drops"]] <- get_dimp_drops(regstats, thresholds)
   flagged[["dips"]] <- get_dimp_dips(regstats, thresholds)
   flagged[["bumps"]] <- get_dimp_bumps(regstats, thresholds)
-  flagged[["after_bumps"]] <- get_after_bumps(flagged[["bumps"]], thresholds)
+  flagged[["after_bumps"]] <- get_after_bumps(flagged[["bumps"]], students, courses)
   flagged[["waits"]] <- get_dimp_waits(courses, myopt, thresholds)
   
   squeezes <- calc_squeezes(filtered_students, filtered_courses, myopt)
