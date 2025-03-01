@@ -13,8 +13,8 @@ library(bslib)
 library(tidyverse)
 library(feather)
 
-source("../includes/config.R")
-source("../includes/load_funcs.R")
+source("includes/config.R")
+source("includes/load_funcs.R")
 load_funcs(cedar_base_dir)
 
 # external source loading
