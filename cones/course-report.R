@@ -8,35 +8,39 @@
 # TODO: create loops to manage and accept course and term lists for batch processing
 # some already in cedar.R; need to separate processing from actual report call as with forecast, regstats, etc
 
-create_course_report <- function(students, courses, opt) {
-  
+get_course_data <- function(students, courses, opt) {
   # for studio testing...
   # students <- load_students(opt)
   # courses <- load_courses(opt)
   # opt <- list()
-  # opt[["course"]] <- "MATH 1130"
-  # #opt[["term"]] <- 202510
+  # opt[["course"]] <- "UHON 301"
+  #opt[["term"]] <- 202510
+  
+  # init payload list
+  course_data <- list()
   
   # these should always be set this way
   opt$status <- "A"
   opt$uel <- TRUE
-  opt$aggregate <- "course"
+  group_cols <- c("TERM", "SUBJ", "SUBJ_CRSE", "CRSE_TITLE", "level", "gen_ed_area")
   
   # create term agnostic opt param for getting historic enrollments
   myopt <- opt
   myopt[["term"]] <- NULL
+  myopt[["aggregate"]] <- "subj_crse" # not use if this is used by called functions
   
   # get basic enrollment data for all terms
   message("getting basic enrollment data for course-report...")
-  enrls <- get_enrl(courses,myopt)
+  enrls <- get_enrl(courses,myopt,group_cols)
+  
+  # TODO: likely redundant, already in get_enrl
+  # TODO: this seems only used by the forecasting logic below; and gets overwritten later by calc_squeezes
   enrls <- add_term_type_col(enrls,"TERM")
   
   # load forecast data from forecast table; see forecast-report.R
   forecast_data <- load_forecasts(myopt)
   forecast_data <- forecast_data %>% filter (SUBJ_CRSE == myopt[["course"]])
-  
   forecast_data <- add_term_type_col(forecast_data,"TERM") 
-  
   
   # use 8 as threshold because the table has major and conduit projections (= to 4 terms)
   # don't forecast in case we never offer a course that semester, since there's no previous target data
@@ -46,7 +50,7 @@ create_course_report <- function(students, courses, opt) {
     myopt$term <- "tl_falls"
     forecast(students,courses,myopt)
   }
-      
+  
   if (nrow(enrls %>% filter(term_type == "spring")) > 0 && nrow(forecast_data[forecast_data$term_type=="spring",]) < 6) {
     message("need more spring forecasts. retroactively forecasting!")
     message("setting  myopt$term to 'tl_springs' (from includes/lists.R)")
@@ -68,9 +72,48 @@ create_course_report <- function(students, courses, opt) {
   # use forecast-report.R to load forecast data with enrollments and accuracy
   forecasts <- calc_forecast_accuracy(students, courses, myopt) # returns a list with short and long versions
   forecasts <- forecasts[["forecast_short"]]
-  forecasts <- forecasts %>% select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))
+  course_data[["forecasts"]] <- forecasts %>% select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))
   
   
+  # use regstats to find flagged courses
+  course_data[["reg_stats_flagged"]] <-  get_reg_stats(students,courses,myopt)
+  
+  # get class list enrollment data for more thorough reporting
+  filtered_students <- students %>% filter_class_list(myopt)
+  
+  # get squeezes, already merged with enrl_cl_data already merged with enrl data
+  # TODO: this overwrites an existing enrls from get_enrl, which is bad
+  # TODO: need to keep enrl data and squeeze data separate in functions and combine here
+  course_data[["enrls"]] <- calc_squeezes(filtered_students,courses,myopt) # calls calc_cl_enrls and returns all regstats info
+  
+  # message("merging forecast summary data with enrollment summary data...")
+  # enrl_w_forecast <- merge (enrl_w_forecast, cl_enrls, by.x=c("SUBJ_CRSE", "TERM","term_type"), by.y=c("SUBJ_CRSE", "Academic Period Code","term_type") ,all.x=T)
+  
+  # run lookout functions to see where students are coming and going from  
+  message("getting lookout data...")
+  course_data[["where_from"]] <- where_from(students,myopt)
+  course_data[["where_to"]] <- where_to(students,myopt)
+  course_data[["where_at"]] <- where_at(students,myopt)
+  
+  # get rollcall data
+  message("getting rollcall data...")
+  myopt[["aggregate"]] <- "classification_wide"
+  course_data[["rollcall_by_class"]] <- rollcall(students,myopt)
+  
+  myopt[["aggregate"]] <- "major_wide"
+  course_data[["rollcall_by_major"]] <- rollcall(students,myopt)
+  
+  
+  # get grade data; opt term should be null to get all data
+  message("getting gradebook data...")
+  myopt[["aggregate"]] <- "course"
+  course_data[["grades"]] <- get_grades(students,myopt)
+  
+  return (course_data)
+}
+
+
+use_NSO_data_for_forecasts <- function() {
   ############### 
   # UNFINISHED: use nosedive to find out freshman contribution to course we're reporting on
   ###############
@@ -110,65 +153,25 @@ create_course_report <- function(students, courses, opt) {
     message("ignoring nso data.")
   }
   
-  # use regstats to find flagged courses
-  flagged <-  get_reg_stats(students,courses,myopt)
-  
-  # get class list enrollment data for more thorough reporting
-  filtered_students <- students %>% filter_class_list(myopt)
-  
-  # get squeezes, already merged with enrl_cl_data already merged with enrl data
-  enrls <- calc_squeezes(filtered_students,courses,myopt) # calls calc_cl_enrls and returns all regstats info
+}
 
-  # message("merging forecast summary data with enrollment summary data...")
-  # enrl_w_forecast <- merge (enrl_w_forecast, cl_enrls, by.x=c("SUBJ_CRSE", "TERM","term_type"), by.y=c("SUBJ_CRSE", "Academic Period Code","term_type") ,all.x=T)
+
+
+create_course_report <- function(students, courses, opt) {
   
-  # run lookout functions to see where students are coming and going from  
-  message("getting lookout data...")
-  where_from_data <- where_from(students,myopt)
-  where_to_data <- where_to(students,myopt)
-  where_at_data <- where_at(students,myopt)
-  
-  # get rollcall data
-  message("getting rollcall data...")
-  myopt[["aggregate"]] <- "classification_wide"
-  agg_by_class <- rollcall(students,myopt)
-  
-  myopt[["aggregate"]] <- "major_wide"
-  agg_by_major <- rollcall(students,myopt)
-  
-  
-  # get grade data
-  # set term as null to get all data
-  message("getting gradebook data...")
-  myopt[["aggregate"]] <- "course"
-  grade_data <- get_grades(students,myopt)
-  
+  course_data <- get_course_data(students,courses,opt)
   
   # payload
-  d_params <- list("course" = opt[["course"]],
-                   "term"  = opt[["term"]],
-                   "opt" = opt,
-                   "tables" = list(
-                     "enrls" = enrls,
-                     "where_from_data" = where_from_data,
-                     "where_to_data" = where_to_data,
-                     "where_at_data" = where_at_data,
-                     "agg_by_class" = agg_by_class,
-                     "agg_by_major" = agg_by_major,
-                     "grade_data" = grade_data,
-                     "forecasts" = forecasts,
-                     "flagged" = flagged
-                     #"forecast_next_term" = forecast_next_term
+  d_params <- list("opt" = opt,
+                   "course_data" = course_data
                    )
-  )
-  
   
   message("rendering report for ", opt[["course"]],"...")
   
   # set output data
   output_filename <- sub(" ", "_", opt[["course"]])
   d_params$output_filename <- output_filename
-  d_params$rmd_file <- "cones/course-report/course-report.Rmd"
+  d_params$rmd_file <- paste0(cedar_base_dir,"/Rmd/course-report.Rmd")
   d_params$output_dir_base <- paste0(cedar_output_dir,"course-reports/")
   
   create_report(opt,d_params)
