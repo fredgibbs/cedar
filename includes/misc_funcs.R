@@ -46,16 +46,20 @@ convert_param_to_list <- function(param) {
 
 
 filter_by_term <- function(data,term,term_col_name) {
+  
+  # if term is not a list, convert to string
   if (!is.list(term)) {
     term <- as.character(term)
   }
   
+  message("term legnth: ", length(term))
+  
   if (length(term) > 0 || !is.null(term)) { 
     message("processing term param: ", term)
     #message("term_col_name: ", term_col_name)
-    
-    # check for dash to indicate range
-    if (grepl("-",term)) {
+    print(str(term))
+    # check for single string and dash to indicate range
+    if (length(term) == 1 && grepl("-",term)) {
       message("parsing term code range...")
       terms <- unlist(str_split(term,"-"))
       message("terms: ",terms)
@@ -71,7 +75,8 @@ filter_by_term <- function(data,term,term_col_name) {
       message("term_str: ",term_str)
       
       data <- data %>% filter (!!rlang::parse_expr(term_str))
-    } # end if "-"
+    } # end if not list
+    
     else if (term == "fall") {
       data <- data %>% filter (substring(get({{term_col_name}}),5,6) == 80)
     } 
@@ -211,7 +216,7 @@ load_courses <- function(opt) {
 
 load_students <- function(opt) {
 message("loading class list data...")
-students <- read_feather(paste0(cedar_data_dir,"processed/class_list.feather"))
+students <- read_feather(paste0(cedar_data_dir,"processed/class-list.feather"))
 
 message("processing data...")
 
@@ -413,93 +418,12 @@ get_dept_from_course <- function (course) {
 
 
 
-compress_aop_pairs <- function (courses,opt) {
-  message("compressing AOP courses into single row...")
-  
-  # for testing...
-   # courses <- load_courses(opt)
-   # opt <- list()
-   # #opt[["course"]] <- "BIOL 2305"
-   # opt[["term"]] <- "202210"
-   # courses <-  filter_DESRs(courses,opt)
-  
-  # for clarity, combine aop and twin courses into single entry
-  # test to see if we're filtering by dept
-  courses <- courses %>%  group_by(TERM, XL_CODE)
-  
-  # get just AOP courses
-  courses_aop <- courses %>% filter (INST_METHOD == "MOPS")
-  
-  # AOP sections don't necessarily have a partner, so remove those without one
-  # TODO: handle case of AOP course having partner, but not being crosslisted
-  # might be able to check on course title
-  courses_aop <- courses_aop %>% filter (XL_CODE != "0")
-  
-  # get pairs of aop and twin section
-  aop_pairs <- courses_aop %>% filter (XL_CODE %in% courses_aop$XL_CODE) %>% 
-    distinct(CRN, .keep_all = TRUE) %>% 
-    group_by(TERM,XL_CODE)
-  
-  # to collapse the aop and online section into one row, get each section's enrollment
-  aop_pairs <- aop_pairs %>% mutate (sect_enrl = ENROLLED, pair_enrl = total_enrl - ENROLLED)
-  
-  # arrange by inst_method, and take first row of group
-  aop_single <- aop_pairs %>% arrange(INST_METHOD) %>% filter (row_number() == 1)
-  # message("aop sections:")
-  # print(aop_single)
-  
-  # since compressing two sections into one, change ENROLLED to mimic total_enrl
-  # otherwise, compressing effectively deletes the non-aop section enrollment
-  aop_single <- aop_single %>% mutate (ENROLLED = total_enrl)
-  
-  # remove all pairs from orig course list
-  courses <- courses %>% filter (!(XL_CODE %in% courses_aop$XL_CODE)) %>% distinct(CRN, .keep_all = TRUE) %>% 
-    group_by(TERM,XL_CODE)
-  
-  # add all single rows
-  courses <- rbind(courses,aop_single)
-  
-  message("returning compressed aop rows...")
-  
-  return(courses)
-} # end compress_aop_pairs
-
-
-merge_hr_data <- function (courses) {
-  
-  ############ merge personnel data with course data
-  message("welcome to merge_hr_data!")
-  
-  # get faculty data to associate title with person in course listings
-  file_name <- paste0(cedar_data_dir,"processed/fac_by_term.Rda")
-  message("loading ",file_name,"...")
-  load(file_name)
-  
-  message("adjusting data types...")
-  courses$`PRIM_INST_ID` <- as.double(courses$`PRIM_INST_ID`)
-  courses$`TERM` <- as.character(courses$`TERM`)
-  
-  # disregard as_of_date in HR data
-  fac_by_term <- fac_by_term %>% select (-c(as_of_date))
-  
-  # merge faculty and course data
-  # merging DEPT fields means an instructor w/o an appt % or other kind of admin appt with that DEPT 
-  # will not have a title listed on the enrl reporting tools
-  message("merging faculty data with course data...")
-  courses <- merge(courses,fac_by_term,by.x=c("TERM","PRIM_INST_ID"),by.y=c("term_code","UNM ID"),all.x=TRUE)
-  courses <- courses %>% select (-c(DEPT.y))
-  courses <- courses %>% rename (DEPT = DEPT.x)
-  
-  message("done merging HR data.")
-  
-  return(courses)
-} # end merge_hr_data
 
 
 
 # this function is called when looping through a list of depts (even if just one)
 create_report <- function(opt, d_params) {
-  message("welcome to create_report!")
+  message("welcome to create_report! (in misc_funcs.R")
   
   output <- opt$output
   
@@ -514,7 +438,7 @@ create_report <- function(opt, d_params) {
   }
   
   # TRICKY! the paths for the output file are relative to the Rmd file, not the current working directory.
-  if (opt[["onedrive"]]) {
+  if (!is.null(opt[["onedrive"]]) && opt[["onedrive"]]) {
     output_filename <- paste0(cedar_onedrive_dir,"/",d_params$output_filename,".aspx")
   } 
   else {
@@ -527,17 +451,20 @@ create_report <- function(opt, d_params) {
   
   Sys.setenv(RSTUDIO_PANDOC=rstudio_pandoc)
   
-  # xfun::Rscript_call(
-  #   rmarkdown::render,
-  #   list(input = 'dept-reports/dept-report.Rmd', output_format = 'html_document',output_file = output_file,params = d_params)
-  # )
-  # 
-  
-  rmarkdown::render(d_params$rmd_file,
-                    output_file = output_filename,
-                    params = d_params)
-  
+  # need to run as Rscript call from shiny app (or within Rstudio)
+  if (!is.null(opt[["shiny"]]) && opt[["shiny"]] == TRUE) {
+    rmd_output <- xfun::Rscript_call(
+      rmarkdown::render,
+      list(input = d_params$rmd_file, output_format = 'html_document', output_file = output_filename, params = d_params)
+    )
+  } else {
+    rmd_output <- rmarkdown::render(d_params$rmd_file,
+                      output_file = output_filename,
+                      params = d_params)
+  }
+
   message("done rendering.")
+  return (rmd_output)
 } # end create report
 
 

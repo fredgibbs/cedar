@@ -196,6 +196,11 @@ message("loading external functions...")
 source("includes/load_funcs.R")
 load_funcs("./")
 
+# load data 
+courses <- load_courses(opt)
+if (!opt$enrl) { # don't load just for enrl
+  students <- load_students(opt)  
+}
 
 ########### PROCESS SPECIFIED FUNCTION  REQUEST  ##############
 if (opt$func == "guide") {
@@ -227,8 +232,6 @@ if (opt$func == "credit-hours") {
     stop("no error")
   }
   
-  
-  students <- load_students(opt)  
   filtered_students <- filter_class_list(students, opt)
   credit_hours_data <- get_credit_hours(filtered_students)
   
@@ -259,9 +262,6 @@ if (opt$func == "course-report") {
     stop("no error")
   }
   
-  # load data 
-  courses <- load_courses(opt)
-  students <- load_students(opt)
   
   # if no term specified, use next term
   if (is.null(opt[["term"]])) {
@@ -355,14 +355,9 @@ if (opt$func == "data-status") {
             data-status reports on how recent data has been updated. No required params. ")
     stop("no error")
   }
-  source("cones/data-status/data-status.R")
   
   data_status_out <- get_data_status(opt)
-  
   process_output(data_status_out,"data_status") #.csv is added in process_output
-  
-  
-  # TODO: make status able to return values for display in various reports
 }
 
 
@@ -377,8 +372,6 @@ if (opt$func == "dept-report") {
     quit()
   }
   
-  students <- load_students(opt)
-  courses <- load_courses(opt)
   create_dept_report(students,courses,opt)
 }
 
@@ -416,9 +409,6 @@ if (opt$func == "enrl") {
     stop("no error")
   }
   
-  courses <- load_courses(opt)
-  #students <- load_students(opt)
-  
   get_enrl_out <- get_enrl(courses,opt)
   process_output(get_enrl_out,"enrollments")
 }
@@ -452,10 +442,6 @@ if (opt$func == "forecast") {
     quit()
   }
   
-  # load data
-  courses <- load_courses(opt)
-  students <- load_students(opt)
-  
   # forecast
   # opt params get modified here, so return the new ones for the forecast accuracy filtering
   # there is no other output after forecasting (it could be forecast_data)
@@ -485,10 +471,6 @@ if (opt$func == "forecast-report") {
             ")
     quit()
   }
-  
-  # load data
-  courses <- load_courses(opt)
-  students <- load_students(opt)
   
   # display forecast report for opt params
   forecast_data <- calc_forecast_accuracy(students,courses,opt)
@@ -528,12 +510,10 @@ if (opt$func == "gradebook") {
   # 3 202210                 HIST 1105 lower Making History         9.52     2    10     2     1     0     1     0     2     0     0     1     2     19      2       3
   # 
   
-  students <- load_students(opt)
   grades_out <- get_grades(students,opt)
   process_output(grades_out,"csv/grades.csv")
 
 }
-
 
 
 
@@ -587,9 +567,6 @@ if (opt$func == "lookout") {
     stop("no error")
   }
   
-  # load class list data
-  students <- load_students(opt)
-  
   # lookout controller doesn't yet return values, but saves 3 Rda files in the output/lookout folder
   lookout_out <- lookout(students, opt)
 }
@@ -598,23 +575,14 @@ if (opt$func == "lookout") {
 
 ########### NOSEDIVE ##############
 if (opt$func == "nosedive") {
-
-  # load data  
-  courses <- load_courses(opt)
-  students <- load_students(opt)
-  
   nosedive_out <- nosedive(courses, students, opt)  
 }
 
 
-########### REGSTAT ##############
+########### REGSTATS ##############
 if (opt$func == "regstats") {
   source("cones/regstats/regstats.R")
   
-  # load class list data  
-  courses <- load_courses(opt)
-  students <- load_students(opt)
-
   regstat_out <- get_reg_stats(students, courses, opt)
   process_output(regstat_out,"") # don't need to supply csv name since we'll use list names
   
@@ -641,7 +609,6 @@ if (opt$func == "rollcall") {
     stop("no error")
   }
   
-  students <- load_students(opt)
   rollcall_out <- rollcall(students, opt)
   process_output(rollcall_out,"rollcall") # saves to csv/rollcall.csv
 }
@@ -658,10 +625,8 @@ if (opt$func == "seatfinder-report") {
              Use -h to see filtering params. ")
     stop("no error")
   }
-  source("cones/seatfinder-report/seatfinder-report.R")
-  students <- load_students(opt)
-  courses <- load_courses(opt)
-  create_seatfinder_report(students,courses,opt)  
+
+    create_seatfinder_report(students,courses,opt)  
 }
 
 
@@ -679,30 +644,13 @@ if (opt$func == "waitlist") {
     stop("no error")
   }
   
-  students <- load_students(opt)
   waitlist_out <- inspect_waitlist(students,opt)
-
-  process_output(waitlist_out,"waitlist") # saves to csv/waitlist.csv
+  process_output(waitlist_out,"waitlist") 
 }
 
 
 ###################################################
 ################ MISC CONES #######################
-
-
-############### SALARY BANDS  ############### 
-if (opt$func == "salary-bands") {
-  source("budget/salary-bands/salary-bands.R")
-  salary_bands_out <- salary_bands(courses,opt)
-}
-
-
-########### FEE REPORT ##############
-if (opt$func == "fee-report") {
-  source("budget/course-fees/course-fees.R")
-  courses <- load_courses(opt)
-  fee_report(courses, opt)  
-}
 
 
 ########### WORKLOAD REPORT (under development) ##############
