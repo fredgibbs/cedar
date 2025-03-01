@@ -198,7 +198,7 @@ load_funcs("./")
 
 # load data 
 courses <- load_courses(opt)
-if (!opt$enrl) { # don't load just for enrl
+if (is.null(opt$enrl)) { # don't load just for enrl
   students <- load_students(opt)  
 }
 
@@ -581,8 +581,6 @@ if (opt$func == "nosedive") {
 
 ########### REGSTATS ##############
 if (opt$func == "regstats") {
-  source("cones/regstats/regstats.R")
-  
   regstat_out <- get_reg_stats(students, courses, opt)
   process_output(regstat_out,"") # don't need to supply csv name since we'll use list names
   
