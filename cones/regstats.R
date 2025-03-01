@@ -333,9 +333,9 @@ get_reg_stats <- function(students,courses,opt) {
 }
 
 
-create_regstat_report <- function(flagged, opt) {
+create_regstat_report <- function(students,courses,opt) {
   
-  # flagged <- get_reg_stats(students,courses,opt)
+  flagged <- get_reg_stats(students,courses,opt)
   
   # if arrange param set, use it
   if (!is.null(opt[["arrange"]])) {
