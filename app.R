@@ -27,7 +27,7 @@ load(url("https://unmm-my.sharepoint.com/:u:/g/personal/fwgibbs_unm_edu/EcFs0ZAu
 opt <- list()
 opt[["uel"]] <- TRUE
 opt[["level"]] <- "lower" # for faster testing
-courses <- load_courses(opt=NULL) 
+#courses <- load_courses(opt=NULL) 
 courses <- courses %>%  filter_DESRs(opt) 
 
 #students <- load_students(opt=NULL)
