@@ -28,11 +28,19 @@ process_output <- function(output_data,filename) {
     message(cur_name)
     
     cur_item <- as_tibble(output_list[[i]])
+    
     # message("count: ", i )
     # print(names(output_list))
     # message("list element name: ", cur_name)
     # message("current element:")
     # print(cur_item)
+    
+    
+    cedar <- function(x,...) {
+      opt <- list(...) 
+      get_enrl(courses,opt)
+      }
+    
     
     # if arrange param set, use it
     if (!is.null(opt[["arrange"]])) {
@@ -581,15 +589,17 @@ if (opt$func == "nosedive") {
 
 ########### REGSTATS ##############
 if (opt$func == "regstats") {
-  regstat_out <- get_reg_stats(students, courses, opt)
-  process_output(regstat_out,"") # don't need to supply csv name since we'll use list names
   
-  # check for output flog 
+  # check if wanting report
   if (!is.null(opt[["output"]]) && (opt[["output"]] == "html" || opt[["output"]] == "aspx")) {
-    create_regstat_report(regstat_out, opt)
+    create_regstat_report(students, courses, opt)
   }
- 
+  else {
+    regstat_out <- get_reg_stats(students, courses, opt)  
+    process_output(regstat_out,"") # don't need to supply csv name since we'll use list names
+  }
 }
+
 
 ########### ROLLCALL ##############
 if (opt$func == "rollcall") {
