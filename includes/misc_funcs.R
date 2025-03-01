@@ -467,24 +467,3 @@ create_report <- function(opt, d_params) {
   return (rmd_output)
 } # end create report
 
-
-
-# dormant: used originally for 2022-23 dept data reports
-# create linear model and use slope to find end point
-repel_row <- function(sum_table,name) {
-  #check if sum_table has any rows
-  if(!nrow(sum_table) == 0){
-    sum_table$term_bin<-1:nrow(sum_table)
-    fm <- as.formula (paste(names(sum_table)[2],"~","term_bin"))
-    model <- lm( fm, data = sum_table)
-    ends <- predict(model, newdata=data.frame(term_bin=c(1,nrow(sum_table))))
-    start <- ends[[1]]
-    end <- ends[[2]]
-    if (start < 0) start = 0
-    slope <- coef(model)[2]
-    result <- c(level=name, y=end, x="202280", slope=slope, per_change = end/start-1)
-  } 
-  else {
-    result <- c(level=name, y=0, x="202280", slope=0, per_change = 0)
-  }
-}  
