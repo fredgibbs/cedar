@@ -117,9 +117,21 @@ filter_DESRs <- function(courses, opt) {
   # }
   # 
 
+  
+  # CROSSLIST FILTER
+  .xlist_filter <- function(df,action) {
+    message("Welcome to xlist.R!")
+    
+    if (action == "exclude") {
+      print("excluding cross-listed courses (by XL_CRN = 0)...")
+      df <- df %>% filter(XL_CRN == "0")
+      return(df)
+    }
+    
+  
   # crosslist processing
   if (!is.null(opt$crosslist)) {
-    courses <- xlist_filter(courses,opt$crosslist)
+    courses <- .xlist_filter(courses,opt$crosslist)
     check_num_rows(courses)
   }
   
@@ -144,13 +156,6 @@ filter_DESRs <- function(courses, opt) {
     check_num_rows(courses)
   }
 
-  # filter academic title
-  if (!is.null(opt$title)) {
-    message("using academic title...")
-    courses <- courses %>% filter( (`Academic Title` == opt$title) )
-    check_num_rows(courses)
-  }
-
   # job category from parsing HR Report
   if (!is.null(opt$job_cat)) {
     param_to_list <- convert_param_to_list(opt[["job_cat"]])
@@ -165,8 +170,6 @@ filter_DESRs <- function(courses, opt) {
   courses <- courses %>% distinct(CRN,.keep_all = TRUE)
     
   message("done filtering DESRs. returning ",nrow(courses)," courses...\n")
-  
-  #courses <- courses %>% select (TERM,CRN,DEPT,SUBJ,CRSE,SUBJ_CRSE,level,SECT,CRSE_TITLE,INST_METHOD,PT,PRIM_INST_LAST,INST_NAME, `Academic Title`,job_cat,`Home Organization Desc`,ENROLLED,total_enrl,TOTAL_HOURS,XL_SUBJ,XL_CRSE,XL_CRN, XL_ENRL,XL_CODE,WAIT_COUNT,SEATS_AVAIL,crse_base) %>% arrange(TERM,SUBJ,crse_base, SECT, INST_NAME)
   
   return(courses)
   

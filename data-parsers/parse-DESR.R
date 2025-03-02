@@ -5,6 +5,41 @@ pacman::p_load(tidyverse, readxl, fs, data.table, lubridate)
 
 message("Welcome to parse-DESR!")
 
+
+.merge_hr_data <- function (courses) {
+  
+  ############ merge personnel data with course data
+  message("\nwelcome to merge_hr_data!")
+  
+  # get faculty data to associate title with person in course listings
+  file_name <- paste0(cedar_data_dir,"processed/fac_by_term.Rda")
+  message("loading ",file_name,"...")
+  load(file_name)
+  
+  message("adjusting data types...")
+  courses$`PRIM_INST_ID` <- as.double(courses$`PRIM_INST_ID`)
+  courses$`TERM` <- as.character(courses$`TERM`)
+  
+  # disregard as_of_date in HR data
+  fac_by_term <- fac_by_term %>% select (-c(as_of_date))
+  
+  # merge faculty and course data
+  # do not via DEPT fields because means an instructor w/o an appt % or admin appt with that DEPT 
+  # will not have a title listed on the enrl reporting tools
+  message("merging faculty data with course data...")
+  courses <- merge(courses,fac_by_term,by.x=c("TERM","PRIM_INST_ID"),by.y=c("term_code","UNM ID"),all.x=TRUE)
+  courses <- courses %>% select (-c(DEPT.y))
+  courses <- courses %>% rename (DEPT = DEPT.x)
+  
+  message("done merging HR data.")
+  
+  return(courses)
+} # end merge_hr_data
+
+
+
+
+
 # load basic includes 
 source("load-parser-includes.R")
 
@@ -127,7 +162,10 @@ for (file in file_list) {
   new_courses$DEPT <- subj_to_dept_map[new_courses$SUBJ]
   new_courses <- new_courses %>% mutate(DEPT = ifelse(is.na(DEPT), SUBJ, DEPT))
   
-  # TODO: merge personnel data here instead of when loading?
+  # merge with HR data
+  # this is largely just to preserve existing functionality that depends on job_cat field in dept reporting
+  # needs to have less precarious HR data access to keep data updated
+  new_courses <- .merge_hr_data(new_courses)
   
   message("done processing latest DESR.") 
   

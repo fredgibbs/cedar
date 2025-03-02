@@ -81,18 +81,6 @@ calc_cl_enrls <- function(students,reg_status=NULL) {
   return (reg_stats_summary)
 }
 
-
-
-# CROSSLIST FILTER
-xlist_filter <- function(df,action) {
-  message("Welcome to xlist.R!")
-  
-  if (action == "exclude") {
-    print("excluding cross-listed courses (by XL_CRN = 0)...")
-    df <- df %>% filter(XL_CRN == "0")
-    return(df)
-  }
-  
   
   # home will filter out all xled rows of a course except the one that matches dept filtering
   # best used when looking at a single dept's courses
@@ -193,35 +181,6 @@ compress_aop_pairs <- function (courses,opt) {
 } # end compress_aop_pairs
 
 
-merge_hr_data <- function (courses) {
-  
-  ############ merge personnel data with course data
-  message("welcome to merge_hr_data!")
-  
-  # get faculty data to associate title with person in course listings
-  file_name <- paste0(cedar_data_dir,"processed/fac_by_term.Rda")
-  message("loading ",file_name,"...")
-  load(file_name)
-  
-  message("adjusting data types...")
-  courses$`PRIM_INST_ID` <- as.double(courses$`PRIM_INST_ID`)
-  courses$`TERM` <- as.character(courses$`TERM`)
-  
-  # disregard as_of_date in HR data
-  fac_by_term <- fac_by_term %>% select (-c(as_of_date))
-  
-  # merge faculty and course data
-  # merging DEPT fields means an instructor w/o an appt % or other kind of admin appt with that DEPT 
-  # will not have a title listed on the enrl reporting tools
-  message("merging faculty data with course data...")
-  courses <- merge(courses,fac_by_term,by.x=c("TERM","PRIM_INST_ID"),by.y=c("term_code","UNM ID"),all.x=TRUE)
-  courses <- courses %>% select (-c(DEPT.y))
-  courses <- courses %>% rename (DEPT = DEPT.x)
-  
-  message("done merging HR data.")
-  
-  return(courses)
-} # end merge_hr_data
 
 
 # generic summary function based on group_cols
@@ -498,14 +457,14 @@ get_enrl <- function (courses,opt,group_cols=NULL) {
     courses <- compress_aop_pairs(courses,opt) # defined in misc_funcs
     
     #courses <- courses %>% select(TERM,CRN,SUBJ_CRSE,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,total_enrl,sect_enrl,pair_enrl)
-    courses <- courses %>% select(TERM,CRN,SUBJ,SUBJ_CRSE,SECT,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,`Academic Title`,ENROLLED,total_enrl,XL_SUBJ,SEATS_AVAIL,WAIT_COUNT,sect_enrl,pair_enrl,gen_ed_area)
+    courses <- courses %>% select(TERM,CRN,SUBJ,SUBJ_CRSE,SECT,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,ENROLLED,total_enrl,XL_SUBJ,SEATS_AVAIL,WAIT_COUNT,sect_enrl,pair_enrl,gen_ed_area)
     
   }
   else {
     message("leaving AOP pairs alone...")
     
     # remove extraneous cols
-    courses <- courses %>% select(TERM,CRN,SUBJ,SUBJ_CRSE,SECT,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,`Academic Title`,ENROLLED,total_enrl,XL_SUBJ,SEATS_AVAIL,WAIT_COUNT,gen_ed_area)
+    courses <- courses %>% select(TERM,CRN,SUBJ,SUBJ_CRSE,SECT,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,ENROLLED,total_enrl,XL_SUBJ,SEATS_AVAIL,WAIT_COUNT,gen_ed_area)
   }
   
   # courses get listed multiple times b/c of crosslisting (inc aop, but also general)
