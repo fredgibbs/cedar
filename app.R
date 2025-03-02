@@ -36,21 +36,24 @@ courses <- completed_and_ongoing_courses
 
 
 # load students
-message("loading students...")
-classlists <- Sys.getenv("classlists") 
-students <- readRDS(url(classlists))
-message("loaded students with ",nrow(students)," rows.")
+# message("loading students...")
+# classlists <- Sys.getenv("classlists") 
+# students <- readRDS(url(classlists))
+# message("loaded students with ",nrow(students)," rows.")
 
-write.csv(students,"students.csv")
 
 # filter courses
 opt <- list()
 opt[["uel"]] <- TRUE
 opt[["level"]] <- "lower" # for faster testing
+opt[["dept"]] <- "HIST"
 #courses <- load_courses(opt=NULL) 
 courses <- courses %>%  filter_DESRs(opt) 
-
-
+write.csv(courses,"courses.csv")
+message("finished writing courses.csv")
+courses <- NULL
+read.csv("courses.csv")
+message(head(courses))
 
 # Define UI for application that draws a histogram
 ui <- page_navbar(
