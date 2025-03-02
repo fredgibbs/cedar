@@ -5,6 +5,13 @@
 pacman::p_load(tidyverse, readxl,rvest,fs,data.table, optparse, feather, plotly)
 
 
+# create controller function for running in RStudio
+cedar <- function(x,...) {
+  opt <- list(...) 
+  get_enrl(courses,opt)
+}
+
+
 # output_data is going to be a df/tibble or list
 .process_output <- function(output_data,filename) {
   message("welcome to process_output!")
@@ -28,19 +35,6 @@ pacman::p_load(tidyverse, readxl,rvest,fs,data.table, optparse, feather, plotly)
     message(cur_name)
     
     cur_item <- as_tibble(output_list[[i]])
-    
-    # message("count: ", i )
-    # print(names(output_list))
-    # message("list element name: ", cur_name)
-    # message("current element:")
-    # print(cur_item)
-    
-    
-    cedar <- function(x,...) {
-      opt <- list(...) 
-      get_enrl(courses,opt)
-      }
-    
     
     # if arrange param set, use it
     if (!is.null(opt[["arrange"]])) {
