@@ -6,7 +6,7 @@ pacman::p_load(tidyverse, readxl,rvest,fs,data.table, optparse, feather, plotly)
 
 
 # output_data is going to be a df/tibble or list
-process_output <- function(output_data,filename) {
+.process_output <- function(output_data,filename) {
   message("welcome to process_output!")
   
   output_list <- list()
@@ -353,7 +353,7 @@ if (opt$func == "data-status") {
   }
   
   data_status_out <- get_data_status(opt)
-  process_output(data_status_out,"data_status") #.csv is added in process_output
+  .process_output(data_status_out,"data_status") #.csv is added in process_output
 }
 
 
@@ -406,7 +406,7 @@ if (opt$func == "enrl") {
   }
   
   get_enrl_out <- get_enrl(courses,opt)
-  process_output(get_enrl_out,"enrollments")
+  .process_output(get_enrl_out,"enrollments")
 }
 
 
@@ -445,7 +445,7 @@ if (opt$func == "forecast") {
   
   # since it's almost always useful to see results right away, calc and show accuracy and recommendations
   forecast_data <- calc_forecast_accuracy(students,courses,opt)
-  process_output(forecast_data,"forecasts") #.csv is added in process_output
+  .process_output(forecast_data,"forecasts") #.csv is added in process_output
   
 }
 
@@ -472,7 +472,7 @@ if (opt$func == "forecast-report") {
   forecast_data <- calc_forecast_accuracy(students,courses,opt)
   
   # calc and show accuracy and recommendations
-  process_output(forecast_data,"none")
+  .process_output(forecast_data,"none")
   
   # check for output flog 
   if (!is.null(opt[["output"]]) && (opt[["output"]] == "html" || opt[["output"]] == "aspx")) {
@@ -507,7 +507,7 @@ if (opt$func == "gradebook") {
   # 
   
   grades_out <- get_grades(students,opt)
-  process_output(grades_out,"csv/grades.csv")
+  .process_output(grades_out,"csv/grades.csv")
 
 }
 
@@ -584,7 +584,7 @@ if (opt$func == "regstats") {
   }
   else {
     regstat_out <- get_reg_stats(students, courses, opt)  
-    process_output(regstat_out,"") # don't need to supply csv name since we'll use list names
+    .process_output(regstat_out,"") # don't need to supply csv name since we'll use list names
   }
 }
 
@@ -606,7 +606,7 @@ if (opt$func == "rollcall") {
   }
   
   rollcall_out <- rollcall(students, opt)
-  process_output(rollcall_out,"rollcall") # saves to csv/rollcall.csv
+  .process_output(rollcall_out,"rollcall") # saves to csv/rollcall.csv
 }
 
 
@@ -641,7 +641,7 @@ if (opt$func == "waitlist") {
   }
   
   waitlist_out <- inspect_waitlist(students,opt)
-  process_output(waitlist_out,"waitlist") 
+  .process_output(waitlist_out,"waitlist") 
 }
 
 
