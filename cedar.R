@@ -117,12 +117,6 @@ option_list = list(
   make_option(c("-i","--inst"), type="character", 
               help="instructor", metavar="character"),
 
-  make_option("--not_inst_list", action = "store",
-              help="name of a list of instructors", metavar="character"),
-  
-  make_option(c("--notinst"), type="character", 
-              help="NOT instructor", metavar="character"),
-  
   make_option(c("--im"), type="character",
               help="instruction method ", metavar="character"),
   
@@ -147,14 +141,8 @@ option_list = list(
   make_option(c("--status"), type="character", default="A", 
               help="status [default = %default]", metavar="character"), 
   
-  make_option(c("--regstatus"), type="character",
-              help="status [default = %default]", metavar="character"), 
-  
   make_option(c("--summer"), default=FALSE, action="store_true",
               help="include summer terms"),
-  
-  make_option(c("--title"), type="character", 
-              help="academic title", metavar="character"),
   
   make_option(c("--uel"), action="store_true",
               help="Use Exclude List", metavar="character"),
