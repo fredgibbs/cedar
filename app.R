@@ -25,14 +25,17 @@ load_funcs(cedar_base_dir)
 # classlists
 # readRDS(url("https://unmm-my.sharepoint.com/:u:/g/personal/fwgibbs_unm_edu/ERz_u5OXEjNFvbNGTbG7T1sBRxKp3QGehRVm_7HmhxZmPA?download=1"))
 
-
+# desrs
 #load(url("https://unmm-my.sharepoint.com/:u:/g/personal/fwgibbs_unm_edu/EcFs0ZAuy35IgjAQ593NAIwBcnocDZ1u6oLALNgVZRs30g?download=1"))
+
+message("loading courses...")
 desrs <- Sys.getenv("desrs") 
 load(url(desrs))
 courses <- completed_and_ongoing_courses
 
 
 # load students
+message("loading students...")
 classlists <- Sys.getenv("classlists") 
 readRDS(url(classlists))
 message("loaded students with ",nrow(students)," rows.")
