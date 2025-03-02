@@ -52,7 +52,7 @@ courses <- courses %>%  filter_DESRs(opt)
 write.csv(courses,"courses.csv")
 message("finished writing courses.csv")
 courses <- NULL
-read.csv("courses.csv")
+courses <- read.csv("courses.csv")
 message(head(courses))
 
 # Define UI for application that draws a histogram
