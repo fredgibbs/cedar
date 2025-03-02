@@ -31,9 +31,11 @@ desrs <- Sys.getenv("desrs")
 load(url(desrs))
 courses <- completed_and_ongoing_courses
 
+
 # load students
 classlists <- Sys.getenv("classlists") 
 readRDS(url(classlists))
+message("loaded students with ",nrow(students)," rows.")
 
 
 # filter courses
