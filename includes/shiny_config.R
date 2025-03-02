@@ -2,7 +2,7 @@ cedar_base_dir <- "."
 
 # recommended to keep as is, but you can specify other folders you've created
 cedar_output_dir <- paste0(cedar_base_dir,"output/")
-cedar_data_dir <- paste0(cedar_base_dir,"data/")
+#cedar_data_dir <- paste0(cedar_base_dir,"data/")
 
 # if you want to save the MyReports excel files you will download, update the following:
 cedar_data_archive_dir <- NULL
