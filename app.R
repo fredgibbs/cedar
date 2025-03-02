@@ -41,6 +41,7 @@ classlists <- Sys.getenv("classlists")
 students <- readRDS(url(classlists))
 message("loaded students with ",nrow(students)," rows.")
 
+write.csv(students,"students.csv")
 
 # filter courses
 opt <- list()
