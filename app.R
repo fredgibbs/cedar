@@ -27,13 +27,17 @@ desrs <- Sys.getenv("desrs")
 load(url(desrs))
 courses <- completed_and_ongoing_courses
 
+classlists <- Sys.getenv("classlists") 
+load(url(classlists)) # loads "students"
+
+
+# filter courses
 opt <- list()
 opt[["uel"]] <- TRUE
 opt[["level"]] <- "lower" # for faster testing
 #courses <- load_courses(opt=NULL) 
 courses <- courses %>%  filter_DESRs(opt) 
 
-#students <- load_students(opt=NULL)
 
 
 # Define UI for application that draws a histogram
