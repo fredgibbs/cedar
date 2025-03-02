@@ -22,7 +22,8 @@ load_funcs(cedar_base_dir)
 #load(url("https://www.dropbox.com/scl/fi/8jxi6y5goz44ub5vsbms9/degrees.Rda?rlkey=we9lgiqkw0sq6vjtds6tpr08v&st=ch13dtit&dl=1"))
 #load(url("https://unmm-my.sharepoint.com/:u:/g/personal/fwgibbs_unm_edu/EUsiRM6_Xr9Ng-ygeuWDvNwB75F2tZuHSa_nHSBrepsLnw?download=1"))
 
-load(url("https://unmm-my.sharepoint.com/:u:/g/personal/fwgibbs_unm_edu/EcFs0ZAuy35IgjAQ593NAIwBcnocDZ1u6oLALNgVZRs30g?download=1"))
+#load(url("https://unmm-my.sharepoint.com/:u:/g/personal/fwgibbs_unm_edu/EcFs0ZAuy35IgjAQ593NAIwBcnocDZ1u6oLALNgVZRs30g?download=1"))
+load(url(desrs))
 courses <- completed_and_ongoing_courses
 
 opt <- list()
