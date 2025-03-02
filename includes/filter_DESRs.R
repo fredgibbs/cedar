@@ -128,7 +128,6 @@ filter_DESRs <- function(courses, opt) {
       return(df)
     }
     
-  
   # crosslist processing
   if (!is.null(opt$crosslist)) {
     courses <- .xlist_filter(courses,opt$crosslist)
