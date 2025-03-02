@@ -7,8 +7,10 @@ pacman::p_load(tidyverse, readxl,rvest,fs,data.table, optparse, feather, plotly)
 
 # create controller function for running in RStudio
 cedar <- function(x,...) {
-  opt <- list(...) 
-  get_enrl(courses,opt)
+  opt <- list(...)
+  
+  # TODO: set opt$func based on first param
+  # get_enrl(courses,opt)
 }
 
 
@@ -183,6 +185,7 @@ message("starting timer...")
 start.time <- Sys.time()
 
 message("loading external functions...")
+source("includes/config.R")
 source("includes/load_funcs.R")
 load_funcs("./")
 
