@@ -200,16 +200,10 @@ load_forecasts <- function(opt) {
 
 
 load_courses <- function(opt) {
-  # load data
   message("loading course data...")
   load(paste0(cedar_data_dir,"processed/courses_with_final_and_latest_enrollments.Rda"))
   courses <- completed_and_ongoing_courses # rename DF from file
-  
-  message("processing data...")
-
-  # merge HR data
-  courses <- merge_hr_data(courses)
-  
+  message("done loading course data.")
   return(courses)
 }
 
@@ -217,9 +211,6 @@ load_courses <- function(opt) {
 load_students <- function(opt) {
 message("loading class list data...")
 students <- read_feather(paste0(cedar_data_dir,"processed/class-list.feather"))
-
-message("processing data...")
-
 message("done loading student data.")
 return(students)
 }
@@ -228,9 +219,6 @@ return(students)
 load_academic_study <- function() {
   message("loading academic-study.feather...")
   headcount <- read_feather(paste0(cedar_data_dir,"processed/academic-study.feather"))
-  
-  message("processing data...")
-  
   message("done loading academic study data.")
   return(headcount)
 }
