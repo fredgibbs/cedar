@@ -29,6 +29,13 @@ load_funcs(cedar_base_dir)
 # desrs
 #load(url("https://unmm-my.sharepoint.com/:u:/g/personal/fwgibbs_unm_edu/EcFs0ZAuy35IgjAQ593NAIwBcnocDZ1u6oLALNgVZRs30g?download=1"))
 
+message("looking for saved courses...")
+courses <- NULL
+courses <- read.csv("courses.csv")
+message(head(courses))
+
+
+
 message("loading courses...")
 desrs <- Sys.getenv("desrs") 
 load(url(desrs))
