@@ -73,29 +73,13 @@ create_dept_report <- function (students,courses,opt) {
     d_params <- set_payload (dept_code,prog_focus)
     
     
-    ############ 
-    # run scripts to prepare data and images
-    ############
-    
     ####### HEADCOUNT
-    if (file.exists(paste0(data_processed_dir,"academic-study.feather"))) {
-      d_params <- get_headcount_data_for_dept_report(d_params)
-      # produces: headcount-by-year.png, headcount_filtered_by_level_dept.Rda (hc_filtered)
-    } else {
-      stop("headcount.Rda not found in ",data_processed_dir,". You must first run data/parsers/parse-academic-study.R.")
-    }
-    
+    d_params <- get_headcount_data_for_dept_report(d_params)
+
     ####### DEGREES
-    if (file.exists(paste0(data_processed_dir,"degrees.Rda"))) {
-      #source("degrees/degrees-for-rmd.R") 
-      d_params <- get_degrees_for_dept_report(d_params)
-      # produces: degrees-for-program-by-year.png; degrees-for-program-by-year.Rda (degrees_for_program)
-    } else {
-      stop("degrees.Rda not found in ",data_processed_dir,". You must first run data/parsers/parse-degrees.R.")
-    }
-    
+    d_params <- get_degrees_for_dept_report(d_params)
+
     ####### CREDIT HOURS  
-    # this uses just class list data, so no file checks necessary
     d_params <- get_credit_hours_for_dept_report(students, d_params)
     
     ####### CREDIT HOURS BY MAJOR
