@@ -13,25 +13,25 @@ source(paste0(cedar_base_dir,"/includes//misc_funcs.R"))
 # define details for each kind of MyReports report
 report_specs <- list(
   desr = list(
-    dir = "DESRs",
+    dir = "DESRs/",
     data_file = "DESRs",
     term_col = "TERM",
     parser = "parse-DESR.R"
   ),
   cl = list(
-    dir = "class-lists",
-    data_file = "class-list",
+    dir = "class_lists/",
+    data_file = "class_lists",
     term_col = "Academic Period",
     parser = "parse-class-list.R"
   ),
   as = list(
-    dir = "academic-study",
-    data_file = "academic-study",
+    dir = "academic_studies/",
+    data_file = "academic_studies",
     term_col = "Academic Period",
     parser = "parse-academic-study.R"
   ),
   deg = list(
-    dir = "degrees",
+    dir = "degrees/",
     data_file = "degrees",
     parser = "parse-degrees.R"
   )
@@ -106,7 +106,7 @@ for (report in report_list) {
     }
     
     message("loading latest data...")
-    new_data <- read_xlsx(file)
+    new_data <- read_xlsx(file, guess_max = 10000)
     message("loaded ",nrow(new_data) ," rows.")
     
     message("excel file loaded. processing data...")
@@ -154,31 +154,39 @@ for (report in report_list) {
     message("saving Rds file: ",filename,"...")
     saveRDS(data,file=filename)
     message("saved ",nrow(data) ," rows.")
-
-    if (!is.null(cedar_cloud_data_dir)) {
-      message("copying Rds to local OneDrive folder...")
-      
-      file.copy(to =   cedar_cloud_data_dir,
-                from = filename)
-    }
+    
     
     # message("saving feather file...") 
     # write_feather(students,paste0(cedar_data_dir,"/processed/class-list.feather"))
     # message("saved ",nrow(students) ," rows.")
-  
+    
     # if data archiving enabled, archive downloaded file to archive folder (from config.R)
     if (!is.null(cedar_data_archive_dir)) {
-      message("moving .xlsx file to archive folder...")
+      archive_dir <- paste0(cedar_data_archive_dir, report_spec$dir)
+      message("moving .xlsx file to archive folder: ", archive_dir, "...")
       
       filepath <- as.character(file)
       
-      file.copy(to =   paste0(cedar_data_archive_dir, report_spec$dir, basename(filepath)),
+      file.copy(to =   paste0(archive_dir, basename(filepath)),
                 from = filepath)
       file.remove(from = filepath)
       
       message("xlsx file archived.")
     } # end if archiving data files
   } # end process excel file
+  
+  
+  if (!is.null(cedar_cloud_data_dir)) {
+    cloud_filepath <- paste0(cedar_cloud_data_dir, report_spec$data_file,".Rds")
+    local_filepath <- paste0(cedar_data_dir,"processed/",report_spec$data_file,".Rds")
+
+    message("copying Rds to local OneDrive folder: ",cloud_filepath,"...")
+    
+    file.copy(to =   cloud_filepath,
+              from = local_filepath)
+  }
+  
+  
 } # end report loop
 
 message("all done in parse-data.")
