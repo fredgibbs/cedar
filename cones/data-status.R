@@ -7,12 +7,12 @@ get_data_status <- function (opt) {
   # check for expected data files and report number of records per term and last updated date
   
   message("getting class list status...")
-  class_list <- load_students(opt)
+  class_list <- load_students()
   class_list_status <- class_list %>% group_by(`Academic Period Code`,as_of_date) %>% summarize (rows = n())
   status_list[["class_list"]] <- class_list_status
 
   message("getting DESRs status...")
-  DESRs <- load_courses(opt)
+  DESRs <- load_courses()
   DESR_status <- DESRs %>% group_by(`TERM`,as_of_date) %>% summarize (rows = n())
   status_list[["DESR_status"]] <- DESR_status
 

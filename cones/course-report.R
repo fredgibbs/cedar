@@ -10,8 +10,8 @@
 
 get_course_data <- function(students, courses, opt) {
   # for studio testing...
-  # students <- load_students(opt)
-  # courses <- load_courses(opt)
+  # students <- load_students()
+  # courses <- load_courses()
   # opt <- list()
   # opt[["course"]] <- "UHON 301"
   #opt[["term"]] <- 202510

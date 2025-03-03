@@ -3,7 +3,7 @@ get_enrolled_cr <- function(filtered_students,courses,opt) {
   message("welcome to get_enrolled_cr!")
   
   # uncomment for testing
-  # filtered_students <- load_students(opt)
+  # filtered_students <- load_students()
   # courses <- list('HIST 491',"HIST 492")
   #opt[["course"]] <- cl_crits
   

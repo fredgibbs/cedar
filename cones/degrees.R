@@ -1,7 +1,7 @@
 count_degrees <- function() {
   
   # degrees.Rda comes from parse-degrees.R, which processes Graduates and Pending Graduates Report.
-  load(paste0(cedar_data_dir,"processed/degrees.Rda")) # load degrees DF
+  degrees <- load_degrees()
   
   # don't filter by college here to get majors/minors from other colleges who have an A&S program as a second majors, certificate, etc.
   # degrees <- grads %>% filter (`College`=="College of Arts and Sciences" | `College`=="Graduate Programs") 
