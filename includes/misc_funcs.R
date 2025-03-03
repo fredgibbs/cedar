@@ -128,7 +128,7 @@ filter_course_list <- function(all_courses,select_courses,opt) {
   #print(select_courses)
   #print(as.list(select_courses))
   # studio testing...
-  #all_courses <- load_courses(opt)
+  #all_courses <- load_courses()
   #select_courses <- as_tibble(next_courses$SUBJ_CRSE)
   
   # filter all courses to just supplied selected 
@@ -199,29 +199,43 @@ load_forecasts <- function(opt) {
 }
 
 
-load_courses <- function(opt) {
-  message("loading course data...")
-  load(paste0(cedar_data_dir,"processed/courses_with_final_and_latest_enrollments.Rda"))
-  courses <- completed_and_ongoing_courses # rename DF from file
-  message("done loading course data.")
-  return(courses)
+load_datafile <- function(filename) {
+  message("loading data for: ",filename,"...")
+  
+  # check for cloud data
+  if (exists("cedar_cloud_data_urls") && !is.null(cedar_cloud_data_urls[[filename]])) {
+    message("getting data from the cloud...")
+    data <- readRDS(url(cedar_cloud_data_urls[[filename]] ))
+  } else {
+    message("getting data from local file...")
+    data <- readRDS(paste0(cedar_data_dir,"processed/",filename,".Rds"))  
+  }
+  
+  message("returning data...")
+  return(data)
 }
 
 
-load_students <- function(opt) {
-message("loading class list data...")
-students <- read_feather(paste0(cedar_data_dir,"processed/class-list.feather"))
-message("done loading student data.")
-return(students)
+load_students <- function() {
+  data <- load_datafile("class_lists")
+  return(data)
 }
 
-
-load_academic_study <- function() {
-  message("loading academic-study.feather...")
-  headcount <- read_feather(paste0(cedar_data_dir,"processed/academic-study.feather"))
-  message("done loading academic study data.")
-  return(headcount)
+load_courses <- function() {
+  data <- load_datafile("desrs")
+  return(data)
 }
+
+load_degrees <- function() {
+  data <- load_datafile("degrees")
+  return(data)
+}
+
+load_academic_studies <- function() {
+  data <- load_datafile("academic_studies")
+  return(data)
+}
+
 
 
 # add prev term col
