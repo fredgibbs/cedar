@@ -17,22 +17,10 @@ source("includes/shiny_config.R")
 source("includes/load_funcs.R")
 load_funcs(cedar_base_dir)
 
-# external source loading
-# source("https://raw.githubusercontent.com/fredgibbs/cedar/refs/heads/main/cones/enrl/enrl.R")
-#load(url("https://www.dropbox.com/scl/fi/8jxi6y5goz44ub5vsbms9/degrees.Rda?rlkey=we9lgiqkw0sq6vjtds6tpr08v&st=ch13dtit&dl=1"))
-#load(url("https://unmm-my.sharepoint.com/:u:/g/personal/fwgibbs_unm_edu/EUsiRM6_Xr9Ng-ygeuWDvNwB75F2tZuHSa_nHSBrepsLnw?download=1"))
-
-# classlists
-# readRDS(url("https://unmm-my.sharepoint.com/:u:/g/personal/fwgibbs_unm_edu/ERz_u5OXEjNFvbNGTbG7T1sBRxKp3QGehRVm_7HmhxZmPA?download=1"))
-# classlists <-  "https://unmm-my.sharepoint.com/:u:/g/personal/fwgibbs_unm_edu/ERz_u5OXEjNFvbNGTbG7T1sBRxKp3QGehRVm_7HmhxZmPA?download=1"
-
-# desrs
-#load(url("https://unmm-my.sharepoint.com/:u:/g/personal/fwgibbs_unm_edu/EcFs0ZAuy35IgjAQ593NAIwBcnocDZ1u6oLALNgVZRs30g?download=1"))
-
+# use "secret" environment variables from posit cloud connect 
 message("loading courses...")
 desrs <- Sys.getenv("desrs") 
-load(url(desrs))
-courses <- completed_and_ongoing_courses
+courses <- readRDS(url(desrs))
 
 # load students
 # message("loading students...")
