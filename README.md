@@ -1,4 +1,45 @@
-BASIC DATA UPDATES 
+CEDAR is a command line tool written in R.
+
+To use it, you need to have R installed, and to able to run Rscript from the command line.
+
+Ideally, you can clone it from GitHub, but you can also just download the zip file of the code.
+---
+
+## CONFIGURING CEDAR
+
+Using Finder (Mac) or the Windows File Manager, navigate to the "includes" folder in your cedar directory. You don't need to do this on the command line.
+
+Find the cedar/includes/config_template.R, and rename it to config.R
+Open the newly renamed config.R file in a text editor, like Notepad++ (Windows) or TextEdit (Mac).  
+DO NOT USE Notepad or Word! 
+
+You will see lines for "cedar_base_dir" and "cedar_data_archive_dir". For each, in between the quotes: 
+- cedar_base_dir: put the full path to your cedar directory. 
+- cedar_data_archive_dir: put the full path to where you will store the raw Excel files from my reports after you've ingested them into CEDAR. If you don't want to archive old MyReports, leave it blank
+
+In both cases: Make sure the path BEGINS and END with a regular slash "/".
+On Windows, use either single forward slashes, or double backslashes anywhere they appear. 
+
+If you want to make reports, you need to make sure you have pandoc installed on your machine. See https://pandoc.org/installing.html. On a Mac, it will install to /usr/local/bin/. Set cedar_pandoc_path to "/usr/local/bin/"
+
+Make sure filename extension stays as .R  when you save your file.
+
+---
+
+Now, on the command line, change directories to the cedar folder.
+
+From the commannd line, type  "Rscript cedar.R" (without quotes) and press Enter
+If you get an error that Rscript is not found, there is a problem with your system path.
+
+Otherwise, you should see a long list of options and a message that no function was specified. This means EVERYTHING IS WORKING!
+
+For fun, copy and paste the following onto the command line: 
+Rscript cedar.R -f enrl -c 'ENGL 1120' -t 202410 -a course
+
+See the cookbook for examples of what you can do.
+
+
+## Updating Data
 
 GENERAL RULE: When getting current data, always download ALL available fields from MyReports.
 
