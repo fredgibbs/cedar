@@ -190,9 +190,9 @@ source("includes/load_funcs.R")
 load_funcs("./")
 
 # load data 
-courses <- load_courses(opt)
+courses <- load_courses()
 if (is.null(opt$enrl)) { # don't load just for enrl
-  students <- load_students(opt)  
+  students <- load_students()  
 }
 
 ########### PROCESS SPECIFIED FUNCTION  REQUEST  ##############
@@ -649,7 +649,7 @@ if (opt$func == "waitlist") {
 ########### WORKLOAD REPORT (under development) ##############
 if (opt$func == "workload-report") {
   source("cones/workload-report/workload.R")
-  all_courses <- load_courses(opt)
+  all_courses <- load_courses()
   
   # filter out all 0 enrollments
   all_courses <- all_courses %>% filter (total_enrl > 0)
