@@ -5,7 +5,7 @@
 
 calc_cl_enrls <- function(students,reg_status=NULL) {
   
-  # students <- load_students(opt)
+  # students <- load_students()
   # #reg_status <- c("DR")
   # reg_status <- NULL
   
@@ -85,7 +85,7 @@ compress_aop_pairs <- function (courses,opt) {
   message("compressing AOP courses into single row...")
   
   # for testing...
-  # courses <- load_courses(opt)
+  # courses <- load_courses()
   # opt <- list()
   # #opt[["course"]] <- "BIOL 2305"
   # opt[["term"]] <- "202210"

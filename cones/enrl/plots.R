@@ -7,7 +7,7 @@ plot_enrls <- function(summary, opt) {
   
   message("welcome to plot_enrls!")  
 
-  courses <- load_courses(opt)
+  courses <- load_courses()
   myopt <- list()
   myopt$aggregate <- "method"
   myopt$x <- "compress"

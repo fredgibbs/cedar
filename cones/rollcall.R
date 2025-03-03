@@ -311,7 +311,7 @@ rollcall <- function (students,opt) {
   # opt$aggregate <- "major_wide"
   # opt$course <- "ENGL 2210"
   # 
-  # students <- load_students(opt)
+  # students <- load_students()
   
   # opt$registration_status <- "Student Registered"
   # #opt$classification <-  'Freshman, 1st Yr, 1st Sem'

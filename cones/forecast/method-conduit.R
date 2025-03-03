@@ -20,8 +20,8 @@ conduit_forecast <- function(students,courses,opt) {
   message("\n FORECASTING VIA CONDUIT...")
   
   #for studio testing...
-  # students <- load_students(opt)
-  # courses <- load_courses(opt)
+  # students <- load_students()
+  # courses <- load_courses()
   # opt <- list()
   # opt[["course"]] <- "ENGL 2993"
   # opt[["term"]] <- "202560"

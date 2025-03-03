@@ -149,7 +149,7 @@ get_reg_data <- function(filtered_students,opt) {
   message("welcome to get_reg_data!")
   
   # uncomment for testing
-  # students <- load_students(opt)
+  # students <- load_students()
   # filtered_students <- students %>% filter (SUBJ_CRSE %in% ...)
   
   # group and summarize class_lists

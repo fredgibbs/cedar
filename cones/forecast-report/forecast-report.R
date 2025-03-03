@@ -7,7 +7,7 @@
 find_major_enrl_correlations <- function(courses, opt) {
 
   # uncomment for studio testing
-  # courses <- load_courses(opt)
+  # courses <- load_courses()
   # opt <- list()
   
   
@@ -60,8 +60,8 @@ calc_forecast_accuracy <- function(students,courses, opt) {
   message("Welcome to calc_forecast_accuracy!")
   
   #uncomment for studio testing
-  # courses <- load_courses(opt)
-  # students <- load_students(opt)
+  # courses <- load_courses()
+  # students <- load_students()
   # 
   # opt <- list()
   # opt$course <- "BIOL 1110"

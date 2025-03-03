@@ -194,7 +194,7 @@ get_grades <- function(students,opt) {
   
   # for studio testing
   # opt <- list()
-  # students <- load_students(opt)
+  # students <- load_students()
   # opt$course <- "AFST 1110"
   # opt$term <- "202460"
 

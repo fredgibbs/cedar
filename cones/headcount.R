@@ -1,7 +1,7 @@
 # get counts of majors across Colleges to see change over time
 # useful for trying to understanding relationship b/w changing majors and enrollments
 count_majors <- function(opt) {
-  acad_study <- load_academic_study()
+  acad_study <- load_academic_studies()
   acad_study <- acad_study %>% distinct(`Academic Period`,ID, .keep_all = TRUE)
   acad_study <- acad_study %>% filter (`Student Level` == "Undergraduate")
   acad_study <- acad_study %>% group_by(`Academic Period`,Major)
@@ -23,7 +23,7 @@ count_majors <- function(opt) {
 
 count_heads_in_college <- function(opt) {
 
-  headcount <- load_academic_study()
+  headcount <- load_academic_studies()
 
   # don't filter by College field, since it represents only First Major,
   # and would ignore students with Second Majors or minors in a different College.

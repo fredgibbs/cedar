@@ -52,8 +52,8 @@ seatfinder <- function (students, courses, opt) {
   # opt <- list()
   # opt$term <- "202510"
   # opt$pt <- "2H"
-  # courses <- load_courses(opt)
-  # students <- load_students(opt)
+  # courses <- load_courses()
+  # students <- load_students()
 
   message("\n","welcome to seatfinder!")
   

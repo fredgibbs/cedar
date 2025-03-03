@@ -14,8 +14,8 @@ fall_to_spring_forecast <- function(students, courses, opt) {
   message("welcome to basic forecasting!")
   
   #uncomment for studio testing
-  # students <- load_students(opt)
-  # courses <- load_courses(opt)
+  # students <- load_students()
+  # courses <- load_courses()
   # opt <- list()
   # opt$term <- "202480"
   # opt$course <- "HIST 491"
