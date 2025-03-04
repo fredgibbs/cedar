@@ -16,7 +16,7 @@ params:
   output_filename: 1
 ---
 
-```{r setup, fig.width = 10, fig.height = 12}
+```{r setup, fig.width = 10, fig.height = 12, echo = FALSE,warning = FALSE, message = FALSE}
   library(kableExtra)
   library(rmarkdown)
   library(dplyr)
@@ -41,7 +41,7 @@ params:
   dips <- flagged[["dips"]]
   bumps <- flagged[["bumps"]]
   
-  knitr::opts_chunk$set(echo = TRUE,warning = TRUE, message = TRUE, dpi=200,fig.height=11,out.height="100%")
+  knitr::opts_chunk$set(echo = FALSE,warning = FALSE, message = FALSE, dpi=200,fig.height=11,out.height="100%")
 ```
 
 
