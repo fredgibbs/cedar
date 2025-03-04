@@ -37,8 +37,8 @@ get_grades_summary <- function(grades) {
   grades_summary$`Final Grade` <- factor(grades_summary$`Final Grade`,levels=unlist(grades_to_points[1]))
   grades_summary <- grades_summary %>% arrange(`Final Grade`)
   
-  message("initial grades summary:")
-  grades_summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  # message("initial grades summary:")
+  # grades_summary %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   return(grades_summary)
 }
@@ -75,8 +75,8 @@ get_pf_sum_by_course <- function(pf_sum) {
   pf_sum_by_course <- pf_sum %>% group_by(`Academic Period Code`, SUBJ_CRSE ) %>% 
     summarize (passed = sum(passed), failed = sum(failed), dropped = sum(dropped))
   
-  message("pass/fail/drop summary:")
-  pf_sum_by_course %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  # message("pass/fail/drop summary:")
+  # pf_sum_by_course %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   return(pf_sum_by_course)
 }
@@ -115,9 +115,9 @@ get_grades_summary_by_course <- function(grades_summary,pf_sum_by_course) {
     mutate (`DFW %`=round((dropped+failed)/(dropped+passed+failed)*100,digits=2), .after=`SUBJ_CRSE` ) %>% 
     arrange(`Academic Period Code`,SUBJ_CRSE)
   
-  message("the master gradebook (w/o instructors): course grades (wide) by course and term:")
-  grades_summary_by_course %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  
+  # message("the master gradebook (w/o instructors): course grades (wide) by course and term:")
+  # grades_summary_by_course %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
+
   return(grades_summary_by_course)
 }
 
@@ -132,8 +132,8 @@ get_course_avg <- function(grades_summary_by_course) {
     mutate (`DFW %`=round((dropped+failed)/(passed+failed+dropped)*100,digits=2)) %>% 
     arrange(desc(`DFW %`))
   
-  message("course averages:")
-  grades_summary_by_course_avg %>% tibble::as_tibble() %>% print(n =20, width=Inf)
+  # message("course averages:")
+  # grades_summary_by_course_avg %>% tibble::as_tibble() %>% print(n =20, width=Inf)
   
   return(grades_summary_by_course_avg)
 }
@@ -147,8 +147,8 @@ get_grades_summary_by_course_term_avg <- function(grades_summary_by_course) {
     mutate (`DFW %`=round((dropped+failed)/(passed+failed+dropped)*100,digits=2)) %>% 
     arrange(`Academic Period Code`,SUBJ_CRSE)
   
-  message("course averages per semester:")
-  grades_summary_by_course_term_avg %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
+  # message("course averages per semester:")
+  # grades_summary_by_course_term_avg %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
   
   return(grades_summary_by_course_term_avg)
 }
@@ -163,8 +163,8 @@ get_inst_term_avg <- function(grades_summary_w){
     mutate (`DFW %`=round(failed/(passed+failed)*100,digits=2), .after = `Primary Instructor Last Name` ) %>% 
     arrange(`Academic Period Code`,`Primary Instructor Last Name`)
   
-  message("course + inst averages per semester:")
-  grades_summary_by_inst_term_avg %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  # message("course + inst averages per semester:")
+  # grades_summary_by_inst_term_avg %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   return (grades_summary_by_inst_term_avg)
 }
@@ -179,8 +179,8 @@ get_inst_avg <- function(grades_summary_w){
     mutate (`DFW %`=round(failed/(passed+failed)*100,digits=2), .after = `Primary Instructor Last Name` ) %>% 
     arrange(`Primary Instructor Last Name`)
   
-  message("course + inst averages:")
-  grades_summary_by_inst_avg %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  # message("course + inst averages:")
+  # grades_summary_by_inst_avg %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   return(grades_summary_by_inst_avg)
 }
