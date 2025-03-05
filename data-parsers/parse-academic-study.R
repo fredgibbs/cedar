@@ -47,7 +47,8 @@ parse <- function (new_students) {
   #cat(unique(new_students$Major[is.na(new_students$major_DEPT)]),sep="\n")
   
   # TODO: check First Minor also since some minors are not majors?
-  
+  # discard unnecessary fields
+  new_students <- new_students %>% select (-c(`Student First Name`,`Student Last Name`,`Confidentiality Indicator`,`Email Address`,`Preferred First Name`,`NetID`,`Street Line 1`,`Street Line 2`,`City`,`County`,`County Code`,`Zip Code`,`State/Province`,`Phone Number`))
   
   message("done processing academic study Excel file.") 
   
