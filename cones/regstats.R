@@ -128,17 +128,18 @@ get_after_bumps <- function (bumps, students, courses) {
     
     myopt[["course"]] <- course
     
+    # get top 5 courses where students go after a bump course (than than normal enrollment)
     where_tos <- where_to(students,myopt) %>% arrange (desc(avg_contrib))
     next_courses <- head(where_tos,n=5)
-    
     after_bumps <- c(after_bumps, next_courses$SUBJ_CRSE)
-    message("after_bumps now looks like:",after_bumps)
+  
   } # end loop through bumps to find next courses
   
   after_bumps <- unique(tibble(SUBJ_CRSE = after_bumps))
   
   message("done assembling after bumps:")
   print(after_bumps)
+  
   return(after_bumps)
 }
 
@@ -197,8 +198,6 @@ get_dimp_bumps <- function(regstats,thresholds) {
 
 get_dimp_dips <- function(regstats,thresholds) {
   dips <- regstats %>% filter (substring(`Registration Status Code`,1,1) == "R") 
-  message("DIPS")
-  print(dips)
   dips <- get_dimp_concerns(dips,thresholds,"minus")
   dips <-  dips %>% arrange (impacted)
   
@@ -313,22 +312,23 @@ get_reg_stats <- function(students,courses,opt) {
   flagged[["high_fall_sophs"]] <- get_high_fall_sophs(students, courses, myopt)
 
   
-  # output to terminal 
-  message("courses with enrollment dips:")
-  flagged[["dips"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
-  
-  message("courses with enrollment bumps:")
-  flagged[["bumps"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
-  
-  message("courses with higher than usual drops:")
-  flagged[["drops"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
-  
-  message("courses with long wait lists:")
-  flagged[["waits"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
-  
-  message("courses with enrollment squeezes:")
-  flagged[["squeezes"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
-  
+  # output to terminal
+  # now handled in cedar.R through process_output
+  # message("courses with enrollment dips:")
+  # flagged[["dips"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
+  # 
+  # message("courses with enrollment bumps:")
+  # flagged[["bumps"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
+  # 
+  # message("courses with higher than usual drops:")
+  # flagged[["drops"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
+  # 
+  # message("courses with long wait lists:")
+  # flagged[["waits"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
+  # 
+  # message("courses with enrollment squeezes:")
+  # flagged[["squeezes"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
+  # 
   return(flagged)
 }
 
