@@ -22,17 +22,21 @@ report_specs <- list(
     dir = "class_lists/",
     data_file = "class_lists",
     term_col = "Academic Period",
+    ID_col = "Student ID",
     parser = "parse-class-list.R"
   ),
   as = list(
     dir = "academic_studies/",
     data_file = "academic_studies",
     term_col = "Academic Period",
+    ID_col = "ID",
     parser = "parse-academic-study.R"
   ),
   deg = list(
     dir = "degrees/",
     data_file = "degrees",
+    term_col = "Academic Period",
+    ID_col = "ID",
     parser = "parse-degrees.R"
   )
 )
@@ -63,11 +67,14 @@ if (is.null(opt$report)){
 # convert report to list
 report_list <- convert_param_to_list(opt$report)
 
+# uncomment for studio testing
+#opt["report"] <- "desr"
+
 
 # loop through reports as specified in command line
 for (report in report_list) {
   # uncomment for studio testing
-  # report <- report_list[[1]]
+  #report <- report_list[[1]]
   
   message("processing report type: ", report)
   
@@ -85,7 +92,7 @@ for (report in report_list) {
   
   for (file in file_list) {
     # uncomment for studio testing
-    # file <- file_list[1]
+    #file <- file_list[1]
     
     message("processing file: ", file, "..." )
     
@@ -115,7 +122,9 @@ for (report in report_list) {
     if (!rebuild) {
       message("filtering out current term data in old data...")
       new_term <- unique(new_data[[{{report_spec[["term_col"]]}}]])
-      old_data <- old_data %>% filter (!!report_spec[["term_col"]] != new_term)
+      message("new term: ", new_term)
+      old_data <- old_data %>% filter (!!as.symbol(report_spec[["term_col"]]) != new_term)
+      message("old_data now has ",nrow(old_data) ," rows.")
     }
     
     message("adding as_of_date column...")
@@ -150,6 +159,12 @@ for (report in report_list) {
       data <- new_data
     }
     
+    # encrypt student ID
+    message("encypting IDs..")
+    if (!is.null(report_spec)) {
+      data[[report_spec$ID_col]] <- sapply(data[[report_spec$ID_col]], digest::digest, algo = "md5")
+    }
+    
     filename <- paste0(cedar_data_dir,"processed/",report_spec$data_file,".Rds")
     message("saving Rds file: ",filename,"...")
     saveRDS(data,file=filename)
@@ -180,10 +195,14 @@ for (report in report_list) {
     cloud_filepath <- paste0(cedar_cloud_data_dir, report_spec$data_file,".Rds")
     local_filepath <- paste0(cedar_data_dir,"processed/",report_spec$data_file,".Rds")
 
-    message("copying Rds to local OneDrive folder: ",cloud_filepath,"...")
+    message("copying Rds FROM local data folder: ",local_filepath)
+    message("copying Rds TO local OneDrive folder: ",cloud_filepath,"...")
     
     file.copy(to =   cloud_filepath,
-              from = local_filepath)
+              from = local_filepath,
+              overwrite = TRUE)
+    
+    message("Rds file copied to OneDrive.")
   }
   
   
