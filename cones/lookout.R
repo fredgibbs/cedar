@@ -55,9 +55,10 @@ where_at <- function (students,opt) {
 # for a given course, finds courses taken by students in the following semester
 # this is semester agnostic, so these are averages from class list data
 where_to <- function (students,opt) {
-  message("\n Figuring out where students go after target_course...")
   
   target_course <- opt[["course"]]
+
+  message("\n Figuring out where students go after target_course: ", target_course ,"...")
   
   if (!is.null(opt[["summer"]])) {
     incl_summer <- opt[["summer"]]
@@ -91,7 +92,7 @@ where_to <- function (students,opt) {
   
   disp_merge_summary <- disp_merge %>% 
     group_by(`next_term`,SUBJ_CRSE,`Student Classification`,term_type) %>%  
-    summarize (enrolled=n())
+    summarize (enrolled=n(), .groups="keep")
   
   disp_merge_summary <- disp_merge_summary %>% 
     group_by(SUBJ_CRSE,`Student Classification`,term_type) %>% 
@@ -102,13 +103,12 @@ where_to <- function (students,opt) {
     select(SUBJ_CRSE,`Student Classification`,term_type,avg_contrib) %>%  
     distinct()
   
-  
-  message("course contributions w/o classifications")
   dispersal_avgs_wo_class <- dispersal_avgs %>% 
     group_by(SUBJ_CRSE,term_type) %>%  
-    summarize(avg_contrib = sum(avg_contrib)) %>% 
+    summarize(avg_contrib = sum(avg_contrib), .groups="keep") %>% 
     arrange(desc(avg_contrib))
   
+  message("course contributions w/o classifications")
   # dispersal_avgs_wo_class %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   # create col to indicate target course
