@@ -159,7 +159,7 @@ for (report in report_list) {
       data <- new_data
     }
     
-    # encrypt student ID
+    # encrypt student IDs
     message("encypting IDs..")
     if (!is.null(report_spec)) {
       data[[report_spec$ID_col]] <- sapply(data[[report_spec$ID_col]], digest::digest, algo = "md5")
