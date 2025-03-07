@@ -11,21 +11,25 @@ library(shiny)
 library(DT)
 library(bslib)
 library(tidyverse)
-library(feather)
 
 source("includes/shiny_config.R")
 source("includes/load_funcs.R")
 load_funcs(cedar_base_dir)
 
 # use "secret" environment variables from posit cloud connect 
-message("loading courses...")
 desrs <- Sys.getenv("desrs") 
-courses <- readRDS(url(desrs))
+class_lists <- Sys.getenv("class_lists") 
+academic_studies <- Sys.getenv("academic_studies") 
+degrees <- Sys.getenv("degrees") 
 
-# load students
-# message("loading students...")
-# classlists <- Sys.getenv("classlists") 
-# students <- readRDS(url(classlists))
+
+message("loading courses...")
+
+courses <- readRDS(url(desrs))
+students <- readRDS(url(class_lists))
+academic_studies <- readRDS(url(academic_studies))
+degrees <- readRDS(url(degrees))
+
 # message("loaded students with ",nrow(students)," rows.")
 
 # filter courses
