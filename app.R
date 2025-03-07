@@ -274,6 +274,7 @@ server <- function(input, output, session) {
   ##### COURSE REPORT
   observeEvent(input$cr_button,{
     opt <- list()
+    opt[["shiny"]] <- TRUE
     opt[["course"]] <- input$cr_course_selection
     #opt[["term"]] <- input$cr_term
   
