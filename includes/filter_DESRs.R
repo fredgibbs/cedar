@@ -62,7 +62,7 @@ filter_DESRs <- function(courses, opt) {
     courses <- filter_by_col(courses,"SUBJ_CRSE",opt[["course"]])
   }
   
-  # term filter
+  # filter by TERM
   if (length(opt[["term"]]) > 0 || !is.null(opt[["term"]])) { 
     courses <- filter_by_term(courses,opt[["term"]],"TERM")
     check_num_rows(courses)  
@@ -99,12 +99,15 @@ filter_DESRs <- function(courses, opt) {
   # filter by instructional method
   # this is the best way to flag aop (mops) courses
   if (!is.null(opt$im)) {
+    message("filtering by instructional method:",opt$im)
+
+    # # provide common filter shortcut
+    # if(opt$im == "f2f") {
+    #   opt$im <- "ENH,0,HYB"
+    # }
     
-    # provide common shortcut, since f2f courses could have either IM
-    if(opt$im == "f2f") {
-      opt$im <- "ENH,0,HYB"
-    }
-    courses <- courses %>% filter (INST_METHOD %in% as.list(strsplit(opt$im, ",")[[1]]))
+    courses <- filter_by_col(courses,"INST_METHOD",opt[["im"]])
+
     check_num_rows(courses)
   }
   
