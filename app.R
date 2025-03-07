@@ -335,7 +335,8 @@ server <- function(input, output, session) {
     opt[["level"]] <- input$rs_level
     flagged <- create_regstat_report(students,courses,opt)
     
-    html_file <- "/Users/fwgibbs/Dropbox/cedar/output/regstats-reports/html/regstats-202510-1.html"
+    #html_file <- "/Users/fwgibbs/Dropbox/cedar/output/regstats-reports/html/regstats-202510-1.html"
+    html_file <- "output.html"
     #print(html_file)
     
     #output$cd_enrls <- renderDataTable({

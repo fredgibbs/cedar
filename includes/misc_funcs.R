@@ -518,6 +518,7 @@ create_report <- function(opt, d_params) {
   
   # need to run as Rscript call from shiny app (or within Rstudio)
   if (!is.null(opt[["shiny"]]) && opt[["shiny"]] == TRUE) {
+    output_filename <- "output.html"
     rmd_output <- xfun::Rscript_call(
       rmarkdown::render,
       list(input = d_params$rmd_file, output_format = 'html_document', output_file = output_filename, params = d_params)
