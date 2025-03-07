@@ -23,8 +23,7 @@ academic_studies <- Sys.getenv("academic_studies")
 degrees <- Sys.getenv("degrees") 
 
 
-message("loading courses...")
-
+message("loading data...")
 courses <- readRDS(url(desrs))
 students <- readRDS(url(class_lists))
 academic_studies <- readRDS(url(academic_studies))

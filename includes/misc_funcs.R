@@ -515,7 +515,6 @@ create_report <- function(opt, d_params) {
   message("output file set to: ", output_filename)
   message("rendering report for ", d_params$dept_code)
   
-  Sys.setenv(RSTUDIO_PANDOC=rstudio_pandoc)
   
   # need to run as Rscript call from shiny app (or within Rstudio)
   if (!is.null(opt[["shiny"]]) && opt[["shiny"]] == TRUE) {
@@ -524,6 +523,8 @@ create_report <- function(opt, d_params) {
       list(input = d_params$rmd_file, output_format = 'html_document', output_file = output_filename, params = d_params)
     )
   } else {
+    Sys.setenv(RSTUDIO_PANDOC = rstudio_pandoc) # from config.R
+    
     rmd_output <- rmarkdown::render(d_params$rmd_file,
                       output_file = output_filename,
                       params = d_params)
