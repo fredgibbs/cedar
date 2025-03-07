@@ -10,7 +10,7 @@ filter_by_col <- function(courses, col, val) {
   param_to_list <- convert_param_to_list(val)
   message(param_to_list)
   
-  ## use get instead of {{ }} because cal is passed in as a string, rather than a variable
+  ## use get instead of {{ }} because col is passed in as a string, rather than a variable
   courses <- courses %>% filter (get(col) %in% param_to_list)
   
   check_num_rows(courses)
