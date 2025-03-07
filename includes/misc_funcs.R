@@ -1,5 +1,21 @@
 # this file provides miscellaneous functions used across CEDAR
 
+# create controller function for running in RStudio
+# emulate CLI functionality from within RS
+# all code and env variables should have been loaded by .Rprofile
+cedar <- function(x="guide",...) {
+  opt <- list(...)
+  opt$func <- x
+  
+  if (is.null(opt$guide)) {
+    opt$guide <- FALSE
+  }
+  print(opt)  
+  
+  process_func(opt)
+}
+
+
 convert_param_to_list <- function(param) {
   message("converting param to list...")
   # message("converting param (",param,") to list...")
@@ -419,6 +435,54 @@ get_dept_from_course <- function (course) {
 }
 
 
+# output_data is going to be a df/tibble or list
+process_output <- function(output_data,filename,opt) {
+  message("welcome to process_output!")
+  
+  output_list <- list()
+  
+  if (is_tibble(output_data)) {
+    message("incoming output_data is tibble.")
+    output_list[[filename]] <- output_data
+  } 
+  else if (is.list(output_data )) {
+    message("incoming output_data is list.")
+    output_list <- output_data
+  }
+  
+  # print(output_list)  
+  
+  # process each element of list
+  for (i in 1: length(output_list)) {
+    cur_name <- names(output_list)[i]
+    message(cur_name)
+    
+    cur_item <- as_tibble(output_list[[i]])
+    
+    # if arrange param set, use it
+    if (!is.null(opt[["arrange"]])) {
+      arrange_col <- opt[["arrange"]]
+      cur_item <- cur_item %>%  arrange(get({{arrange_col}}) )
+    }
+    
+    # if output csv flag set, print 5 rows as sample and save file 
+    if (!is.null(opt[["output"]]) && opt[["output"]] == "csv") {
+      
+      message(cur_name)
+      cur_item %>% tibble::as_tibble() %>% print(n = 5, width=Inf)
+      
+      message("saving CSV file...")
+      filename <- paste0(cedar_output_dir,"csv/",cur_name,".csv")  
+      message("filename set to: ",filename)
+      write.csv(cur_item, file = filename)
+    }
+    else {
+      # print all rows to terminal
+      cur_item %>% tibble::as_tibble() %>% print(n = nrow(cur_item), width=Inf)  
+    }
+  }
+  message("all done in process_output!\n")
+}
 
 
 
