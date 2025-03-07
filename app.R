@@ -122,9 +122,9 @@ ui <- page_navbar(
             
             fluidRow(
               column(8,
-                     selectizeInput(inputId = "cr_course_selection",
+                     selectizeInput(inputId = "cr_course",
                                     label = "Select Course", 
-                                    multiple = TRUE,
+                                    multiple = FALSE,
                                     choices = sort(unique(courses$SUBJ_CRSE))),
               ),
               column(4,
@@ -233,7 +233,7 @@ ui <- page_navbar(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
-  
+  ### ENROLLMENT
   observeEvent(input$enrl_button,{
     
     output$enrl_summary = DT::renderDataTable({
@@ -271,30 +271,21 @@ server <- function(input, output, session) {
   })
   
   
-  
+  ##### COURSE REPORT
   observeEvent(input$cr_button,{
     opt <- list()
-    opt[["output"]] <- "html"
     opt[["course"]] <- input$cr_course_selection
+    #opt[["term"]] <- input$cr_term
+  
+    course_data <- create_course_report(students,courses,opt)
     
-    # create report and get filename
-    # html_file <- create_course_report(students,courses,opt)
-    #course_data <- get_course_data(students,courses,opt)
-    html_file <- "/Users/fwgibbs/Dropbox/cedar/output/course-reports/html/ENGL_1120.html"
-    #print(html_file)
-    
+    html_file <- "Rmd/output.html"
+
     #output$cd_enrls <- renderDataTable({
-    output$cd_enrls <- renderUI({
-      #course_data[["enrls"]]
-      #tags$h1("header")
+    output$rs_enrls <- renderUI({
       tags$iframe(src = base64enc::dataURI(file=html_file, mime="text/html; charset=UTF-8"),style="height:100vh; width:100%")
-      
-      #tags$iframe(src=paste0("file://",html_file))
-      #print(mine)
-      #mine
-      })
-    print("done rendering")
-    
+    })
+    print("done rendering ui.")
   },ignoreInit = TRUE)
   
   
