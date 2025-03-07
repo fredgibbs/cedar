@@ -2,15 +2,7 @@ cedar_base_dir <- "./"
 
 # recommended to keep as is, but you can specify other folders you've created
 cedar_output_dir <- paste0(cedar_base_dir,"output/")
-#cedar_data_dir <- paste0(cedar_base_dir,"data/")
-
-# if you want to save the MyReports excel files you will download, update the following:
-cedar_data_archive_dir <- NULL
-# set the above to NULL (no quotes) to skip archiving MyReports downloads
-
-
-# standard OneDrive location to save shared files (requires local OneDrive syncing enabled)
-cedar_onedrive_dir <- NULL
+cedar_data_dir <- paste0(cedar_base_dir,"data/")
 
 # define the current term
 cedar_current_term <- 202510
