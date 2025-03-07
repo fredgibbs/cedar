@@ -33,6 +33,7 @@ degrees <- readRDS(url(degrees))
 
 # filter courses
 opt <- list()
+opt[["shiny"]] <- TRUE
 opt[["uel"]] <- TRUE
 opt[["level"]] <- "lower" # for faster testing
 opt[["dept"]] <- "HIST"
@@ -327,13 +328,14 @@ server <- function(input, output, session) {
     
     # get regstats data
     opt <- list()
-    opt$term <- "202480,202510"
+    opt$term <- "202510"
+    opt[["shiny"]] <- TRUE
     opt[["pt"]] <- input$rs_pt
     opt[["im"]] <- input$rs_im
     opt[["level"]] <- input$rs_level
     flagged <- create_regstat_report(students,courses,opt)
     
-    html_file <- "/Users/fwgibbs/Dropbox/cedar/output/regstats-reports/html/regstats-202510.html"
+    html_file <- "/Users/fwgibbs/Dropbox/cedar/output/regstats-reports/html/regstats-202510-1.html"
     #print(html_file)
     
     #output$cd_enrls <- renderDataTable({
