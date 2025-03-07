@@ -1,4 +1,4 @@
-cedar_base_dir <- "."
+cedar_base_dir <- "./"
 
 # recommended to keep as is, but you can specify other folders you've created
 cedar_output_dir <- paste0(cedar_base_dir,"output/")
