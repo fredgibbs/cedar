@@ -336,14 +336,14 @@ server <- function(input, output, session) {
     flagged <- create_regstat_report(students,courses,opt)
     
     #html_file <- "/Users/fwgibbs/Dropbox/cedar/output/regstats-reports/html/regstats-202510-1.html"
-    html_file <- "output.html"
+    html_file <- "Rmd/output.html"
     #print(html_file)
     
     #output$cd_enrls <- renderDataTable({
     output$rs_enrls <- renderUI({
       tags$iframe(src = base64enc::dataURI(file=html_file, mime="text/html; charset=UTF-8"),style="height:100vh; width:100%")
     })
-    print("done rendering")
+    print("done rendering ui.")
     
   },ignoreInit = TRUE)
   
