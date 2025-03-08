@@ -74,7 +74,6 @@ calc_cl_enrls <- function(students,reg_status=NULL) {
     reg_stats_summary <- cl_enrls %>% filter (`Registration Status Code` %in% reg_status)
   }
   
-  
   message("calc_cl_enrls returning ",nrow(reg_stats_summary)," rows.")
   
   return (reg_stats_summary)
@@ -137,20 +136,27 @@ compress_aop_pairs <- function (courses,opt) {
 
 # generic summary function based on group_cols
 # replaces the many variants of aggregate
-summarize_courses <- function (courses, group_cols) {
+summarize_courses <- function (courses, opt) {
   message("summarizing courses with group_cols...")
   
-  # TODO: set default group_cols (like basic subj_crse)
-  if (is.null(group_cols)) {
-    group_cols <- c("TERM","SUBJ","SUBJ_CRSE","level","gen_ed_area")
+  # set default group_cols
+  if (is.null(opt[["group_cols"]])) {
+    group_cols <- c("TERM", "term_type", "SUBJ","SUBJ_CRSE","CRSE_TITLE","level","gen_ed_area")
   }
+  else {
+    group_cols <- opt[["group_cols"]]
+    group_cols <- convert_param_to_list(group_cols)
+    print(str(group_cols))
+    group_cols <- as.character(group_cols)
+    #group_cols <- c("SUBJ_CRSE","PT")
+    print(str(group_cols))
+  }
+  
   summary <- courses %>% ungroup() %>% group_by_at(group_cols) %>% 
     summarize(.groups="keep", sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT))
   
   return(summary)
 }
-
-
 
 
 # basic summary summarizes different sections into a single row
@@ -168,18 +174,6 @@ agg_by_course_type <- function(courses,opt) {
 }
 
 
-# maintains INST_METHOD
-agg_by_course_method <- function(courses,opt) {
-  message("agg_by_course_type: basic course summary (summarize all course sections into single row):")
-  summary <- courses %>% group_by(TERM,SUBJ,SUBJ_CRSE,CRSE_TITLE,INST_METHOD,level,gen_ed_area) %>% 
-    summarize(.groups="keep", sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
-    select (TERM,SUBJ_CRSE,SUBJ,CRSE_TITLE,INST_METHOD,enrolled,sections,avg_size,avail,waiting,level,gen_ed_area)
-  
-  #summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  
-  return(summary)
-}
-
 # only INST_METHOD
 agg_by_method <- function(courses,opt) {
   summary <- courses %>% group_by(TERM,SUBJ,INST_METHOD,level,gen_ed_area) %>% 
@@ -190,7 +184,6 @@ agg_by_method <- function(courses,opt) {
   
   return(summary)
 }
-
 
 
 # basic summary summarizes different sections and variants (method and pt) into a single row
@@ -225,82 +218,33 @@ agg_by_course_term <- function(courses,opt) {
 }
 
 
-# agg_by_dept <- function(courses,opt) { 
-#   message("agg_by_dept:")
-#   summary <- courses %>% group_by(acad_year,TERM,DEPT,level) %>% 
-#     summarize(sections=n(),avg_size=median(ENROLLED),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT))
-#   #summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-#   
-#   return(summary)
-# }
-
-
-agg_by_dept_level <- function(courses,opt) { 
-  message("summarizing across DEPT and LEVEL:")
-  summary <- courses %>% group_by(acad_year,TERM,DEPT,level) %>% 
-    summarize(sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
-    arrange(acad_year,DEPT,factor(level,levels=c("lower","upper","grad","total")),enrolled)
-  
-  summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  
-  return(summary)
-}
-
-
-# basic summary for college
-agg_by_college_level <- function(courses,opt) { 
-  # group only by academic year to get college totals
-  summary <- courses %>% group_by(TERM,`COLLEGE_DESC`,level) %>% 
-    summarize(sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
-    arrange(TERM,factor(level,levels=c("lower","upper","grad","total")),enrolled)
-  
-  summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  
-  return(summary)
-}
-
-
-
 ############# aggregate function (for enrollment summaries)
-aggregate_courses <- function(courses, opt, group_cols) {
+aggregate_courses <- function(courses, opt) {
 
   agg_by <- opt$aggregate
   
-  
-  if (!is.null(group_cols)) {
+  if (!is.null(opt[["group_cols"]])) {
     message("group_cols is not null...")
-    summary <- summarize_courses(courses,group_cols)
+    summary <- summarize_courses(courses,opt)
   }
   else if (agg_by == "course") {
+    stop("course is not implemented yet!")
     summary <- agg_by_course(courses,opt)
   }
-  else if (agg_by == "method") {
-    summary <- agg_by_method(courses,opt)
-  }
-
   else if (agg_by == "course_type") {
-    summary <- agg_by_course_type(courses,opt) 
-  }
-  else if (agg_by == "course_method") {
-    summary <- agg_by_course_method(courses,opt) 
+    stop("course_type is not implemented yet!")
+    summary <- agg_by_course_type(courses,opt)
   }
   else if (agg_by == "subj_crse") {
+    stop("subj_crse is not implemented yet!")
     summary <- agg_by_subj_crse(courses,opt)
   }
   else if (agg_by == "course_term") {
+    stop("course_term is not implemented yet!")
     summary <- agg_by_course_term(courses,opt) 
   }
-  else if (agg_by == "dept") {
-    summary <- agg_by_dept(courses,opt) 
-  }
-  else if (agg_by == "dept_level") {
-    summary <- agg_by_dept_level(courses,opt) 
-  }
-  else if (agg_by == "college_level") {
-    summary <- agg_by_college_level(courses,opt) 
-  }
   else {
-    message("not sure how to aggregate! aggregate param ",agg_by, " not found.")
+    stop("not sure how to aggregate! aggregate param ",agg_by, " not found.")
   }  
   
   # return the summary DF
@@ -317,7 +261,7 @@ get_enrl_for_dept_report <- function(courses, d_params) {
   
   myopt <- list()
   myopt$dept <- d_params[["dept_code"]]
-  myopt$aggregate <- "course_term"
+  myopt$group_by <- c("SUBJ","SUBJ_CRSE","CRSE_TITLE","level","gen_ed_area")
   myopt$x <- "compress"
   myopt$uel <- TRUE 
   
@@ -387,36 +331,41 @@ get_enrl <- function (courses,opt,group_cols=NULL) {
   # opt$course <- "ENGL 1110"
   
   message("\n","welcome to get_enrl!")
-  #print(opt)
   
-  # default status should be A for active courses
+  # default status to A for active courses
   if (is.null(opt$status)) {
     opt$status <- "A"
   }
+
+  # default to use exclude list
+  if (is.null(opt$uel)) {
+    opt$uel <- TRUE
+  }
+  
+  # default to use ABQ campus (EA is ABQ online courses)
+  if (is.null(opt$campus)) {
+    opt$campus <- c("ABQ","EA")
+  }
   
   # filter courses according to options
-  # TODO: in practice, filtering is usually done by the caller so this is redundant
-  # TODO: move aop compression into filter_DESRs -- it's a kind of filtering,
   courses <- filter_DESRs(courses, opt)
 
   # add academic year field
-  # TODO: need to move into load_courses
+  # TODO: move into load_courses or parser?
   courses <- add_acad_year (courses, "TERM")
   
+  select_cols <- c("CAMP","COLLEGE","TERM","term_type","CRN","SUBJ","SUBJ_CRSE","SECT","level","CRSE_TITLE","INST_METHOD","PT","INST_NAME","ENROLLED","total_enrl","XL_SUBJ","SEATS_AVAIL","WAIT_COUNT","gen_ed_area")
+  
   ### AOP COMPRESSION
-  message("figuring out AOP compression...")
   if (!is.null(opt$aop) && opt$aop == "compress") {
-    courses <- compress_aop_pairs(courses,opt) # defined in misc_funcs
-    
-    #courses <- courses %>% select(TERM,CRN,SUBJ_CRSE,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,total_enrl,sect_enrl,pair_enrl)
-    courses <- courses %>% select(CAMP,COLLEGE,TERM,CRN,SUBJ,SUBJ_CRSE,SECT,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,ENROLLED,total_enrl,XL_SUBJ,SEATS_AVAIL,WAIT_COUNT,sect_enrl,pair_enrl,gen_ed_area)
-    
+    message("compressing AOP pairs...")
+    courses <- compress_aop_pairs(courses,opt) 
+    select_cols <- c(select_cols, "sect_enrl","pair_enrl")
+    courses <- courses %>% select(all_of(select_cols))
   }
   else {
     message("leaving AOP pairs alone...")
-    
-    # remove extraneous cols
-    courses <- courses %>% select(CAMP,COLLEGE,TERM,CRN,SUBJ,SUBJ_CRSE,SECT,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,ENROLLED,total_enrl,XL_SUBJ,SEATS_AVAIL,WAIT_COUNT,gen_ed_area)
+    courses <- courses %>% select(all_of(select_cols))
   }
   
   # courses get listed multiple times b/c of crosslisting (inc aop, but also general)
@@ -428,8 +377,8 @@ get_enrl <- function (courses,opt,group_cols=NULL) {
     arrange(TERM,SUBJ_CRSE,CRSE_TITLE,INST_METHOD)
   
   # check if aggregating
-  if(!is.null(opt$aggregate) || !is.null(group_cols)) {
-    courses <- aggregate_courses(courses, opt, group_cols)
+  if(!is.null(opt$aggregate) || !is.null(opt$group_cols)) {
+    courses <- aggregate_courses(courses, opt)
   } else {
     message("no aggregating!")
   }
