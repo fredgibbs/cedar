@@ -282,28 +282,27 @@ ui <- page_navbar(
                value = cedar_regstats_thresholds[["min_count"]])
       ),
       column(2,
-             selectizeInput(
+             numericInput(
                inputId = "sf_min_impacted",
                label = "Min Impacted",   # min difference b/w enrollment and mean (= number of students affected)
-               multiple = TRUE,
                value = cedar_regstats_thresholds[["min_impacted"]])
       ),
       column(2,
-             selectInput(
+             numericInput(
                inputId = "sf_min_pct_sd",
                label = "Pct SD",   # percent of students outside the mean compared to standard deviation
                value = cedar_regstats_thresholds[["min_pct_sd"]])
       ),
       
       column(2,
-             selectInput(
+             numericInput(
                inputId = "sf_min_squeeze",   # squeeze is ratio of avail seats to  mean attrition
                label = "Method",
                multiple = TRUE,
                value = cedar_regstats_thresholds[["min_squeeze"]])
       ),
       column(2,
-             selectInput(
+             numericInput(
                inputId = "sf_min_wait",   # min number of students on waitlist before being flagged
                label = "Min Waiting", 
                value = cedar_regstats_thresholds[["min_wait"]])
