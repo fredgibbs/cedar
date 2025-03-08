@@ -30,9 +30,10 @@ convert_param_to_list <- function(param) {
     message("converting param to string.")
     param <- as.character(param)
   }
-    
-  # check if named list (probably defined in includes/lists.R)  
-  if (exists(get("param"))) { 
+  
+  # TODO: handle a list/vector of named lists/vectors
+  # check if param is a named list (probably defined in includes/lists.R)  
+  if (length(param) == 1 && exists(get("param"))) { 
     message("found named list (", get("param"), ") object.")
     
     if (is.list(get(param))) {
@@ -44,7 +45,7 @@ convert_param_to_list <- function(param) {
       param_to_list <- as.list( as.character(param))
     }
   
-    # check for comma in list  
+    # check for comma in param
   } else if (grepl(",", param)) {
     message("comma string detected...")
     param <- str_replace(param, ", ", ",")
