@@ -236,6 +236,11 @@ get_reg_stats <- function(students,courses,opt) {
   message("setting default thresholds...")
   thresholds <- cedar_regstats_thresholds
   
+  if (!is.null(opt[["thresholds"]])) {
+    message("using opt$thresholds...")
+    thresholds <- opt[["thresholds"]]
+  }
+  
   myopt <- opt
   
   # if no course specified, use all lower division AS courses
