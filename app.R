@@ -55,16 +55,28 @@ ui <- page_navbar(
             
             fluidRow(
               column(2,
-                     selectizeInput(inputId = "enrl_course",
-                                 label = "Select Course", 
-                                 multiple = TRUE,
-                                 choices = sort(unique(courses$SUBJ_CRSE))),
+                     selectizeInput(inputId = "enrl_campus",
+                                    label = "Select Campus", 
+                                    multiple = TRUE,
+                                    choices = sort(unique(courses$CAMPUS))),
+              ),
+              column(2,
+                     selectizeInput(inputId = "enrl_college",
+                                    label = "Select College", 
+                                    multiple = TRUE,
+                                    choices = sort(unique(courses$COLLEGE))),
               ),
               column(2,
                      selectizeInput(inputId = "enrl_dept",
                                     label = "Select Department", 
                                     multiple = TRUE,
                                     choices = sort(unique(courses$DEPT))),
+              ),
+              column(2,
+                     selectizeInput(inputId = "enrl_course",
+                                 label = "Select Course", 
+                                 multiple = TRUE,
+                                 choices = sort(unique(courses$SUBJ_CRSE))),
               ),
               column(2,
                      selectizeInput(inputId = "enrl_term_type",
@@ -241,12 +253,13 @@ server <- function(input, output, session) {
       opt <- list()
       opt$status <- "A"
       opt$uel <- TRUE
-      opt$aggregate <- input$enrl_agg_by
+      opt[["aggregate"]] <- input$enrl_agg_by
+      opt[["campus"]] <- input$enrl_campus
+      opt[["college"]] <- input$enrl_college
       opt[["dept"]] <- input$enrl_dept
       opt[["pt"]] <- input$enrl_pt
       opt[["method"]] <- input$enrl_method
       opt[["term"]] <- input$enrl_term
-      print(str(opt[["term"]]))
       opt[["level"]] <- input$enrl_level
       opt[["course"]] <- input$enrl_course
       

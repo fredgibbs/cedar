@@ -29,12 +29,12 @@ filter_DESRs <- function(courses, opt) {
     stop("Error in filter_DESRs: Please supply at least one filter parameter", call.=FALSE)
   }
   
-  # filter by campus
+  # filter by CAMPUS
   if (!is.null(opt$campus)) {
     courses <- filter_by_col(courses,"CAMP",opt[["campus"]])
   }
   
-  # filter by college
+  # filter by COLLEGE
   if (!is.null(opt$college)) {
     courses <- filter_by_col(courses,"COLLEGE",opt[["college"]])
   }
