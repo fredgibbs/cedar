@@ -98,9 +98,8 @@ seatfinder <- function (students, courses, opt) {
   
   # aggregate enrollments across courses (f_courses is already aggregated, so sections here are total courses)
   # enrollment summaries get merged to course lists
-  # TODO: how to integrate to shiny inputs?
-  group_cols <- c("TERM","SUBJ_CRSE","PT","INST_METHOD","level","gen_ed_area")
-  enrl_summary <- get_enrl(f_courses,opt,group_cols)
+  opt[["group_cols"]] <- c("TERM","SUBJ_CRSE","PT","INST_METHOD","level","gen_ed_area")
+  enrl_summary <- get_enrl(f_courses,opt)
   
   # filter out everything but specified current term
   # enrl_summary <- enrl_summary %>% filter (TERM == opt[["term_end"]])
@@ -137,9 +136,9 @@ seatfinder <- function (students, courses, opt) {
   term_courses[["end"]] <- end_term_courses %>% ungroup() %>% select (-TERM) %>% arrange(SUBJ_CRSE,CRSE_TITLE)
 
   
-  # aggregate enrollments across course types (don't get specific course data, just PT,method, etc) 
-  group_cols <- c("TERM","PT","INST_METHOD","level","gen_ed_area")
-  enrl_type_summary <- get_enrl(f_courses,opt,group_cols)
+  # aggregate enrollments across COURSE TYPES (don't get specific course data, just PT,method, etc) 
+  opt[["group_cols"]] <- c("TERM","PT","INST_METHOD","level","gen_ed_area")
+  enrl_type_summary <- get_enrl(f_courses,opt)
   
   # find enrollment differences compared to last year across course types
   course_type_summary <- enrl_type_summary %>% 
