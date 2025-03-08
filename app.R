@@ -32,18 +32,12 @@ degrees <- readRDS(url(degrees))
 # message("loaded students with ",nrow(students)," rows.")
 
 # filter courses
-opt <- list()
-opt[["shiny"]] <- TRUE
-opt[["uel"]] <- TRUE
-opt[["level"]] <- "lower" # for faster testing
-opt[["dept"]] <- "HIST"
-#courses <- load_courses(opt=NULL) 
-courses <- courses %>%  filter_DESRs(opt) 
-write.csv(courses,"courses.csv")
-message("finished writing courses.csv")
-courses <- NULL
-courses <- read.csv("courses.csv")
-message(head(courses))
+# opt <- list()
+# opt[["shiny"]] <- TRUE
+# opt[["uel"]] <- TRUE
+# opt[["level"]] <- "lower" # for faster testing
+# opt[["dept"]] <- "HIST"
+
 
 # Define UI for application that draws a histogram
 ui <- page_navbar(
@@ -58,7 +52,7 @@ ui <- page_navbar(
                      selectizeInput(inputId = "enrl_campus",
                                     label = "Select Campus", 
                                     multiple = TRUE,
-                                    choices = sort(unique(courses$CAMPUS))),
+                                    choices = sort(unique(courses$CAMP))),
               ),
               column(2,
                      selectizeInput(inputId = "enrl_college",
