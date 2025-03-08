@@ -8,7 +8,7 @@
 # TODO: create loops to manage and accept course and term lists for batch processing
 # some already in cedar.R; need to separate processing from actual report call as with forecast, regstats, etc
 
-get_course_data <- function(students, courses, opt) {
+get_course_data <- function(students, courses, forecasts, opt) {
   # for studio testing...
   # students <- load_students()
   # courses <- load_courses()
@@ -16,29 +16,29 @@ get_course_data <- function(students, courses, opt) {
   # opt[["course"]] <- "UHON 301"
   #opt[["term"]] <- 202510
   
-  # init payload list
+  # init payload list for return value
   course_data <- list()
   
   # these should always be set this way
   opt$status <- "A"
   opt$uel <- TRUE
-  group_cols <- c("TERM", "SUBJ", "SUBJ_CRSE", "CRSE_TITLE", "level", "gen_ed_area")
+  
   
   # create term agnostic opt param for getting historic enrollments
   myopt <- opt
   myopt[["term"]] <- NULL
-  myopt[["aggregate"]] <- "subj_crse" # not use if this is used by called functions
+  myopt[["aggregate"]] <- "subj_crse" # not sure if this is used by called functions
+  myopt[["group_cols"]] <- c("TERM", "SUBJ", "SUBJ_CRSE", "CRSE_TITLE", "level", "gen_ed_area")
   
   # get basic enrollment data for all terms
   message("getting basic enrollment data for course-report...")
-  enrls <- get_enrl(courses,myopt,group_cols)
+  enrls <- get_enrl(courses,myopt)
   
   # TODO: likely redundant, already in get_enrl
   # TODO: this seems only used by the forecasting logic below; and gets overwritten later by calc_squeezes
   enrls <- add_term_type_col(enrls,"TERM")
   
-  # load forecast data from forecast table; see forecast-report.R
-  forecast_data <- load_forecasts(myopt)
+  forecast_data <- forecasts
   forecast_data <- forecast_data %>% filter (SUBJ_CRSE == myopt[["course"]])
   forecast_data <- add_term_type_col(forecast_data,"TERM") 
   
@@ -157,9 +157,9 @@ use_NSO_data_for_forecasts <- function() {
 
 
 
-create_course_report <- function(students, courses, opt) {
+create_course_report <- function(students, courses, forecasts, opt) {
   
-  course_data <- get_course_data(students,courses,opt)
+  course_data <- get_course_data(students,courses, forecasts, opt)
   
   # payload
   d_params <- list("opt" = opt,

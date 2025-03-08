@@ -107,7 +107,7 @@ major_forecast <- function(students, courses, opt) {
   message("convert to wide format, so each row is a major/classification combination and terms are cols: ")
   conduits_wide <- spread(conduits, `Academic Period Code`, n)
   
-  #conduits_wide %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  conduits_wide %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   
   # make NAs into 0s; first test to see if any NAs exist to avoid error
@@ -143,7 +143,7 @@ major_forecast <- function(students, courses, opt) {
 
   # filter out freshman if forecasting for fall, since those can be better estimated from nosedive
   # for now, we only have nso data for fall 2024; don't use nosedive if forecasting earlier terms
-  if (opt$nso && target_term_type == "fall" && target_term == 202480) {
+  if (opt$nso && target_term_type == "fall" && target_term == 202580) {
     message("term type detected as Fall 2024..." )
     prev_target_class_count <- prev_target_student_list %>% 
       filter (`Student Classification` != 'Freshman, 1st Yr, 1st Sem') %>% 

@@ -210,7 +210,7 @@ get_grades <- function(students,opt) {
     # if course set to "existing", use list of courses already in forecast_table.
     # this is a good way to round out forecasts.
     if (as.character(course) == "forecasts") {
-      forecast_data <- load_forecasts(list())
+      forecast_data <- load_forecasts()
       opt$course <- unique(as.list(forecast_data$SUBJ_CRSE))
       message("finished processing course as forecasts!")
     }

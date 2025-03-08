@@ -30,7 +30,7 @@ get_forecast_data <- function (students,courses,opt) {
   # if not, call forecast to create row and reload
   
   # load existing forecast data
-  forecast_data <- load_forecasts(opt)
+  forecast_data <- load_forecasts()
   
   # filter for specified course
   message("filtering for specified course: ",course_list)
@@ -74,7 +74,7 @@ add_to_forecast_table <- function(new_forecast_row) {
   forecast_method <- new_forecast_row[["method"]]
   
   # load existing data or create new tibble to hold data
-  forecast_data <- load_forecasts(opt)
+  forecast_data <- load_forecasts()
 
   # if any data in forecast table, remove previous rows w same course/term forecasts
   if (nrow(forecast_data) > 0) {
@@ -90,9 +90,9 @@ add_to_forecast_table <- function(new_forecast_row) {
   }
   
   # save new data
-  forecast_rda_file <- paste0(cedar_data_dir,"processed/forecasts.Rda")
-  save(forecast_data, file=forecast_rda_file)
-  message("updated ",forecast_rda_file, " with new forecast row.")
+  forecast_rds_file <- paste0(cedar_data_dir,"processed/forecasts.Rds")
+  saveRDS(forecast_data, file=forecast_rds_file)
+  message("updated ",forecast_rds_file, " with new forecast row.")
 }
 
 
@@ -133,7 +133,7 @@ forecast <- function(students, courses, opt) {
   # if course set to "forecasts", use list of courses already in forecast_table.
   else if (course == "forecasts") {
     message("course set to FORECASTS...")
-    forecast_data <- load_forecasts(list())
+    forecast_data <- load_forecasts()
     course_list <- unique(as.list(forecast_data$SUBJ_CRSE))
     opt[["course"]] <- course_list
   }
@@ -218,7 +218,7 @@ if (is.null(opt$summer) ){
   
   for (course in course_list) {
     course <- as.character(course)
-    message("\n FORECAST now processing course ",counter,"of ",total_courses,": ",course,"...")
+    message("\n FORECAST now processing course ",counter," of ",total_courses,": ",course,"...")
     
     # uncomment for studio testing
     # course <- "CHEM 1120C"

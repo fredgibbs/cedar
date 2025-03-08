@@ -65,7 +65,7 @@ process_func <- function(opt) {
     }
     
     
-    # if no term specified, use next term
+    # if no term specified, use next term (for forecasting)
     if (is.null(opt[["term"]])) {
       # TODO: handle summer, both from --summer opt param and default
       next_term <- add_term(cedar_current_term)
@@ -82,7 +82,7 @@ process_func <- function(opt) {
       message("creating course reports for courses in forecasts table...")
       
       # temp for redoing course reports based on courses in forecast-data
-      forecast_data <- load_forecasts(opt)
+      forecast_data <- load_forecasts()
       course_list <- as.list(unique(forecast_data$SUBJ_CRSE))
       opt[["course"]] <- course_list
       
@@ -140,10 +140,12 @@ process_func <- function(opt) {
     myopt[["aggregate"]] <- "course"
     myopt[["nso"]] <- FALSE
     
+    forecasts <- load_forecasts()
+    
     for (course in course_list) {
       myopt[["course"]] <- course
       message("\n now processing course ",counter," of ",total_courses,": ",course,"...")
-      create_course_report(students,courses,myopt)
+      create_course_report(students,courses,forecasts,myopt)
       counter <- counter + 1
     } # end course loop
   }
