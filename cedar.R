@@ -4,6 +4,7 @@
 #install.packages("pacman", repos='http://cran.us.r-project.org')
 pacman::p_load(tidyverse,fs,data.table, optparse, plotly)
 conflicted::conflicts_prefer(dplyr::filter())
+conflicted::conflicts_prefer(dplyr::lag())
 
 
 set_option_list <- function() {
@@ -17,11 +18,7 @@ set_option_list <- function() {
     make_option(c("--guide"), default=FALSE, action="store_true",
                 help="show instructions and options for specified function."),
     
-    
     # basic filtering params
-    make_option(c("-t", "--term"), type="character", 
-                help="term code (i.e. 202410)", metavar="character"),
-    
     make_option(c("--campus"), type="character",
                 help="campus", metavar="character"),
     
@@ -54,6 +51,9 @@ set_option_list <- function() {
     
     make_option(c("--gen_ed"), type="character",
                 help="gen ed area number"),
+
+    make_option(c("--group_cols"), type="character",
+                help="column names to aggregate results by"),
     
     make_option(c("-i","--inst"), type="character", 
                 help="instructor", metavar="character"),
@@ -84,6 +84,9 @@ set_option_list <- function() {
     
     make_option(c("--summer"), default=FALSE, action="store_true",
                 help="include summer terms"),
+    
+    make_option(c("-t", "--term"), type="character", 
+                help="term code (i.e. 202410)", metavar="character"),
     
     make_option(c("--uel"), action="store_true",
                 help="Use Exclude List", metavar="character"),
@@ -126,7 +129,7 @@ set_option_list <- function() {
 load_data <- function() {
   message("loading data...")
   .GlobalEnv$courses <- load_courses()
-  #.GlobalEnv$students <- load_students()
+  .GlobalEnv$students <- load_students()
 }
 
 
