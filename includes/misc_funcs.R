@@ -19,15 +19,15 @@ cedar <- function(x="guide",...) {
 convert_param_to_list <- function(param) {
   message("converting param to list...")
   # message("converting param (",param,") to list...")
+  print(str(param))
   
   # check if actual list already; if so, return it
   if (is.list(param)) {
     message("param is already list.")
-    #print(param)
     param_to_list <- param
     return(param_to_list)
   } else {
-    # make into string
+    message("converting param to string.")
     param <- as.character(param)
   }
     
