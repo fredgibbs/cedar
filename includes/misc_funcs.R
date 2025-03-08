@@ -18,7 +18,6 @@ cedar <- function(x="guide",...) {
 
 convert_param_to_list <- function(param) {
   message("converting param to list...")
-  # message("converting param (",param,") to list...")
   print(str(param))
   
   # check if actual list already; if so, return it
@@ -26,9 +25,21 @@ convert_param_to_list <- function(param) {
     message("param is already list.")
     param_to_list <- param
     return(param_to_list)
-  } else {
-    message("converting param to string.")
+  } 
+  else {
+    message("ensuring param is character...")
     param <- as.character(param)
+    
+    #check for comma in param
+    if (length(param) == 1 && grepl(",", param)) {
+      message("comma string detected...")
+      param <- str_replace(param, ", ", ",")
+      param <- strsplit(param, ",")[[1]]
+    }
+    
+    message("converting to list and returning...")
+    param_to_list <- as.list(param)
+    return(param_to_list)
   }
   
   # TODO: handle a list/vector of named lists/vectors
@@ -41,16 +52,10 @@ convert_param_to_list <- function(param) {
       #print(get(param))
       param_to_list <- as.list(get(param))
     } else {
-      message("named object found, but not it's not a list. attempting to convert param to string and then to list... ")
+      message("named object found, but not it's not a list. attempting to convert param to char and then to list... ")
       param_to_list <- as.list( as.character(param))
     }
-  
-    # check for comma in param
-  } else if (grepl(",", param)) {
-    message("comma string detected...")
-    param <- str_replace(param, ", ", ",")
-    param_to_list <- as.list(strsplit(param, ",")[[1]])
-    
+
     # default to simple string
   } else {
     message("simple string object detected...")
