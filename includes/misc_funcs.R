@@ -16,55 +16,48 @@ cedar <- function(x="guide",...) {
 }
 
 
+# this function inspects and parses a param to a vector (not list as it did originally)
+# named vectors/lists should returned with their value
+# commma separated strings should be converted to a list
+# char vectors should be returned as is
+
+# TODO: fix list vs vector throughout code
+# TODO: handle a list/vector of named lists/vectors
+
 convert_param_to_list <- function(param) {
-  message("converting param to list...")
+  message("\nwelcome to convert_param_to_list!")
   print(str(param))
   
-  # check if actual list already; if so, return it
+  # check if list type already; if so, return it
   if (is.list(param)) {
-    message("param is already list.")
+    message("param is already list. returning it...")
     param_to_list <- param
     return(param_to_list)
-  } 
-  else {
-    message("ensuring param is character...")
-    param <- as.character(param)
-    
-    #check for comma in param
-    if (length(param) == 1 && grepl(",", param)) {
-      message("comma string detected...")
-      param <- str_replace(param, ", ", ",")
-      param <- strsplit(param, ",")[[1]]
-    }
-    
+  }
+  #check for comma in param
+  else if (length(param) == 1 && grepl(",", param)) {
+    message("comma string detected...")
+    param <- str_replace(param, ", ", ",")
+    param <- strsplit(param, ",")[[1]]
     message("converting to list and returning...")
     param_to_list <- as.list(param)
     return(param_to_list)
   }
-  
-  # TODO: handle a list/vector of named lists/vectors
-  # check if param is a named list (probably defined in includes/lists.R)  
-  if (length(param) == 1 && exists(get("param"))) { 
-    message("found named list (", get("param"), ") object.")
-    
-    if (is.list(get(param))) {
-      message("list type confirmed.")
-      #print(get(param))
-      param_to_list <- as.list(get(param))
-    } else {
-      message("named object found, but not it's not a list. attempting to convert param to char and then to list... ")
-      param_to_list <- as.list( as.character(param))
-    }
-
-    # default to simple string
-  } else {
-    message("simple string object detected...")
-    param_to_list <- as.list(param)
+  # check if param is a named object (probably defined in includes/lists.R)  
+  else if (length(param) == 1 && exists(get("param"))) { 
+    message("param already defined: ", get("param"))
+    return(get(param))
   }
-  message("convert_param_to_list returning: ",param_to_list)
-  return(param_to_list)
+  else if (is.character(param)) {
+    message("param is character. returning as list...")
+    param_to_list <- as.list(param)
+    return(param_to_list)
+  }
+  # quit if unsure what to do to prevent weird errors down the line
+  else {
+    stop("not sure what to do with supplied param.")
+  }
 }
-
 
 
 filter_by_term <- function(data,term,term_col_name) {
@@ -128,7 +121,7 @@ get_course_list <- function(courses,opt) {
   
   # for testing
   # opt <- list()
-  # opt$aggregate <- "course"
+  # opt$group_by <- "course"
   # opt$term <- "202160"
   # opt$level <- "lower"
   # opt$uel <- TRUE
@@ -196,29 +189,29 @@ add_acad_year <- function(df, term_col) {
 }
 
 
-load_forecasts <- function(opt) {
-  message("welcome to load_forecasts!")
-  
-  forecast_rda_file <- paste0(cedar_data_dir,"processed/forecasts.Rda")
-  message("looking for: ",forecast_rda_file,"...")
-  
-  if (file.exists(forecast_rda_file)) {
-    message("loading forecast data...")
-    load(forecast_rda_file) # loads forecast_data
-    
-    if (!exists("forecast_data")) {
-      message("no forecast data available!")
-      forecast_data <- tibble()
-    }
-    else {
-      message("processing data...")
-    }
-  } else { # no forecasts.Rda file; return empty tibble
-    forecast_data <- tibble()
-  } 
-  message("returning forecast data...")
-  return(forecast_data)
-}
+# load_forecasts <- function(opt) {
+#   message("welcome to load_forecasts!")
+#   
+#   forecast_rda_file <- paste0(cedar_data_dir,"processed/forecasts.Rda")
+#   message("looking for: ",forecast_rda_file,"...")
+#   
+#   if (file.exists(forecast_rda_file)) {
+#     message("loading forecast data...")
+#     load(forecast_rda_file) # loads forecast_data
+#     
+#     if (!exists("forecast_data")) {
+#       message("no forecast data available!")
+#       forecast_data <- tibble()
+#     }
+#     else {
+#       message("processing data...")
+#     }
+#   } else { # no forecasts.Rda file; return empty tibble
+#     forecast_data <- tibble()
+#   } 
+#   message("returning forecast data...")
+#   return(forecast_data)
+# }
 
 
 load_datafile <- function(filename) {
@@ -258,6 +251,10 @@ load_academic_studies <- function() {
   return(data)
 }
 
+load_forecasts <- function() {
+  data <- load_datafile("forecasts")
+  return(data)
+}
 
 
 # add prev term col
