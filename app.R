@@ -109,7 +109,7 @@ ui <- page_navbar(
                      selectInput(inputId = "enrl_level",
                                  label = "Level", 
                                  multiple = TRUE,
-                                 choices = courses$level),
+                                 choices = sort(unique(courses$INST_METHOD))),
               ),
               column(2,
                      actionButton("enrl_button",label = "Refresh table"),
@@ -131,7 +131,7 @@ ui <- page_navbar(
                      selectizeInput(inputId = "cr_course",
                                     label = "Select Course", 
                                     multiple = FALSE,
-                                    choices = sort(unique(courses$SUBJ_CRSE))),
+                                    choices = NULL),
               ),
               column(4,
                      actionButton("cr_button",label = "Create Report"),
@@ -240,7 +240,8 @@ ui <- page_navbar(
 server <- function(input, output, session) {
   
   
-  updateSelectizeInput(session, 'foo', choices = sort(unique(courses$SUBJ_CRSE)), server = TRUE)
+  updateSelectizeInput(session, 'enrl_course', choices = sort(unique(courses$SUBJ_CRSE)), server = TRUE)
+  updateSelectizeInput(session, 'cr_course', choices = sort(unique(courses$SUBJ_CRSE)), server = TRUE)
   
   
   ### ENROLLMENT

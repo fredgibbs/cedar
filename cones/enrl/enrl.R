@@ -409,14 +409,14 @@ get_enrl <- function (courses,opt,group_cols=NULL) {
     courses <- compress_aop_pairs(courses,opt) # defined in misc_funcs
     
     #courses <- courses %>% select(TERM,CRN,SUBJ_CRSE,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,total_enrl,sect_enrl,pair_enrl)
-    courses <- courses %>% select(CAMPUS,COLLEGE,TERM,CRN,SUBJ,SUBJ_CRSE,SECT,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,ENROLLED,total_enrl,XL_SUBJ,SEATS_AVAIL,WAIT_COUNT,sect_enrl,pair_enrl,gen_ed_area)
+    courses <- courses %>% select(CAMP,COLLEGE,TERM,CRN,SUBJ,SUBJ_CRSE,SECT,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,ENROLLED,total_enrl,XL_SUBJ,SEATS_AVAIL,WAIT_COUNT,sect_enrl,pair_enrl,gen_ed_area)
     
   }
   else {
     message("leaving AOP pairs alone...")
     
     # remove extraneous cols
-    courses <- courses %>% select(CAMPUS,COLLEGE,TERM,CRN,SUBJ,SUBJ_CRSE,SECT,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,ENROLLED,total_enrl,XL_SUBJ,SEATS_AVAIL,WAIT_COUNT,gen_ed_area)
+    courses <- courses %>% select(CAMP,COLLEGE,TERM,CRN,SUBJ,SUBJ_CRSE,SECT,level,CRSE_TITLE,INST_METHOD,PT,INST_NAME,ENROLLED,total_enrl,XL_SUBJ,SEATS_AVAIL,WAIT_COUNT,gen_ed_area)
   }
   
   # courses get listed multiple times b/c of crosslisting (inc aop, but also general)
