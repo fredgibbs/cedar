@@ -70,7 +70,7 @@ ui <- page_navbar(
                      selectizeInput(inputId = "enrl_course",
                                  label = "Select Course", 
                                  multiple = TRUE,
-                                 choices = sort(unique(courses$SUBJ_CRSE))),
+                                 choices = NULL),
               ),
               column(2,
                      selectizeInput(inputId = "enrl_term_type",
@@ -238,6 +238,10 @@ ui <- page_navbar(
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
+  
+  
+  updateSelectizeInput(session, 'foo', choices = sort(unique(courses$SUBJ_CRSE)), server = TRUE)
+  
   
   ### ENROLLMENT
   observeEvent(input$enrl_button,{
