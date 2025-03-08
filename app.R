@@ -298,7 +298,6 @@ ui <- page_navbar(
              numericInput(
                inputId = "sf_min_squeeze",   # squeeze is ratio of avail seats to  mean attrition
                label = "Method",
-               multiple = TRUE,
                value = cedar_regstats_thresholds[["min_squeeze"]])
       ),
       column(2,
