@@ -421,7 +421,7 @@ server <- function(input, output, session) {
     # get regstats data
     opt <- list()
     opt[["shiny"]] <- TRUE
-    opt[["term"]] <- "202510"
+    opt[["term"]] <- input$rs_term
     opt[["pt"]] <- input$rs_pt
     opt[["im"]] <- input$rs_im
     opt[["level"]] <- input$rs_level
