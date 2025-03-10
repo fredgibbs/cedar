@@ -30,9 +30,9 @@ cl_crits <- as.list(c(cl_engl,cl_chem,cl_biol,cl_fyex,cl_math_1,cl_math_2,cl_mat
 
 
 # define term_list_names 
-tl_falls <- c("202180","202280","202380","202480")
-tl_springs <- c("202110","202210","202310","202410","202510")
-tl_summers <- c("202260","202360","202460","202560")
+tl_falls <- c("202380","202480")
+tl_springs <- c("202310","202410","202510")
+tl_summers <- c("202460","202560")
 
 tl_recents <- c(tl_falls,tl_springs,tl_summers)
 
