@@ -64,8 +64,8 @@ calc_forecast_accuracy <- function(students,courses, opt) {
   # students <- load_students()
   # 
   # opt <- list()
-  # opt$course <- "BIOL 1110"
-  #opt$term <- "202510"
+  # opt$course <- "HIST 1160"
+  # # opt$term <- "202510"
   
   
   # load existing forecast data
@@ -99,9 +99,10 @@ calc_forecast_accuracy <- function(students,courses, opt) {
   #forecast_data_wide %>% tibble::as_tibble() %>% print(n = 10, width=Inf)
   
   
-  # get DESR enrollment data for courses in forecast_data
+  # get DESR enrollment data for courses in forecast_data, esp SEATS_AVAIL for later calcs
   myopt <- opt
-  myopt$aggregate <- "subj_crse"
+  myopt[["campus"]] <- c("ABQ","EA")
+  myopt[["group_cols"]] <- c("TERM", "term_type", "SUBJ", "SUBJ_CRSE", "CRSE_TITLE", "SEATS_AVAIL")
   #myopt$aop <- "compress" # not working with null term?
   myopt[["term"]] <- NULL # remove any term filtering for now to get all enrollments
   myopt[["course"]] <- as.list(unique(forecast_data$SUBJ_CRSE))
@@ -109,22 +110,26 @@ calc_forecast_accuracy <- function(students,courses, opt) {
   message("getting DESR enrollment data...")
   enrls <- get_enrl(courses,myopt)
   
-  # merge enrl data with forecast data; merge TO forecast data to prevent data loss, esp future terms not present in enrls
+  # merge enrl data with forecast data; 
+  # merge TO forecast data to prevent data loss, esp future terms not present in enrls
   message("merging forecast summary data with enrollment summary data...")
   enrl_w_forecast <- merge (forecast_data_wide, enrls, by=c("SUBJ_CRSE", "TERM"),all.x=T)
+  
+  # even tho col already exists, adding it here replaces NA values from terms when course wasn't offered
   enrl_w_forecast <- add_term_type_col(enrl_w_forecast,"TERM")
   
   # fill in missing values if not matched in merge (without term dependence)
-  selected <- enrls %>% ungroup() %>% select (c(SUBJ_CRSE,level,gen_ed_area)) %>% distinct(SUBJ_CRSE, .keep_all = T)
+  # removing level and gen_ed_area from select
+  selected <- enrls %>% ungroup() %>% select (c(SUBJ_CRSE)) %>% distinct(SUBJ_CRSE, .keep_all = T)
   enrl_w_forecast <- rows_patch(enrl_w_forecast, selected, by=c("SUBJ_CRSE") )
   
   # filter students according to courses in forecast table
-  filtered_students <- students %>% filter (SUBJ_CRSE %in% myopt[["course"]])
+  filtered_students <- students %>% filter (SUBJ_CRSE %in% myopt[["course"]] & `Course Campus Code` %in% c("ABQ","EA"))
   
   message("getting class list enrollment data...")
   cl_enrls <- calc_cl_enrls(filtered_students)
   
-  message("merging forecast summary data with enrollment summary data...")
+  message("merging forecast summary data with cl_enrls summary data...")
   enrl_w_forecast <- merge (enrl_w_forecast, cl_enrls, by.x=c("SUBJ_CRSE", "TERM","term_type"), by.y=c("SUBJ_CRSE", "Academic Period Code","term_type") ,all.x=T)
   
   selected <- enrl_w_forecast %>% group_by(SUBJ_CRSE,term_type) %>% select (c(SUBJ_CRSE,term_type, de_mean,dl_mean,da_mean)) %>% distinct(SUBJ_CRSE,term_type, .keep_all = T)
