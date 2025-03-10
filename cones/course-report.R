@@ -16,6 +16,8 @@ get_course_data <- function(students, courses, forecasts, opt) {
   # opt[["course"]] <- "UHON 301"
   #opt[["term"]] <- 202510
   
+  message("\nWelcome to get_course_data!")
+  
   # init payload list for return value
   course_data <- list()
   
@@ -23,27 +25,25 @@ get_course_data <- function(students, courses, forecasts, opt) {
   opt$status <- "A"
   opt$uel <- TRUE
   
-  
   # create term agnostic opt param for getting historic enrollments
   myopt <- opt
   myopt[["term"]] <- NULL
-  myopt[["aggregate"]] <- "subj_crse" # not sure if this is used by called functions
-  myopt[["group_cols"]] <- c("TERM", "SUBJ", "SUBJ_CRSE", "CRSE_TITLE", "level", "gen_ed_area")
+  #myopt[["group_cols"]] <- c("TERM", "SUBJ", "SUBJ_CRSE", "CRSE_TITLE", "level", "gen_ed_area")
+  myopt[["group_cols"]] <- c("CAMP","COLLEGE","TERM", "term_type", "SUBJ", "SUBJ_CRSE", "CRSE_TITLE", "SEATS_AVAIL")
   
   # get basic enrollment data for all terms
   message("getting basic enrollment data for course-report...")
   enrls <- get_enrl(courses,myopt)
   
-  # TODO: likely redundant, already in get_enrl
-  # TODO: this seems only used by the forecasting logic below; and gets overwritten later by calc_squeezes
-  enrls <- add_term_type_col(enrls,"TERM")
-  
+  # get forecast data for course
   forecast_data <- forecasts
   forecast_data <- forecast_data %>% filter (SUBJ_CRSE == myopt[["course"]])
   forecast_data <- add_term_type_col(forecast_data,"TERM") 
   
-  # use 8 as threshold because the table has major and conduit projections (= to 4 terms)
-  # don't forecast in case we never offer a course that semester, since there's no previous target data
+  # use 6 as threshold because the table has major and conduit projections (= to 3 term_types)
+  # don't forecast in case we never offer a course that semester_type, since there's no previous target data
+  message("checking forecast data for fall, spring, summer...")
+  
   if (nrow(enrls %>% filter(term_type == "fall")) > 0 && nrow(forecast_data[forecast_data$term_type=="fall",]) < 6  ) {
     message("need more fall forecasts. retroactively forecasting!")
     message("setting  myopt$term to 'tl_falls' (from includes/lists.R)")
@@ -65,9 +65,6 @@ get_course_data <- function(students, courses, forecasts, opt) {
     forecast(students,courses,myopt)
   } 
   
-  # reset term
-  myopt[["term"]] <- NULL
-  
   
   # use forecast-report.R to load forecast data with enrollments and accuracy
   forecasts <- calc_forecast_accuracy(students, courses, myopt) # returns a list with short and long versions
@@ -76,18 +73,23 @@ get_course_data <- function(students, courses, forecasts, opt) {
   
   
   # use regstats to find flagged courses
-  course_data[["reg_stats_flagged"]] <-  get_reg_stats(students,courses,myopt)
+  flagged <-  get_reg_stats(students,courses,myopt)
+  course_data[["reg_stats_flagged"]] <-  flagged
   
-  # get class list enrollment data for more thorough reporting
-  filtered_students <- students %>% filter_class_list(myopt)
   
-  # get squeezes, already merged with enrl_cl_data already merged with enrl data
-  # TODO: this overwrites an existing enrls from get_enrl, which is bad
-  # TODO: need to keep enrl data and squeeze data separate in functions and combine here
-  course_data[["enrls"]] <- calc_squeezes(filtered_students,courses,myopt) # calls calc_cl_enrls and returns all regstats info
+  # combine enrls and regstats and add squeeze calc
+  message("filtering STUDENTS by course...")
+  filtered_students <- students %>% filter (SUBJ_CRSE %in% opt[["course"]])
+  message("left with ",nrow(filtered_students)," students.")
   
-  # message("merging forecast summary data with enrollment summary data...")
-  # enrl_w_forecast <- merge (enrl_w_forecast, cl_enrls, by.x=c("SUBJ_CRSE", "TERM","term_type"), by.y=c("SUBJ_CRSE", "Academic Period Code","term_type") ,all.x=T)
+  regstats <- calc_cl_enrls(filtered_students)
+  
+  # TODO: very similar code duplicated in regstats.R
+  message("calculating squeeze...")
+  squeezes <- merge(enrls,regstats,by.x=c("CAMP","COLLEGE","TERM","SUBJ_CRSE"),by.y=c("Course Campus Code","Course College Code","Academic Period Code","SUBJ_CRSE"),all.x=TRUE )
+  squeezes <- squeezes %>% mutate(squeeze = round(avail/da_mean,digits=2))
+  course_data[["enrls"]] <- squeezes
+  
   
   # run lookout functions to see where students are coming and going from  
   message("getting lookout data...")
@@ -158,6 +160,8 @@ use_NSO_data_for_forecasts <- function() {
 
 
 create_course_report <- function(students, courses, forecasts, opt) {
+  
+  message("\nWelcome to create_course_report!")
   
   course_data <- get_course_data(students,courses, forecasts, opt)
   
