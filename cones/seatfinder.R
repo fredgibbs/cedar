@@ -55,7 +55,7 @@ seatfinder <- function (students, courses, opt) {
   # courses <- load_courses()
   # students <- load_students()
 
-  message("\n","welcome to seatfinder!")
+  message("\n","Welcome to seatfinder!")
   
   # set opt 
   message ("seatfinder always uses the exclude list, excludes AOP courses, includes only active courses, and aggregates section enrollments by course_type...")

@@ -271,9 +271,6 @@ ui <- page_navbar(
                label = "Level", 
                multiple = TRUE,
                choices = sort(unique(courses$level))),
-      ),
-      column(3,
-             actionButton("rs_button",label = "Refresh table"),
       )
     ), # end fluidRow
     
@@ -311,8 +308,8 @@ ui <- page_navbar(
                label = "Min Waiting", 
                value = cedar_regstats_thresholds[["min_wait"]])
       ),
-      column(2,
-             actionButton("sf_button",label = "Refresh table"),
+      column(3,
+             actionButton("rs_button",label = "Refresh table"),
       )
     ), # end fluidRow
     
