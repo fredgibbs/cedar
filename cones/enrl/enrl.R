@@ -20,38 +20,38 @@ calc_cl_enrls <- function(students,reg_status=NULL) {
     distinct(`Student ID`, .keep_all = TRUE)
   
   # count students in each term by reg status code
-  cl_enrls <- cl_enrls %>% group_by (SUBJ_CRSE,`Registration Status Code`,`Academic Period Code`, term_type) %>% 
+  cl_enrls <- cl_enrls %>% group_by (`Course Campus Code`,`Course College Code`,SUBJ_CRSE,`Registration Status Code`,`Academic Period Code`, term_type) %>% 
     summarize(count = n(), .groups="keep") 
   
   # calc mean reg codes per course and term type
-  cl_enrls <- cl_enrls %>% group_by (SUBJ_CRSE,term_type,`Registration Status Code`) %>% 
+  cl_enrls <- cl_enrls %>% group_by (`Course Campus Code`,`Course College Code`,SUBJ_CRSE,term_type,`Registration Status Code`) %>% 
     mutate(mean = round(mean(count),digits=1))
   
   
   if (is.null(reg_status)) {
     
-    cl_enrls <- cl_enrls %>% group_by(SUBJ_CRSE,`Academic Period Code`, term_type)
+    cl_enrls <- cl_enrls %>% group_by(`Course Campus Code`,`Course College Code`,SUBJ_CRSE,`Academic Period Code`, term_type)
     
     reg_stats_summary <- cl_enrls %>% filter(`Registration Status Code`== "RE" | `Registration Status Code`== "RS")  %>%
-      summarize(registered = sum(count))
+      summarize(registered = sum(count), .groups="keep")
     
     de <- cl_enrls %>% filter (`Registration Status Code` %in% c("DR")) %>%
-      summarize(dr_early = sum(count))
+      summarize(dr_early = sum(count), .groups="keep")
     reg_stats_summary <- merge(reg_stats_summary, de, all=T)
     
     
     dl <- cl_enrls %>% filter (`Registration Status Code` %in% c("DG","DW","DD")) %>%
-      summarize(dr_late = sum(count))
+      summarize(dr_late = sum(count), .groups="keep")
     reg_stats_summary <- merge(reg_stats_summary, dl, all=T)
     
     
     da <- cl_enrls %>% filter (`Registration Status Code` %in% c("DR","DG","DW","DD")) %>%
-      summarize(dr_all = sum(count))
+      summarize(dr_all = sum(count), .groups="keep")
     reg_stats_summary <- merge(reg_stats_summary, da, all=T)
     
 
     cl_total <- cl_enrls %>% 
-      summarize(cl_total = sum(count))
+      summarize(cl_total = sum(count), .groups="keep")
     reg_stats_summary <- merge(reg_stats_summary, cl_total, all=T)
     
         
@@ -59,14 +59,15 @@ calc_cl_enrls <- function(students,reg_status=NULL) {
     reg_stats_summary[is.na(reg_stats_summary)] <- 0
     
     
-    # regroup without APC
-    reg_stats_summary <- reg_stats_summary %>% group_by(SUBJ_CRSE, term_type)
+    # regroup without APC to calc means
+    reg_stats_summary <- reg_stats_summary %>% group_by(`Course Campus Code`,`Course College Code`,SUBJ_CRSE, term_type)
     
     # get means across term_types
     reg_stats_summary <- reg_stats_summary %>% mutate(de_mean = round(mean(dr_early),digits=2))
     reg_stats_summary <- reg_stats_summary %>% mutate(dl_mean = round(mean(dr_late),digits=2))
     reg_stats_summary <- reg_stats_summary %>% mutate(da_mean = round(mean(dr_all),digits=2))
-    
+    reg_stats_summary <- reg_stats_summary %>% mutate(cl_mean = round(mean(cl_total),digits=2))
+    reg_stats_summary <- reg_stats_summary %>% mutate(reg_mean = round(mean(registered),digits=2))
     
   }
   # if given list of reg codes, filter for those
@@ -141,7 +142,7 @@ summarize_courses <- function (courses, opt) {
   
   # set default group_cols
   if (is.null(opt[["group_cols"]])) {
-    group_cols <- c("TERM", "term_type", "SUBJ","SUBJ_CRSE","CRSE_TITLE","level","gen_ed_area")
+    group_cols <- c("CAMP","COLLEGE","TERM", "term_type", "SUBJ","SUBJ_CRSE","CRSE_TITLE","level","gen_ed_area")
   }
   else {
     group_cols <- opt[["group_cols"]]
@@ -344,7 +345,7 @@ get_enrl <- function (courses,opt,group_cols=NULL) {
   
   # default to use ABQ campus (EA is ABQ online courses)
   if (is.null(opt$campus)) {
-    opt$campus <- c("ABQ","EA")
+    #opt$campus <- c("ABQ","EA")
   }
   
   # filter courses according to options
