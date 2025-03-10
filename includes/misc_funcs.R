@@ -230,7 +230,7 @@ load_datafile <- function(filename) {
   return(data)
 }
 
-
+# TODO: replace these specific loads with load_datafile across codebase
 load_students <- function() {
   data <- load_datafile("class_lists")
   return(data)
@@ -492,7 +492,7 @@ process_output <- function(output_data,filename,opt) {
 
 # this function is called when looping through a list of depts (even if just one)
 create_report <- function(opt, d_params) {
-  message("welcome to create_report! (in misc_funcs.R")
+  message("\nWelcome to create_report! (in misc_funcs.R)")
   
   output <- opt$output
   
@@ -516,7 +516,7 @@ create_report <- function(opt, d_params) {
   
   message("working dir: ",getwd())
   message("output file set to: ", output_filename)
-  message("rendering report for ", d_params$dept_code)
+  message("rendering report for dept_code: ", d_params$dept_code)
   
   
   # need to run as Rscript call from shiny app (or within Rstudio)
