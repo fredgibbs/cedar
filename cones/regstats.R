@@ -1,88 +1,3 @@
-
-# filtered_students should be term agnostic, but limited to opt params or defaults for courses
-calc_squeezes <- function(filtered_students,filtered_courses,opt) {
-  
-  # for testing...
-  #filtered_courses <- courses
-  
-  message("finding enrollment squeezes...")
-  
-  # get final enrollments; need to use get_enrl to get final number of available seats
-  myopt <- opt
-  myopt[["aggregate"]] <- "subj_crse"
-  myopt[["uel"]] <- "true"
-  myopt[["term"]] <- NULL # need enrollments across all terms for mean calcs
-  
-  enrls <- get_enrl(filtered_courses,myopt)
-  message("enrls from CALC_SQUEEZES")
-  print(enrls)
-  
-  # get registration status
-  cl_drops <- calc_cl_enrls(filtered_students)
-
-  # merge drop data w course data
-  squeezes <- merge(enrls,cl_drops,by.x=c("TERM","SUBJ_CRSE"),by.y=c("Academic Period Code","SUBJ_CRSE"),all.x=TRUE )
-  
-  # add term_type
-  squeezes <- add_term_type_col(squeezes,"TERM")
-  
-  # remove NAs if we're getting data for future terms with NA drops
-  # will remove rows with NA for gen_ed; need to fix this
-  # squeezes <- na.omit(squeezes)
-  
-  # find mean drops across term types
-  # squeezes <- squeezes %>% group_by (SUBJ_CRSE,term_type) %>% mutate(mean_drops = mean(drops))
-
-  # find "squeeze" amount -- the ratio of available seats to mean drops (all drops, not just late)
-  squeezes <- squeezes %>% mutate(squeeze = round(avail/da_mean,digits=2))
-  message("all done in calc_squeezes.")
-  return(squeezes)
-}
-
-
-filter_squeezes <- function(squeezes,thresholds,opt) {
-  
-    # filter only for those courses where we have less open spots at end of term than the mean attrition
-  squeezes <- squeezes %>%
-    filter (enrolled >= thresholds[["min_count"]]) %>%  
-    filter (squeeze < thresholds[["min_squeeze"]]) 
-  
-  # keep only data for specified term now that course stats calcs are done
-  if (!is.null(opt[["term"]])) {
-    squeezes <- filter_by_term(squeezes,opt[["term"]],"TERM") 
-  }
-  
-  squeezes <- squeezes %>% arrange(term_type,TERM,squeeze)
-  
-  message("all done calculating squeezes!")
-  
-  return(squeezes)
-}
-
-
-set_defaults <- function(opt) {
-  # if no term specified, use next term
-  if (is.null(opt[["term"]])) {
-    # TODO: handle summer, both from --summer opt param and default
-    next_term <- add_term(cedar_current_term,opt[["summer"]])
-    message("no opt$term param found. setting opt$term to: ",next_term)
-    opt[["term"]] <- next_term
-  }  
-  
-  if (is.null(opt[["level"]])) {
-    message("no opt$level param found. setting opt$level to: lower")
-    opt[["level"]] <- "lower"
-  }  
-  
-  if (is.null(opt[["college"]])) {
-    message("no opt$college param found. setting opt$term to: AS")
-    opt[["college"]] <- "AS"
-  }  
-  
-  return(opt)
-}
-
-
 # use rollcall to find popular fall courses among sophomores for potential summer offerings
 # rollcall -a course_classification_avg --classification 'Sophomore, 2nd Yr' --arrange mean --coursecollege AS -t fall
 get_high_fall_sophs <- function (students,courses,opt) {
@@ -99,7 +14,6 @@ get_high_fall_sophs <- function (students,courses,opt) {
   
   # 100 is a bit arbitrary; not sure how to calc would what be a better threshold
   rollcall_out <- rollcall_out %>% filter(mean > 100)
-  
   
   # grab just SUBJ_CRSE col
   high_fall_sophs <- tibble(SUBJ_CRSE = unique(rollcall_out$SUBJ_CRSE))
@@ -144,93 +58,14 @@ get_after_bumps <- function (bumps, students, courses) {
 }
 
 
-# get a summary of registration status via class lists
-# course and term agnostic
-get_reg_data <- function(filtered_students,opt) {
-  message("welcome to get_reg_data!")
-  
-  # uncomment for testing
-  # students <- load_students()
-  # filtered_students <- students %>% filter (SUBJ_CRSE %in% ...)
-  
-  # group and summarize class_lists
-  message("computing summary stats...")
-  filtered_students <- filtered_students %>% group_by(`Academic Period Code`,SUBJ_CRSE,`Registration Status Code`,term_type)
-  summary_by_term <- filtered_students %>% summarize(count = n(), .groups="keep")
-  summary_by_term <- summary_by_term %>% group_by(SUBJ_CRSE,term_type,`Registration Status Code`)
-  summary <- summary_by_term %>% summarize (mean = round(mean(count),digits=2), sd = round(sd(count),digits=2), .groups="keep")
-  
-  regstats <- merge(summary_by_term,summary, by=c("SUBJ_CRSE","Registration Status Code","term_type"))
-  
-  message("get_reg_data now returning regstats...")
-  return (regstats)
-}
 
-
-# this function identifies courses of concern for dips and bumps,
-# in the sense that some enrollment stats are outside thresholds set in config.R
-get_dimp_concerns <- function(regstats,thresholds,sign) {
-  #print(regstats)
-  if (sign=="plus") {
-    concerns <- regstats %>%  mutate(pct_sd = round((count - mean) / sd,digits=2), impacted =  round((count - (mean + sd)),digits=2)) %>% 
-      filter (impacted > thresholds[["min_impacted"]])  %>% 
-      filter (count > thresholds[["min_count"]]) %>% 
-      filter (pct_sd > thresholds[["min_pct_sd"]])
-  } else if (sign =="minus") {
-    concerns <- regstats %>%  mutate(pct_sd = round((mean - count) / sd,digits=2), impacted =  round((mean - sd) - count,digits=2)) %>% 
-      filter (impacted > thresholds[["min_impacted"]])  %>% 
-      filter (count > thresholds[["min_count"]]) %>% 
-      filter (pct_sd > thresholds[["min_pct_sd"]])
-  }
-  
-  return(concerns)
-}
-
-
-get_dimp_bumps <- function(regstats,thresholds) {
-  bumps <- regstats %>% filter (substring(`Registration Status Code`,1,1) == "R") 
-  bumps <- get_dimp_concerns(bumps,thresholds,"plus")
-  bumps <-  bumps %>% arrange (desc(impacted))
-  
-  return (bumps)
-}
-
-
-get_dimp_dips <- function(regstats,thresholds) {
-  dips <- regstats %>% filter (substring(`Registration Status Code`,1,1) == "R") 
-  dips <- get_dimp_concerns(dips,thresholds,"minus")
-  dips <-  dips %>% arrange (impacted)
-  
-  return (dips)
-}
-
-
-get_dimp_drops <- function(regstats,thresholds) {
-  drops <- regstats %>% filter (substring(`Registration Status Code`,1,1) == "D") 
-  drops <- get_dimp_concerns(drops,thresholds,"plus")
-  drops <-  drops %>% arrange (desc(impacted))
-  
-  return(drops)
-}
-
-
-# find high wait list courses from courses list (not actually regstats)
-get_dimp_waits <- function(students, opt, thresholds) {
-  myopt <- opt
-  # if no course specified, defaults already set to AS lower-division
-  myopt[["uel"]] <- TRUE
-  myopt[["aggregate"]] <- "course"
-  
-  waits <- get_enrl(students, myopt)
-  waits <-  waits %>% filter (waiting > thresholds[["min_wait"]]) %>% arrange (desc(waiting))
-  
-  return(waits)
-}
-
-
-# main function called by cedar
+####### main function 
 get_reg_stats <- function(students,courses,opt) {
   message("\n welcome to get_reg_stats!")
+  
+  # uncomment for studio testing
+  #opt <- list()
+  #opt[["course"]] <- "HIST 1160"
   
   # grab default thresholds from config.R
   message("setting default thresholds...")
@@ -239,23 +74,20 @@ get_reg_stats <- function(students,courses,opt) {
   if (!is.null(opt[["thresholds"]])) {
     message("using opt$thresholds...")
     thresholds <- opt[["thresholds"]]
+    print(thresholds)
   }
   
   myopt <- opt
   
   # if no course specified, use all lower division AS courses
   if (is.null(opt$course)) {
-    # message("no course specified. defaulting to AS lower-division courses.")
-    # myopt[["course"]] <- NULL
-    # myopt[["level"]] <- "lower"
-    # myopt[["college"]] <- "AS"
+    message("no course specified. defaulting to lower-division courses.")
+    myopt[["level"]] <- "lower"
     course_list <- as.list(get_course_list(courses,myopt))
   } 
   else {
     message("processing opt$course...")
     course_list <- convert_param_to_list(opt[["course"]])
-    
-    # TODO: use lower thresholds for specific course reporting?
   }
   
   
@@ -268,7 +100,8 @@ get_reg_stats <- function(students,courses,opt) {
   message("left with ",nrow(filtered_students)," students.")
   
   # get registration and enrollment stats  
-  regstats <- get_reg_data(filtered_students,myopt)
+  # regstats <- get_reg_data(filtered_students,myopt)
+  regstats <- calc_cl_enrls(filtered_students)
   
   # filter by term AFTER getting regstats, so get_reg_data can get mean values across terms
   if (!is.null(opt$term)) {
@@ -277,16 +110,73 @@ get_reg_stats <- function(students,courses,opt) {
   }
   
   # find potential anomalies
+  # use biased SD calc, since we're not really sampling from a population
   message("finding courses of interest...")
   flagged <- list()
-  flagged[["drops"]] <- get_dimp_drops(regstats, thresholds)
-  flagged[["dips"]] <- get_dimp_dips(regstats, thresholds)
-  flagged[["bumps"]] <- get_dimp_bumps(regstats, thresholds)
-  flagged[["after_bumps"]] <- get_after_bumps(flagged[["bumps"]], students, courses)
-  flagged[["waits"]] <- get_dimp_waits(courses, myopt, thresholds)
+  std_fields <- c("Course Campus Code", "Course College Code","SUBJ_CRSE","Academic Period Code","term_type","registered")
+  std_group_cols <- c("Course Campus Code", "Course College Code","SUBJ_CRSE","term_type")
   
-  squeezes <- calc_squeezes(filtered_students, filtered_courses, myopt)
-  flagged[["squeezes"]] <- filter_squeezes(squeezes, thresholds, opt)
+  ##### EARLY DROPS
+  drops <- regstats %>% select (all_of(std_fields), count=dr_early, mean=de_mean)
+  drops <- drops %>% group_by_at(all_of(std_group_cols))
+  drops <- drops %>% mutate (sd = sd(count)/(sqrt(n()-1/n())), impacted=count-(mean+sd))
+  drops <- drops %>% filter (impacted > thresholds[["min_count"]])
+  drops <-  drops %>% arrange (desc(impacted))
+  flagged[["early_drops"]] <- drops
+  
+  
+  ##### LATE DROPS
+  late_drops <- regstats %>% select (all_of(std_fields), count=dr_late, mean=dl_mean)
+  late_drops <- late_drops %>% group_by_at(all_of(std_group_cols))
+  late_drops <- late_drops %>% mutate (sd = sd(count)/(sqrt(n()-1/n())), impacted=count-(mean+sd))
+  late_drops <- late_drops %>% filter (impacted > thresholds[["min_count"]])
+  flagged[["late_drops"]]  <-  late_drops %>% arrange (desc(impacted))
+
+    
+  ##### DIPS
+  dips <- regstats %>% select (all_of(std_fields), registered, reg_mean)
+  dips <- dips %>% group_by_at(all_of(std_group_cols))
+  dips <- dips %>% mutate (sd = sd(registered)/(sqrt(n()-1/n())), impacted=(reg_mean-sd)-registered)
+  dips <- dips %>% filter (impacted > thresholds[["min_count"]])
+  flagged[["dips"]] <-  dips %>% arrange (desc(impacted))
+
+  
+  ##### BUMPS
+  bumps <- regstats %>% select (all_of(std_fields), registered, reg_mean)
+  bumps <- bumps %>% group_by_at(all_of(std_group_cols))
+  bumps <- bumps %>% mutate (sd = sd(registered)/(sqrt(n()-1/n())), impacted=registered-(reg_mean+sd))
+  bumps <- bumps %>% filter (impacted > thresholds[["min_count"]])
+  flagged[["bumps"]] <-  bumps %>% arrange (desc(impacted))
+   
+  
+  ##### COURSES AFTER BUMPS
+  flagged[["courses_after_bumps"]] <- get_after_bumps(flagged[["bumps"]], students, courses)
+  
+  
+  ##### WAITS
+  myopt <- opt
+  myopt[["uel"]] <- TRUE
+  myopt[["group_cols"]] <- c("CAMP","COLLEGE","TERM", "SUBJ_CRSE", "SEATS_AVAIL")
+  enrls <- get_enrl(courses, myopt)
+  waits <-  enrls %>% filter (waiting > thresholds[["min_wait"]]) %>% arrange (desc(waiting))
+  flagged[["waits"]] <- waits
+  
+  
+  ##### SQUEEZES
+  squeezes <- merge(enrls,regstats,by.x=c("CAMP","COLLEGE","TERM","SUBJ_CRSE"),by.y=c("Course Campus Code","Course College Code","Academic Period Code","SUBJ_CRSE"),all.x=TRUE )
+  squeezes <- squeezes %>% mutate(squeeze = round(avail/da_mean,digits=2))
+  squeezes <- squeezes %>% 
+    filter (enrolled >= thresholds[["min_count"]]) %>%  
+    filter (squeeze < thresholds[["min_squeeze"]])
+  
+  if (!is.null(opt[["term"]])) {
+    squeezes <- filter_by_term(squeezes,opt[["term"]],"TERM") 
+  }
+  
+  squeezes <- squeezes %>% arrange(term_type,TERM,squeeze)
+
+  flagged[["squeezes"]] <- squeezes
+  
   
   # gather SUBJ_CRSE col into separate list  
   message("gathering flagged courses...")
@@ -297,12 +187,12 @@ get_reg_stats <- function(students,courses,opt) {
   }
 
   # for now, filter for A&S
-  message("filtering for lower A&S courses...")
-  myopt[["level"]] <- "lower"
-  myopt[["college"]] <- "AS"
-  myopt[["course"]] <- NULL
-  flagged_courses <- filter_course_list(courses, flagged_courses, myopt)
-  
+  # message("filtering for lower A&S courses...")
+  # myopt[["level"]] <- "lower"
+  # myopt[["college"]] <- "AS"
+  # myopt[["course"]] <- NULL
+  # flagged_courses <- filter_course_list(courses, flagged_courses, myopt)
+   
   # convert to tibble with unique values
   message("converting to unique SUBJ_CRSE values to tibble...")
   flagged_courses <- tibble(SUBJ_CRSE = unique(flagged_courses))
@@ -316,30 +206,16 @@ get_reg_stats <- function(students,courses,opt) {
   # keep separate since we don't need to forecast for this all the time
   flagged[["high_fall_sophs"]] <- get_high_fall_sophs(students, courses, myopt)
 
-  
-  # output to terminal
-  # now handled in cedar.R through process_output
-  # message("courses with enrollment dips:")
-  # flagged[["dips"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
-  # 
-  # message("courses with enrollment bumps:")
-  # flagged[["bumps"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
-  # 
-  # message("courses with higher than usual drops:")
-  # flagged[["drops"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
-  # 
-  # message("courses with long wait lists:")
-  # flagged[["waits"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
-  # 
-  # message("courses with enrollment squeezes:")
-  # flagged[["squeezes"]] %>% tibble::as_tibble() %>% print(n=nrow(.), width=Inf)  
-  # 
+  message("returning flagged courses...")
   return(flagged)
 }
 
 
+
 create_regstat_report <- function(students,courses,opt) {
+  message("\nWelcome to create_regstat_report!")
   
+  # get flagged courses
   flagged <- get_reg_stats(students,courses,opt)
   
   # if arrange param set, use it
