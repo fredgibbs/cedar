@@ -124,7 +124,7 @@ process_func <- function(opt) {
       }
     } # end if csv file
     else { 
-      message("regular opt param found.")
+      message("regular opt course param found.")
       course_list <- convert_param_to_list(course)
     } # opt$course not null
     
@@ -144,7 +144,7 @@ process_func <- function(opt) {
     
     for (course in course_list) {
       myopt[["course"]] <- course
-      message("\n now processing course ",counter," of ",total_courses,": ",course,"...")
+      message("\nNow processing course ",counter," of ",total_courses,": ",course,"...")
       create_course_report(students,courses,forecasts,myopt)
       counter <- counter + 1
     } # end course loop
