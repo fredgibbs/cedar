@@ -267,14 +267,6 @@ ui <- page_navbar(
     fluidRow(
       column(2,
              numericInput(
-               inputId = "sf_sd_buffer",   # % of standard deviation before flagging as concern
-               label = "DF buffer",
-               min = 0,
-               max = 2,
-               value = cedar_regstats_thresholds[["sd_buffer"]])
-      ),
-      column(2,
-             numericInput(
                inputId = "sf_min_count",   # # min number of students in a course before we flag as a concern
                label = "Min Students",
                min = 0,
@@ -423,7 +415,6 @@ server <- function(input, output, session) {
     opt[["pt"]] <- input$rs_pt
     opt[["im"]] <- input$rs_im
     opt[["level"]] <- input$rs_level
-    opt[["thresholds"]][["buffer"]] <- input$sf_buffer
     opt[["thresholds"]][["min_count"]] <- input$sf_min_count
     opt[["thresholds"]][["min_impacted"]] <- input$sf_min_impacted
     opt[["thresholds"]][["min_squeeze"]] <- input$sf_squeeze
