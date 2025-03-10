@@ -178,10 +178,10 @@ ui <- page_navbar(
       column(2,
              selectizeInput(
                inputId = "sf_term",
-               label = "Select Department", 
+               label = "Select Term", 
                multiple = TRUE,
                choices = sort(unique(courses$TERM))),
-              value="202510"
+              selected="202510"
       ),
       
       column(2,
@@ -208,7 +208,8 @@ ui <- page_navbar(
       column(2,
              selectInput(
                inputId = "sf_pt",
-               label = "Part of Term", 
+               label = "Part of Term",
+               multiple = TRUE,
                choices = sort(unique(courses$PT))),
       ),
       column(2,
@@ -222,6 +223,7 @@ ui <- page_navbar(
              selectInput(
                inputId = "sf_level",
                label = "Level", 
+               multiple = TRUE,
                choices = sort(unique(courses$level))),
       ),
       column(2,
@@ -253,6 +255,7 @@ ui <- page_navbar(
              selectInput(
                inputId = "rs_pt",
                label = "Part of Term", 
+               multiple = TRUE,
                choices = sort(unique(courses$PT))),
       ),
       column(3,
@@ -266,6 +269,7 @@ ui <- page_navbar(
              selectInput(
                inputId = "rs_level",
                label = "Level", 
+               multiple = TRUE,
                choices = sort(unique(courses$level))),
       ),
       column(3,
