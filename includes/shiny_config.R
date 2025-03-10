@@ -8,7 +8,7 @@ cedar_data_dir <- paste0(cedar_base_dir,"data/")
 cedar_current_term <- 202510
 
 # these term codes control how much data appears on dept-reports
-cedar_report_start_term <- 201980
+cedar_report_start_term <- 202180
 cedar_report_end_term <- 202510
 
 # registration underway for next term (compared to current term set above)
