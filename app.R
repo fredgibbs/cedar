@@ -177,6 +177,15 @@ ui <- page_navbar(
     fluidRow(
       column(2,
              selectizeInput(
+               inputId = "sf_term",
+               label = "Select Department", 
+               multiple = TRUE,
+               choices = sort(unique(courses$TERM))),
+              value="202510"
+      ),
+      
+      column(2,
+             selectizeInput(
                inputId = "sf_campus",
                label = "Select Campus", 
                multiple = TRUE,
@@ -267,7 +276,7 @@ ui <- page_navbar(
     fluidRow(
       column(2,
              numericInput(
-               inputId = "sf_min_count",   # # min number of students in a course before we flag as a concern
+               inputId = "rs_min_count",   # # min number of students in a course before we flag as a concern
                label = "Min Students",
                min = 0,
                max = 50,
@@ -275,26 +284,26 @@ ui <- page_navbar(
       ),
       column(2,
              numericInput(
-               inputId = "sf_min_impacted",
+               inputId = "rs_min_impacted",
                label = "Min Impacted",   # min difference b/w enrollment and mean (= number of students affected)
                value = cedar_regstats_thresholds[["min_impacted"]])
       ),
       column(2,
              numericInput(
-               inputId = "sf_min_pct_sd",
+               inputId = "rs_min_pct_sd",
                label = "Pct SD",   # percent of students outside the mean compared to standard deviation
                value = cedar_regstats_thresholds[["min_pct_sd"]])
       ),
       
       column(2,
              numericInput(
-               inputId = "sf_min_squeeze",   # squeeze is ratio of avail seats to  mean attrition
+               inputId = "rs_min_squeeze",   # squeeze is ratio of avail seats to  mean attrition
                label = "Method",
                value = cedar_regstats_thresholds[["min_squeeze"]])
       ),
       column(2,
              numericInput(
-               inputId = "sf_min_wait",   # min number of students on waitlist before being flagged
+               inputId = "rs_min_wait",   # min number of students on waitlist before being flagged
                label = "Min Waiting", 
                value = cedar_regstats_thresholds[["min_wait"]])
       ),
@@ -415,11 +424,11 @@ server <- function(input, output, session) {
     opt[["pt"]] <- input$rs_pt
     opt[["im"]] <- input$rs_im
     opt[["level"]] <- input$rs_level
-    opt[["thresholds"]][["min_count"]] <- input$sf_min_count
-    opt[["thresholds"]][["min_impacted"]] <- input$sf_min_impacted
-    opt[["thresholds"]][["min_squeeze"]] <- input$sf_min_squeeze
-    opt[["thresholds"]][["min_pct_sd"]] <- input$sf_min_pct_sd
-    opt[["thresholds"]][["min_wait"]] <-  input$sf_min_wait
+    opt[["thresholds"]][["min_count"]] <- input$rs_min_count
+    opt[["thresholds"]][["min_impacted"]] <- input$rs_min_impacted
+    opt[["thresholds"]][["min_squeeze"]] <- input$rs_min_squeeze
+    opt[["thresholds"]][["min_pct_sd"]] <- input$rs_min_pct_sd
+    opt[["thresholds"]][["min_wait"]] <-  input$rs_min_wait
     
         
     flagged <- create_regstat_report(students,courses,opt)
