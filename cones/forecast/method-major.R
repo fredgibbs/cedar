@@ -110,6 +110,7 @@ major_forecast <- function(students, courses, opt) {
   conduits_wide %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   
+  #TODO: this throws an error if no data for previous term, b/c conduit_wide has only 2 columns
   # make NAs into 0s; first test to see if any NAs exist to avoid error
   if (any(is.na(conduits_wide[3:4]))) { 
     conduits_wide[3:4][is.na(conduits_wide[3:4])] <- 0
