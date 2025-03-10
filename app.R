@@ -89,7 +89,7 @@ ui <- page_navbar(
                inputId = "enrl_agg_by",
                label = "Select Columns", 
                multiple = TRUE,
-               choices = c("SUBJ_CRSE","DEPT","TERM","PT","INST_METHOD")),
+               choices = c("SUBJ_CRSE", "CRSE_TITLE", "DEPT","TERM","PT","INST_METHOD")),
       )
     ), # end fluidRow 
     fluidRow(
@@ -417,7 +417,7 @@ server <- function(input, output, session) {
     opt[["level"]] <- input$rs_level
     opt[["thresholds"]][["min_count"]] <- input$sf_min_count
     opt[["thresholds"]][["min_impacted"]] <- input$sf_min_impacted
-    opt[["thresholds"]][["min_squeeze"]] <- input$sf_squeeze
+    opt[["thresholds"]][["min_squeeze"]] <- input$sf_min_squeeze
     opt[["thresholds"]][["min_pct_sd"]] <- input$sf_min_pct_sd
     opt[["thresholds"]][["min_wait"]] <-  input$sf_min_wait
     
