@@ -89,7 +89,7 @@ ui <- page_navbar(
                inputId = "enrl_agg_by",
                label = "Select Columns", 
                multiple = TRUE,
-               choices = c("SUBJ_CRSE", "CRSE_TITLE", "DEPT","TERM","PT","INST_METHOD")),
+               choices = c("CAMP","COLLEGE","SUBJ_CRSE", "CRSE_TITLE", "DEPT","TERM","PT","INST_METHOD")),
       )
     ), # end fluidRow 
     fluidRow(
@@ -119,7 +119,7 @@ ui <- page_navbar(
                inputId = "enrl_level",
                label = "Level", 
                multiple = TRUE,
-               choices = sort(unique(courses$INST_METHOD))),
+               choices = sort(unique(courses$level))),
       ),
       column(2,
              actionButton("enrl_button",label = "Refresh table"),
@@ -143,6 +143,7 @@ ui <- page_navbar(
                inputId = "cr_course",
                label = "Select Course", 
                multiple = FALSE,
+               selected = NULL,
                choices = NULL),
       ),
       column(4,
@@ -377,7 +378,7 @@ server <- function(input, output, session) {
     opt[["shiny"]] <- TRUE
     opt[["course"]] <- input$cr_course
     
-    course_data <- create_course_report(students,courses,opt)
+    course_data <- create_course_report(students, courses, forecasts, opt)
     
     html_file <- "Rmd/output.html"
     
