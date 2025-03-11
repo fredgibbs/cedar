@@ -28,7 +28,8 @@ library(DT)
 
 flagged <- params$tables[["flagged"]]
 
-drops <- flagged[["drops"]]
+late_drops <- flagged[["late_drops"]]
+early_drops <- flagged[["early_drops"]]
 dips <- flagged[["dips"]]
 bumps <- flagged[["bumps"]]
 high_fall_sophs <- flagged[["high_fall_sophs"]]
@@ -84,19 +85,25 @@ cat(tabl) # output the table in a format good for HTML/PDF/docx conversion
     datatable(waits,class = 'cell-border stripe')
 ```
 
-### Courses with a bit of a SQUEEZE
+<!--### Courses with a bit of a SQUEEZE-->
 ```{r echo=FALSE} 
-  squeezes <- squeezes %>% select(TERM,SUBJ_CRSE,enrolled,sections,avg_size,avail,waiting,gen_ed_area,de_mean,dl_mean,da_mean,squeeze)
-  
-  colnames(squeezes) <- c("TERM","SUBJ_CRSE","ENRL","SECTS","SECT_SIZE","AVAIL","WAIT","GE_AREA","DE_MEAN","DL_MEAN","DA_MEAN","SQUEEZE")
-    
-  datatable(squeezes,class = 'cell-border stripe')
+  # squeezes <- squeezes %>% select(`Academic Period Code`,SUBJ_CRSE,enrolled,sections,avg_size,avail,waiting,gen_ed_area,de_mean,dl_mean,da_mean,squeeze)
+  # 
+  # colnames(squeezes) <- c("TERM","SUBJ_CRSE","ENRL","SECTS","SECT_SIZE","AVAIL","WAIT","GE_AREA","DE_MEAN","DL_MEAN","DA_MEAN","SQUEEZE")
+  #   
+  # datatable(squeezes,class = 'cell-border stripe')
 ```
 
-### More DROPS than usual
+### More EARLY DROPS than usual
 ```{r echo=FALSE} 
-    datatable(drops,class = 'cell-border stripe')
+    datatable(early_drops,class = 'cell-border stripe')
 ```
+
+### More LATE DROPS than usual
+```{r echo=FALSE} 
+    datatable(late_drops,class = 'cell-border stripe')
+```
+
 
 ### Bigger enrollment DIP than usual
 ```{r echo=FALSE} 
