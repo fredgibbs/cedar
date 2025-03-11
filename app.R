@@ -278,29 +278,21 @@ ui <- page_navbar(
     fluidRow(
       column(2,
              numericInput(
-               inputId = "rs_min_count",   # # min number of students in a course before we flag as a concern
-               label = "Min Students",
-               min = 0,
-               max = 50,
-               value = cedar_regstats_thresholds[["min_count"]])
-      ),
-      column(2,
-             numericInput(
                inputId = "rs_min_impacted",
                label = "Min Impacted",   # min difference b/w enrollment and mean (= number of students affected)
                value = cedar_regstats_thresholds[["min_impacted"]])
       ),
       column(2,
              numericInput(
-               inputId = "rs_min_pct_sd",
-               label = "Pct SD",   # percent of students outside the mean compared to standard deviation
-               value = cedar_regstats_thresholds[["min_pct_sd"]])
+               inputId = "rs_pct_sd",
+               label = "% SD",   # percent of students outside the mean compared to standard deviation
+               value = cedar_regstats_thresholds[["pct_sd"]])
       ),
       
       column(2,
              numericInput(
                inputId = "rs_min_squeeze",   # squeeze is ratio of avail seats to  mean attrition
-               label = "Method",
+               label = "Min Squeeze",
                value = cedar_regstats_thresholds[["min_squeeze"]])
       ),
       column(2,
@@ -426,11 +418,10 @@ server <- function(input, output, session) {
     opt[["pt"]] <- input$rs_pt
     opt[["im"]] <- input$rs_im
     opt[["level"]] <- input$rs_level
-    opt[["thresholds"]][["min_count"]] <- input$rs_min_count
     opt[["thresholds"]][["min_impacted"]] <- input$rs_min_impacted
-    opt[["thresholds"]][["min_squeeze"]] <- input$rs_min_squeeze
-    opt[["thresholds"]][["min_pct_sd"]] <- input$rs_min_pct_sd
     opt[["thresholds"]][["min_wait"]] <-  input$rs_min_wait
+    opt[["thresholds"]][["pct_sd"]] <- input$rs_pct_sd
+    opt[["thresholds"]][["min_squeeze"]] <- input$rs_min_squeeze
     
         
     flagged <- create_regstat_report(students, courses, opt)
