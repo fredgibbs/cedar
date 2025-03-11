@@ -16,7 +16,7 @@ calc_cl_enrls <- function(students,reg_status=NULL) {
   # get distinct rows within courses
   # using SUBJ_CRSE to lump all sections topics courses together
   cl_enrls <- students %>%
-    group_by(`Academic Period Code`, `SUBJ_CRSE`) %>% 
+    group_by(`Course Campus Code`,`Course College Code`,`Academic Period Code`, `SUBJ_CRSE`) %>% 
     distinct(`Student ID`, .keep_all = TRUE)
   
   # count students in each term by reg status code
