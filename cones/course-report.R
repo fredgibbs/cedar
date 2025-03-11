@@ -13,9 +13,9 @@ get_course_data <- function(students, courses, forecasts, opt) {
   # students <- load_students()
   # courses <- load_courses()
   # opt <- list()
-  # opt[["course"]] <- "UHON 301"
-  #opt[["term"]] <- 202510
-  
+  # opt[["course"]] <- "ENGL 1120"
+  # opt[["term"]] <- 202510
+
   message("\nWelcome to get_course_data!")
   
   # init payload list for return value
@@ -29,7 +29,7 @@ get_course_data <- function(students, courses, forecasts, opt) {
   myopt <- opt
   myopt[["term"]] <- NULL
   #myopt[["group_cols"]] <- c("TERM", "SUBJ", "SUBJ_CRSE", "CRSE_TITLE", "level", "gen_ed_area")
-  myopt[["group_cols"]] <- c("CAMP","COLLEGE","TERM", "term_type", "SUBJ", "SUBJ_CRSE", "CRSE_TITLE", "SEATS_AVAIL")
+  myopt[["group_cols"]] <- c("CAMP","COLLEGE","TERM", "term_type", "SUBJ", "SUBJ_CRSE", "CRSE_TITLE")
   
   # get basic enrollment data for all terms
   message("getting basic enrollment data for course-report...")
