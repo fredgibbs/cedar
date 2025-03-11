@@ -71,6 +71,9 @@ calc_forecast_accuracy <- function(students, courses, forecasts, opt) {
   # load existing forecast data
   forecast_data <- forecasts
   
+  message("forecast data:")
+  print(forecast_data)
+  
   # earlier forecast code didn't round
   forecast_data$forecast <- round(forecast_data$forecast, digits=2)
   
