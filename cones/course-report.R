@@ -67,7 +67,7 @@ get_course_data <- function(students, courses, forecasts, opt) {
   
   
   # use forecast-report.R to load forecast data with enrollments and accuracy
-  forecasts <- calc_forecast_accuracy(students, courses, myopt) # returns a list with short and long versions
+  forecasts <- calc_forecast_accuracy(students, courses, forecasts, myopt) # returns a list with short and long versions
   forecasts <- forecasts[["forecast_short"]]
   course_data[["forecasts"]] <- forecasts %>% select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))
   
