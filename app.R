@@ -143,7 +143,7 @@ ui <- page_navbar(
                inputId = "cr_course",
                label = "Select Course", 
                multiple = FALSE,
-               selected = NULL,
+               selected = "",
                choices = NULL),
       ),
       column(4,
@@ -154,7 +154,7 @@ ui <- page_navbar(
     fluidRow(
       column(12,
              #DTOutput("cd_enrls")
-             uiOutput("cd_enrls")
+             uiOutput("cr_report")
       )
     ) # end fluidRow
     
@@ -318,7 +318,7 @@ ui <- page_navbar(
     fluidRow(
       column(12,
              #DTOutput("cd_enrls")
-             uiOutput("rs_enrls")
+             uiOutput("rs_report")
       )
     ) # end fluidRow
   
@@ -383,7 +383,7 @@ server <- function(input, output, session) {
     html_file <- "Rmd/output.html"
     
     #output$cd_enrls <- renderDataTable({
-    output$rs_enrls <- renderUI({
+    output$cr_report <- renderUI({
       tags$iframe(src = base64enc::dataURI(file=html_file, mime="text/html; charset=UTF-8"),style="height:100vh; width:100%")
     })
     print("done rendering ui.")
@@ -433,14 +433,14 @@ server <- function(input, output, session) {
     opt[["thresholds"]][["min_wait"]] <-  input$rs_min_wait
     
         
-    flagged <- create_regstat_report(students,courses,opt)
+    flagged <- create_regstat_report(students, courses, opt)
     
     #html_file <- "/Users/fwgibbs/Dropbox/cedar/output/regstats-reports/html/regstats-202510-1.html"
     html_file <- "Rmd/output.html"
     #print(html_file)
     
     #output$cd_enrls <- renderDataTable({
-    output$rs_enrls <- renderUI({
+    output$rs_report <- renderUI({
       tags$iframe(src = base64enc::dataURI(file=html_file, mime="text/html; charset=UTF-8"),style="height:100vh; width:100%")
     })
     print("done rendering ui.")
