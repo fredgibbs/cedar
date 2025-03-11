@@ -48,21 +48,21 @@ get_course_data <- function(students, courses, forecasts, opt) {
     message("need more fall forecasts. retroactively forecasting!")
     message("setting  myopt$term to 'tl_falls' (from includes/lists.R)")
     myopt$term <- "tl_falls"
-    forecast(students,courses,myopt)
+    forecast(students, courses, forecasts, myopt)
   }
   
   if (nrow(enrls %>% filter(term_type == "spring")) > 0 && nrow(forecast_data[forecast_data$term_type=="spring",]) < 6) {
     message("need more spring forecasts. retroactively forecasting!")
     message("setting  myopt$term to 'tl_springs' (from includes/lists.R)")
     myopt$term <- "tl_springs"
-    forecast(students,courses,myopt)
+    forecast(students, courses, forecasts, myopt)
   }
   
   if (nrow(enrls %>% filter(term_type == "summer")) > 0 && nrow(forecast_data[forecast_data$term_type=="summer",]) < 6) {
     message("need more summer forecasts. retroactively forecasting!")
     message("setting  myopt$term to 'tl_summers' (from includes/lists.R)")
     myopt$term <- "tl_summers"
-    forecast(students,courses,myopt)
+    forecast(students, courses, forecasts, myopt)
   } 
   
   
@@ -163,7 +163,7 @@ create_course_report <- function(students, courses, forecasts, opt) {
   
   message("\nWelcome to create_course_report!")
   
-  course_data <- get_course_data(students,courses, forecasts, opt)
+  course_data <- get_course_data(students, courses, forecasts, opt)
   
   # payload
   d_params <- list("opt" = opt,

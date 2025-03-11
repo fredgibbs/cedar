@@ -56,8 +56,8 @@ find_major_enrl_correlations <- function(courses, opt) {
 # and merges enrollment data with forecast data to display together and compute accuracy of forecasts
 # OPTIONAL param: opt$course for filtering returned data
 
-calc_forecast_accuracy <- function(students,courses, opt) {
-  message("Welcome to calc_forecast_accuracy!")
+calc_forecast_accuracy <- function(students, courses, forecasts, opt) {
+  message("\nWelcome to calc_forecast_accuracy!")
   
   #uncomment for studio testing
   # courses <- load_courses()
@@ -69,7 +69,7 @@ calc_forecast_accuracy <- function(students,courses, opt) {
   
   
   # load existing forecast data
-  forecast_data <- load_forecasts()
+  forecast_data <- forecasts
   
   # earlier forecast code didn't round
   forecast_data$forecast <- round(forecast_data$forecast, digits=2)
