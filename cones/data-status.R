@@ -18,14 +18,13 @@ get_data_status <- function (opt) {
 
   
   message("academic study status:")
-  academic_study <- load_academic_study()
-  academic_study_status <- academic_study %>% group_by(term_code ,as_of_date) %>% summarize (rows = n())
+  academic_studies <- load_academic_studies()
+  academic_study_status <- academic_studies %>% group_by(term_code ,as_of_date) %>% summarize (rows = n())
   status_list[["academic_study_status"]] <- academic_study_status
   
   
-  # TODO: need to add as_of_date to degree-parser.R and degrees.Rda
   message("degrees status:")
-  load(paste0(cedar_data_dir,"processed/degrees.Rda")) # load degrees DF
+  degrees <- load_degrees()
   degrees_status <- degrees %>% group_by(`Academic Period Code`,as_of_date) %>% summarize (rows = n())
   status_list[["degrees_status"]] <- degrees_status
   
