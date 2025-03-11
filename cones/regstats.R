@@ -118,7 +118,7 @@ get_reg_stats <- function(students,courses,opt) {
   message("finding early drops...")
   drops <- regstats %>% select (all_of(std_fields), drop_early=dr_early, de_mean)
   drops <- drops %>% group_by_at(all_of(std_group_cols))
-  drops <- drops %>% mutate (sd = round(sd(drop_early)/(sqrt(n()-1/n())),digits=2), round(impacted=drop_early-(de_mean+sd),digits=2))
+  drops <- drops %>% mutate (sd = round(sd(drop_early)/(sqrt(n()-1/n())),digits=2), impacted = round(drop_early-(de_mean+sd)),digits=2)
   drops <- drops %>% filter (impacted > thresholds[["min_count"]])
   drops <-  drops %>% arrange (desc(impacted))
   flagged[["early_drops"]] <- drops
@@ -128,7 +128,7 @@ get_reg_stats <- function(students,courses,opt) {
   message("finding late drops...")
   late_drops <- regstats %>% select (all_of(std_fields), drop_late=dr_late, dl_mean)
   late_drops <- late_drops %>% group_by_at(all_of(std_group_cols))
-  late_drops <- late_drops %>% mutate (sd = round(sd(drop_late)/(sqrt(n()-1/n())),digits=2), round(impacted=drop_late-(dl_mean+sd),digits=2))
+  late_drops <- late_drops %>% mutate (sd = round(sd(drop_late)/(sqrt(n()-1/n())),digits=2), impacted = round(drop_late-(dl_mean+sd)),digits=2)
   late_drops <- late_drops %>% filter (impacted > thresholds[["min_count"]])
   flagged[["late_drops"]]  <-  late_drops %>% arrange (desc(impacted))
   
@@ -137,7 +137,7 @@ get_reg_stats <- function(students,courses,opt) {
   message("finding dips...")
   dips <- regstats %>% select (all_of(std_fields), registered, reg_mean)
   dips <- dips %>% group_by_at(all_of(std_group_cols))
-  dips <- dips %>% mutate (sd = round(sd(registered)/(sqrt(n()-1/n())),digits=2), impacted=round((reg_mean-sd)-registered),digits=2)
+  dips <- dips %>% mutate (sd = round(sd(registered)/(sqrt(n()-1/n())),digits=2), impacted = round((reg_mean-sd)-registered,digits=2))
   dips <- dips %>% filter (impacted > thresholds[["min_count"]])
   flagged[["dips"]] <-  dips %>% arrange (desc(impacted))
   
