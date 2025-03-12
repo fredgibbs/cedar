@@ -234,8 +234,12 @@ ui <- page_navbar(
     
     
     tabsetPanel(
-      tabPanel("Summary", DT::DTOutput("type_summary")),
-      tabPanel("Common", DT::DTOutput("courses_common"))
+      tabPanel("Type Summary", DT::DTOutput("type_summary")),
+      tabPanel("Common", DT::DTOutput("courses_common")),
+      tabPanel("Previously", DT::DTOutput("courses_prev")),
+      tabPanel("New", DT::DTOutput("courses_new")),
+      tabPanel("Gen Ed", DT::DTOutput("gen_ed_summary")),
+      tabPanel("Gen Ed Likely", DT::DTOutput("gen_ed_likely"))
     )
     
   ), # end nav panel seatfinder
@@ -402,6 +406,23 @@ server <- function(input, output, session) {
     
     output$courses_common = DT::renderDataTable({
       data <- courses_list[["courses_common"]]
+    })
+    
+    output$courses_prev = DT::renderDataTable({
+      data <- courses_list[["courses_prev"]]
+    })
+
+    output$courses_new = DT::renderDataTable({
+      data <- courses_list[["courses_new"]]
+    })
+    
+        
+    output$gen_ed_summary = DT::renderDataTable({
+      data <- courses_list[["gen_ed_summary"]]
+    })
+
+    output$gen_ed_likely = DT::renderDataTable({
+      data <- courses_list[["gen_ed_likely"]]
     })
     
   },ignoreInit = TRUE)
