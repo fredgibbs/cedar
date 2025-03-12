@@ -2,9 +2,7 @@
 # This script expects to be run from the cedar_base_dir (defined in includes/config.R)
 
 #install.packages("pacman", repos='http://cran.us.r-project.org')
-pacman::p_load(tidyverse,fs,data.table, optparse, plotly)
-conflicted::conflicts_prefer(dplyr::filter())
-conflicted::conflicts_prefer(dplyr::lag())
+
 
 
 set_option_list <- function() {
@@ -134,10 +132,16 @@ load_data <- function() {
 
 
 cedar_init <- function() {
+  pacman::p_load(tidyverse,fs,data.table, optparse, plotly)
+  conflicted::conflicts_prefer(dplyr::filter())
+  conflicted::conflicts_prefer(dplyr::lag())
+  
+  
   message("loading external functions...")
   source("includes/config.R")
   source("includes/load_funcs.R")
   load_funcs("./")
+  
   load_data()
 }
 
