@@ -78,8 +78,7 @@ conduit_forecast <- function(students,courses,opt) {
   myopt[["aggregate"]] <- "course"
   
   # the summarize here combines enrolled col for same SUBJ_CRSE (like topics courses)
-  # note that we can't forecast via conduits if we don't have prior semester enrollments
-  # ie we can't skip a term 
+  # note that we can't forecast via conduits if we don't have prior term_type enrollments
   conduit_enrls <- get_enrl(courses,myopt) %>% 
     group_by(SUBJ_CRSE,TERM) %>% 
     summarize (enrolled = sum(enrolled)) %>% 

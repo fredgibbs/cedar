@@ -28,7 +28,6 @@ get_course_data <- function(students, courses, forecasts, opt) {
   # create term agnostic opt param for getting historic enrollments
   myopt <- opt
   myopt[["term"]] <- NULL
-  #myopt[["group_cols"]] <- c("TERM", "SUBJ", "SUBJ_CRSE", "CRSE_TITLE", "level", "gen_ed_area")
   myopt[["group_cols"]] <- c("CAMP","COLLEGE","TERM", "term_type", "SUBJ", "SUBJ_CRSE", "CRSE_TITLE")
   
   # get basic enrollment data for all terms
@@ -97,13 +96,20 @@ get_course_data <- function(students, courses, forecasts, opt) {
   course_data[["where_to"]] <- where_to(students,myopt)
   course_data[["where_at"]] <- where_at(students,myopt)
   
-  # get rollcall data
+  # get rollcall data and pivot to wide
   message("getting rollcall data...")
-  myopt[["aggregate"]] <- "classification_wide"
-  course_data[["rollcall_by_class"]] <- rollcall(students,myopt)
+
+  myopt[["group_cols"]] <- c("Course Campus Code", "Course College Code","Academic Period Code", "term_type", "Student Classification", "SUBJ_CRSE","Short Course Title","level")
+  rollcall_out <- rollcall(students,myopt)
+  rollcall_out <- rollcall_out %>% select(-c(term_type, mean)) %>% 
+    pivot_wider(names_from = `Academic Period Code`, values_from = pct)
+  course_data[["rollcall_by_class"]] <- rollcall_out
   
-  myopt[["aggregate"]] <- "major_wide"
-  course_data[["rollcall_by_major"]] <- rollcall(students,myopt)
+  myopt[["group_cols"]] <- c("Course Campus Code", "Course College Code","Academic Period Code", "term_type", "Major", "SUBJ_CRSE","Short Course Title","level")
+  rollcall_out <- rollcall(students,myopt)
+  rollcall_out <- rollcall_out %>% select(-c(term_type, mean)) %>% 
+    pivot_wider(names_from = `Academic Period Code`, values_from = pct)
+  course_data[["rollcall_by_major"]] <- rollcall_out
   
   
   # get grade data; opt term should be null to get all data
@@ -128,8 +134,8 @@ use_NSO_data_for_forecasts <- function() {
     # calculate NSO Freshman contribution to course
     # use opt, which should have target term specified
     # forecast_enrl_from_majors uses rollcall, so make sure necessary params are set
-    myopt[["aggregate"]] <- "course_classification_major"
-    
+    # TODO: needs to fit new rollcall code
+    myopt[["group_col"]] <- c("Course Campus Code", "Course College Code", "Academic Period Code", "Student Classification", "Major", "SUBJ_CRSE","Short Course Title")
     prog_NSO_enrl <- forecast_enrl_from_majors(NSOers,students,opt)
     message("results from forecast_enrl_from_majors:")
     print(prog_NSO_enrl)

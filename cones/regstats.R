@@ -1,16 +1,12 @@
 # use rollcall to find popular fall courses among sophomores for potential summer offerings
-# rollcall -a course_classification_avg --classification 'Sophomore, 2nd Yr' --arrange mean --coursecollege AS -t fall
 get_high_fall_sophs <- function (students,courses,opt) {
   
   message("getting fall courses with 100+ sophomores for potential summer offerings...")
   myopt <- list()
-  myopt[["aggregate"]] <- "course_classification_avg"
+  myopt[["group_cols"]] <- c("Course Campus Code", "Course College Code","Academic Period Code", "term_type", "Student Classification", "SUBJ_CRSE","Short Course Title","level")
   myopt[["classification"]] <- "Sophomore, 2nd Yr"
-  myopt[["coursecollege"]] <- "AS"
   myopt[["term"]] <- "fall"
   rollcall_out <- rollcall(students,myopt)
-  
-  print(rollcall_out)
   
   # 100 is a bit arbitrary; not sure how to calc would what be a better threshold
   rollcall_out <- rollcall_out %>% filter(mean > 100)
@@ -119,7 +115,7 @@ get_reg_stats <- function(students,courses,opt) {
   drops <- regstats %>% select (all_of(std_fields), drop_early=dr_early, de_mean)
   drops <- drops %>% group_by_at(all_of(std_group_cols))
   drops <- drops %>% mutate (sd = round(sd(drop_early)/(sqrt(n()-1/n())),digits=2), impacted = round(drop_early-(de_mean+sd),digits=2))
-  drops <- drops %>% filter (impacted > thresholds[["min_count"]])
+  drops <- drops %>% filter (impacted > thresholds[["min_impacted"]])
   drops <-  drops %>% arrange (desc(impacted))
   flagged[["early_drops"]] <- drops
   
@@ -129,7 +125,7 @@ get_reg_stats <- function(students,courses,opt) {
   late_drops <- regstats %>% select (all_of(std_fields), drop_late=dr_late, dl_mean)
   late_drops <- late_drops %>% group_by_at(all_of(std_group_cols))
   late_drops <- late_drops %>% mutate (sd = round(sd(drop_late)/(sqrt(n()-1/n())),digits=2), impacted = round(drop_late-(dl_mean+sd),digits=2))
-  late_drops <- late_drops %>% filter (impacted > thresholds[["min_count"]])
+  late_drops <- late_drops %>% filter (impacted > thresholds[["min_impacted"]])
   flagged[["late_drops"]]  <-  late_drops %>% arrange (desc(impacted))
   
   
@@ -138,7 +134,7 @@ get_reg_stats <- function(students,courses,opt) {
   dips <- regstats %>% select (all_of(std_fields), registered, reg_mean)
   dips <- dips %>% group_by_at(all_of(std_group_cols))
   dips <- dips %>% mutate (sd = round(sd(registered)/(sqrt(n()-1/n())),digits=2), impacted = round((reg_mean-sd)-registered,digits=2))
-  dips <- dips %>% filter (impacted > thresholds[["min_count"]])
+  dips <- dips %>% filter (impacted > thresholds[["min_impacted"]])
   flagged[["dips"]] <-  dips %>% arrange (desc(impacted))
   
   
@@ -147,7 +143,7 @@ get_reg_stats <- function(students,courses,opt) {
   bumps <- regstats %>% select (all_of(std_fields), registered, reg_mean)
   bumps <- bumps %>% group_by_at(all_of(std_group_cols))
   bumps <- bumps %>% mutate (sd = round(sd(registered)/(sqrt(n()-1/n())),digits=2), impacted = round(registered-(reg_mean+sd),digits=2))
-  bumps <- bumps %>% filter (impacted > thresholds[["min_count"]])
+  bumps <- bumps %>% filter (impacted > thresholds[["min_impacted"]])
   flagged[["bumps"]] <-  bumps %>% arrange (desc(impacted))
   
   
@@ -167,7 +163,7 @@ get_reg_stats <- function(students,courses,opt) {
   squeezes <- merge(enrls,regstats,by.x=c("CAMP","COLLEGE","TERM","SUBJ_CRSE"),by.y=c("Course Campus Code","Course College Code","Academic Period Code","SUBJ_CRSE"),all.x=TRUE )
   squeezes <- squeezes %>% mutate(squeeze = round(avail/da_mean,digits=2))
   squeezes <- squeezes %>% 
-    filter (enrolled >= thresholds[["min_count"]]) %>%  
+    filter (enrolled >= thresholds[["min_impacted"]]) %>%  
     filter (squeeze < thresholds[["min_squeeze"]]) %>% 
     arrange(term_type,TERM,squeeze)  
   
