@@ -29,7 +29,7 @@ calc_cl_enrls <- function(students,reg_status=NULL) {
   
   
   if (is.null(reg_status)) {
-    
+    message("reg_status is NULL; calculating all reg stats...")
     cl_enrls <- cl_enrls %>% group_by(`Course Campus Code`,`Course College Code`,SUBJ_CRSE,`Academic Period Code`, term_type)
     
     reg_stats_summary <- cl_enrls %>% filter(`Registration Status Code`== "RE" | `Registration Status Code`== "RS")  %>%
@@ -71,7 +71,8 @@ calc_cl_enrls <- function(students,reg_status=NULL) {
     
   }
   # if given list of reg codes, filter for those
-  else if (!is.null(reg_status) && is.list(reg_status)) {
+  else if (!is.null(reg_status)) {
+    message("filtering for status codes: ", reg_status)
     reg_stats_summary <- cl_enrls %>% filter (`Registration Status Code` %in% reg_status)
   }
   
