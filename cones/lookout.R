@@ -37,10 +37,10 @@ where_at <- function (students,opt) {
   courses_avgs <- student_courses_summary %>% 
     select(SUBJ_CRSE,enrl_from_target) %>%  
     distinct()
-
+  
   # filter out target course
   courses_avgs <- courses_avgs %>% filter (SUBJ_CRSE != target_course)
-
+  
   # create col to indicate target course
   courses_avgs$in_crse <- target_course
   
@@ -57,7 +57,7 @@ where_at <- function (students,opt) {
 where_to <- function (students,opt) {
   
   target_course <- opt[["course"]]
-
+  
   message("\n Figuring out where students go after target_course: ", target_course ,"...")
   
   if (!is.null(opt[["summer"]])) {
@@ -116,16 +116,16 @@ where_to <- function (students,opt) {
   
   #TODO: as part of avg table, include target semester variance from mean
   # get enrollment for current term (via opt), avg for target course, and display delta
-
+  
   message("returning where_TO results...")
   return(dispersal_avgs)
 }
 
-  
+
 # show courses students are taking BEFORE target course, and contribution to target_course
-where_from <- function (students,opt) {
+where_from <- function (students, opt) {
   
-  message("\n Figuring out where students are FROM...")
+  message("\nFiguring out where students are FROM...")
   
   target_course <- opt[["course"]]
   
@@ -136,46 +136,36 @@ where_from <- function (students,opt) {
   }
   
   # get list of distinct student IDs in target class
+  # TODO: does registration status matter?
   target_student_list <-  students %>% filter (SUBJ_CRSE == target_course ) %>% 
-    select(`Academic Period Code`,`Student ID`) %>% distinct()
+    select(`Course Campus Code`, `Course College Code`, `Academic Period Code`,`Student ID`) %>% distinct()
   
   # rename APC col to target_term
-  target_student_list <- target_student_list %>%  rename (target_term =`Academic Period Code`)
+  target_student_list <- target_student_list %>%  rename (target_term = `Academic Period Code`)
   
   # for each row, get the previous term code and add to DF
   target_student_list <- target_student_list %>% add_prev_term_col("target_term",summer=incl_summer)
-  #prev_terms <- lapply(target_student_list$target_term,subtract_term,summer=incl_summer)
-  #target_student_list$prev_term = prev_terms
-  
-  # now target_student_list looks like:
-  # target_term Student ID prev_term
-  # 202010 101821300 201980
-  
+
   # get other courses taken (conduit courses) the semester prior to target course
   # merge target IDs from target_term with all student data for conduit terms
-  conduit_students <- merge(target_student_list, students, by.y=c("Student ID", "Academic Period Code"), by.x=c("Student ID", "prev_term"))
+  conduit_students <- merge(target_student_list, students, by.y=c("Course Campus Code", "Course College Code", "Student ID", "Academic Period Code"), by.x=c("Course Campus Code", "Course College Code","Student ID", "prev_term"))
   
-  # summarize conduit_students to see numbers of students in each course contributing to target course each term
-  # add enrolled column
-  # TODO: always include dropped students?
+  # summarize conduit_students to see number of students in each course contributing to target course each term
   conduit_students_summary <- conduit_students %>% 
-    group_by(`target_term`,SUBJ_CRSE,`Student Classification`,term_type) %>%  
+    group_by(`target_term`, `Course Campus Code`, `Course College Code`, SUBJ_CRSE, `Student Classification`,term_type) %>%  
     summarize (enrolled=n(), .groups="keep")
   
   # sum contributions across student classifications
-  message("course contributions w/o classifications:")
   where_from_dispersal_avgs_wo_class <- conduit_students_summary %>% 
-    group_by(target_term,SUBJ_CRSE,term_type) %>%  
+    group_by(target_term, `Course Campus Code`, `Course College Code`, SUBJ_CRSE,term_type) %>%  
     summarize(term_contrib = sum(enrolled), .groups="keep") %>% 
     arrange(desc(term_contrib))
   
   # get average contribution per conduit course across all terms
   # add avg_contrib column
   where_from_dispersal_avgs_wo_class <- where_from_dispersal_avgs_wo_class %>%
-    group_by(SUBJ_CRSE,term_type) %>%
+    group_by(`Course Campus Code`, `Course College Code`, SUBJ_CRSE, term_type) %>%
     summarize(avg_contrib = mean(term_contrib, .groups="keep"))
-
-  # where_from_dispersal_avgs_wo_class %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   # create col to indicate target course
   where_from_dispersal_avgs_wo_class$to_crse <- target_course
@@ -183,7 +173,7 @@ where_from <- function (students,opt) {
   message("returning where_FROM results...")
   return(where_from_dispersal_avgs_wo_class)
 }
-  
+
 
 # main body
 # check for required course param
@@ -194,7 +184,7 @@ lookout <- function (students,opt) {
   # opt <- list()
   # opt$course <-"HIST 412"
   # opt$status <- "A"
-
+  
   # check for required course param
   if (is.null(opt[["course"]])){
     stop("Required params: -c (course)
@@ -204,38 +194,42 @@ lookout <- function (students,opt) {
   # convert opt$course into a list
   course_list <- convert_param_to_list(opt[["course"]])
   
-  # create lists for storing DFs
+  # create DFs storing rows for courses
   where_to_summary <- data.frame()
   where_from_summary <- data.frame()
   where_at_summary <- data.frame()
+  
+  # create list for final return data
+  lookout_summary <- list()
   
   # loop through courses, subsetted by year
   message("about to loop through courses...")
   for (course in course_list) {
     opt$course <- course
-    
     message("processing: ",course)
     
     ###### WHERE_TO
     to_courses <- where_to(students,opt)
-    #to_courses %>% arrange(desc(avg_contrib)) %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-    
     #add new DF to summary table
     where_to_summary <- rbind(where_to_summary,to_courses)
     
+    
     ###### WHERE_FROM
     from_courses <- where_from(students,opt)
-    #from_courses %>% arrange(desc(avg_contrib)) %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-    
     #add new DF to summary table
     where_from_summary <- rbind(where_from_summary,from_courses)
     
     
     ###### WHERE_AT
     at_courses <- where_at(students,opt)
-    #at_courses %>% arrange(desc(enrl_from_target)) %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-    
+    #add new DF to summary table
     where_at_summary <- rbind(where_at_summary,at_courses)
+    
   } # end loop through course list
   
+  lookout_summary[["where_to"]] <- where_to_summary
+  lookout_summary[["where_from"]] <- where_from_summary
+  lookout_summary[["where_at"]] <- where_at_summary
+  
+  return (lookout_summary)
 }  
