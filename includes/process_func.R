@@ -246,15 +246,11 @@ process_func <- function(opt) {
       quit()
     }
     
-    # forecast
-    # opt params get modified here, so return the new ones for the forecast accuracy filtering
-    # there is no other output after forecasting (it could be forecast_data)
-    opt <- forecast(students,courses,opt)
+    forecasts <- forecast(students, courses, opt)
     
-    # since it's almost always useful to see results right away, calc and show accuracy and recommendations
-    forecast_data <- calc_forecast_accuracy(students,courses,opt)
-    process_output(forecast_data,"forecasts",opt) #.csv is added in process_output
-    
+    # since it's almost always useful to see results right away, calc accuracy and recommendations
+    forecast_data <- calc_forecast_accuracy(students, courses, opt)
+    process_output(forecast_data, "forecasts", opt) #.csv is added in process_output
   }
   
   
@@ -373,6 +369,8 @@ process_func <- function(opt) {
     
     # lookout controller doesn't yet return values, but saves 3 Rda files in the output/lookout folder
     lookout_out <- lookout(students, opt)
+    process_output(lookout_out,"",opt) # don't need to supply csv name since we'll use list names
+    
   }
   
   
