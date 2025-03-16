@@ -6,15 +6,15 @@ load_funcs <- function(cedar_base_dir) {
   source("includes/lists.R")
   source("includes/excluded_courses.R")
   source("includes/gen_ed_courses.R")
+  
   source("includes/misc_funcs.R")
   source("includes/process_func.R")
-  
   source("includes/filter_class_list.R")
   source("includes/filter_DESRs.R")
   
   source("cones/enrl/enrl.R")
   source("cones/forecast/forecast.R")
-  source("cones/forecast-report/forecast-report.R")
+  source("cones/forecast/forecast-stats.R")
   
   source("cones/course-report.R")
   source("cones/dept-report.R")
