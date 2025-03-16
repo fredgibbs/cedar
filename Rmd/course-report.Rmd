@@ -340,7 +340,7 @@ cat("\n")
 cat(paste0("#### ","Gradebook\n"))
 
 
-grade_data <-  grade_data %>%  select(c(`Academic Period Code`,`DFW %`,6:ncol(grade_data)))
+grade_data <-  grade_data %>%  select(c(`Course Campus Code`, `Course College Code`, `Academic Period Code`,`DFW %`,8:ncol(grade_data)))
 
 
 table <- kbl(grade_data,digits=2)  %>% 

@@ -10,7 +10,6 @@ find_major_enrl_correlations <- function(courses, opt) {
   # courses <- load_courses()
   # opt <- list()
   
-  
   # aggregate course enrollments across sections
   # get enrollment data for courses in forecast_data
   myopt <- opt
@@ -56,7 +55,7 @@ find_major_enrl_correlations <- function(courses, opt) {
 # and merges enrollment data with forecast data to display together and compute accuracy of forecasts
 # OPTIONAL param: opt$course for filtering returned data
 
-calc_forecast_accuracy <- function(students, courses, forecasts, opt) {
+calc_forecast_accuracy <- function(students, courses, opt) {
   message("\nWelcome to calc_forecast_accuracy!")
   
   #uncomment for studio testing
@@ -67,12 +66,14 @@ calc_forecast_accuracy <- function(students, courses, forecasts, opt) {
   # opt$course <- "HIST 1160"
   # # opt$term <- "202510"
   
-  
   # load existing forecast data
-  forecast_data <- forecasts
+  forecast_data <- load_forecasts()
   
-  message("forecast data:")
-  print(forecast_data)
+  # if empty data, return empty list
+  if (nrow(forecast_data) == 0) {
+    message("incoming forecasts is empty. returning empty tibble.")
+    return (tibble())
+  }
   
   # earlier forecast code didn't round
   forecast_data$forecast <- round(forecast_data$forecast, digits=2)
@@ -102,10 +103,9 @@ calc_forecast_accuracy <- function(students, courses, forecasts, opt) {
   #forecast_data_wide %>% tibble::as_tibble() %>% print(n = 10, width=Inf)
   
   
-  # get DESR enrollment data for courses in forecast_data, esp SEATS_AVAIL for later calcs
+  # get DESR enrollment data for courses in forecast_data, esp SEATS_AVAIL for later calcs (summarized as avail)
   myopt <- opt
-  myopt[["campus"]] <- c("ABQ","EA")
-  myopt[["group_cols"]] <- c("TERM", "term_type", "SUBJ", "SUBJ_CRSE", "CRSE_TITLE", "SEATS_AVAIL")
+  myopt[["group_cols"]] <- c("CAMP","COLLEGE", "TERM", "term_type", "SUBJ", "SUBJ_CRSE")
   #myopt$aop <- "compress" # not working with null term?
   myopt[["term"]] <- NULL # remove any term filtering for now to get all enrollments
   myopt[["course"]] <- as.list(unique(forecast_data$SUBJ_CRSE))
@@ -116,29 +116,30 @@ calc_forecast_accuracy <- function(students, courses, forecasts, opt) {
   # merge enrl data with forecast data; 
   # merge TO forecast data to prevent data loss, esp future terms not present in enrls
   message("merging forecast summary data with enrollment summary data...")
-  enrl_w_forecast <- merge (forecast_data_wide, enrls, by=c("SUBJ_CRSE", "TERM"),all.x=T)
+  enrl_w_forecast <- merge (forecast_data_wide, enrls, by=c("CAMP", "COLLEGE", "SUBJ_CRSE", "TERM"),all.x=T)
   
   # even tho col already exists, adding it here replaces NA values from terms when course wasn't offered
   enrl_w_forecast <- add_term_type_col(enrl_w_forecast,"TERM")
   
   # fill in missing values if not matched in merge (without term dependence)
   # removing level and gen_ed_area from select
-  selected <- enrls %>% ungroup() %>% select (c(SUBJ_CRSE)) %>% distinct(SUBJ_CRSE, .keep_all = T)
+  selected <- enrls %>% ungroup() %>% select (c(CAMP,COLLEGE,SUBJ_CRSE)) %>% distinct(SUBJ_CRSE, .keep_all = T)
   enrl_w_forecast <- rows_patch(enrl_w_forecast, selected, by=c("SUBJ_CRSE") )
   
   # filter students according to courses in forecast table
-  filtered_students <- students %>% filter (SUBJ_CRSE %in% myopt[["course"]] & `Course Campus Code` %in% c("ABQ","EA"))
+  filtered_students <- students %>% filter (SUBJ_CRSE %in% myopt[["course"]])
   
   message("getting class list enrollment data...")
   cl_enrls <- calc_cl_enrls(filtered_students)
   
   message("merging forecast summary data with cl_enrls summary data...")
-  enrl_w_forecast <- merge (enrl_w_forecast, cl_enrls, by.x=c("SUBJ_CRSE", "TERM","term_type"), by.y=c("SUBJ_CRSE", "Academic Period Code","term_type") ,all.x=T)
+  enrl_w_forecast <- merge (enrl_w_forecast, cl_enrls, by.x=c("CAMP", "COLLEGE", "SUBJ_CRSE", "TERM","term_type"), by.y=c("Course Campus Code", "Course College Code", "SUBJ_CRSE", "Academic Period Code","term_type") ,all.x=T)
   
-  selected <- enrl_w_forecast %>% group_by(SUBJ_CRSE,term_type) %>% select (c(SUBJ_CRSE,term_type, de_mean,dl_mean,da_mean)) %>% distinct(SUBJ_CRSE,term_type, .keep_all = T)
-  enrl_w_forecast <- rows_patch(enrl_w_forecast, selected, by=c("SUBJ_CRSE","term_type") )
+  selected <- enrl_w_forecast %>% group_by(CAMP,COLLEGE,SUBJ_CRSE,term_type) %>% 
+    select (c(CAMP,COLLEGE,SUBJ_CRSE,term_type, de_mean,dl_mean,da_mean)) %>% 
+    distinct(CAMP,COLLEGE,SUBJ_CRSE,term_type, .keep_all = T)
   
-  
+  enrl_w_forecast <- rows_patch(enrl_w_forecast, selected, by=c("CAMP","COLLEGE", "SUBJ_CRSE","term_type") )
   enrl_w_forecast <- enrl_w_forecast %>% mutate (conduit_wo_dr = round(conduit - (dr_early), digits=0), .after = conduit )
   enrl_w_forecast <- enrl_w_forecast %>% mutate (major_wo_dr = round(major - (dr_early), digits=0), .after = major )
 
@@ -161,10 +162,7 @@ calc_forecast_accuracy <- function(students, courses, forecasts, opt) {
             m_dr_cl_accr = round(major_wo_dr/cl_total,digits=2)
     ) 
   
-  
 
-  
-  
   # calc group summary stats
   message("computing summary stats...")
   
@@ -272,7 +270,8 @@ calc_forecast_accuracy <- function(students, courses, forecasts, opt) {
   # closest_column(df)
   # 
   # group and arrange for lag calcs
-  forecast_summary <- forecast_summary %>% group_by (SUBJ_CRSE, term_type) %>% arrange(SUBJ_CRSE,term_type,TERM) 
+  forecast_summary <- forecast_summary %>% group_by (CAMP,COLLEGE,SUBJ_CRSE, term_type) %>% 
+    arrange(CAMP,COLLEGE,SUBJ_CRSE,term_type,TERM) 
 
   # try to fractionally estimate how many sections are needed based on sections size from previous term type
   # why not calc sections as use_enrl_vals / 
@@ -302,9 +301,9 @@ calc_forecast_accuracy <- function(students, courses, forecasts, opt) {
   # use thresholds for adjusting computed recommendations
   # forecast_summarhy <- process_recommendations(forecast_summary)
   
-  forecast_summary_short <- forecast_summary %>% ungroup() %>% select(SUBJ_CRSE,TERM,enrolled,cl_total,de_mean,dl_mean,sections,avg_size,avail,conduit,major,pref_enrl_method,pref_cl_method,use_enrl_vals,use_cl_vals,avg_enrl_accr,avg_cl_accr,rec_enrl_sections,rec_cl_sections,diff_fr_prev_cl,diff_fr_prev_enrl)
+  forecast_summary_short <- forecast_summary %>% ungroup() %>% select(CAMP,COLLEGE,SUBJ_CRSE,TERM,enrolled,cl_total,de_mean,dl_mean,sections,avg_size,avail,conduit,major,pref_enrl_method,pref_cl_method,use_enrl_vals,use_cl_vals,avg_enrl_accr,avg_cl_accr,rec_enrl_sections,rec_cl_sections,diff_fr_prev_cl,diff_fr_prev_enrl)
   
-  forecast_summary <- forecast_summary %>% ungroup() %>% select(SUBJ_CRSE,TERM,enrolled,cl_total,dr_early,de_mean,dr_late,dl_mean,sections,avg_size,avail,conduit,conduit_wo_dr,c_enrl_accr,avg_c_enrl_accr, c_dr_enrl_accr, avg_c_dr_enrl_accr,c_cl_accr, avg_c_cl_accr, c_dr_cl_accr, avg_c_dr_cl_accr, major, major_wo_dr, m_enrl_accr, avg_m_enrl_accr, m_dr_enrl_accr, avg_m_dr_enrl_accr, m_cl_accr, avg_m_cl_accr, m_dr_cl_accr, avg_m_dr_cl_accr,pref_enrl_method,pref_cl_method,use_enrl_vals,use_cl_vals,avg_enrl_accr,avg_cl_accr,rec_enrl_sections,rec_cl_sections,diff_fr_prev_enrl,diff_fr_prev_cl)
+  forecast_summary <- forecast_summary %>% ungroup() %>% select(CAMP,COLLEGE,SUBJ_CRSE,TERM,enrolled,cl_total,dr_early,de_mean,dr_late,dl_mean,sections,avg_size,avail,conduit,conduit_wo_dr,c_enrl_accr,avg_c_enrl_accr, c_dr_enrl_accr, avg_c_dr_enrl_accr,c_cl_accr, avg_c_cl_accr, c_dr_cl_accr, avg_c_dr_cl_accr, major, major_wo_dr, m_enrl_accr, avg_m_enrl_accr, m_dr_enrl_accr, avg_m_dr_enrl_accr, m_cl_accr, avg_m_cl_accr, m_dr_cl_accr, avg_m_dr_cl_accr,pref_enrl_method,pref_cl_method,use_enrl_vals,use_cl_vals,avg_enrl_accr,avg_cl_accr,rec_enrl_sections,rec_cl_sections,diff_fr_prev_enrl,diff_fr_prev_cl)
   
   payload <- list()
   payload[["forecast_short"]] <- forecast_summary_short
@@ -337,34 +336,6 @@ process_recommendations <- function(forecast_summary) {
 }
 
 
-########### UNFINISHED
-########## RESET TABLE FUNCTION 
-# load Rda, remove rows for specified course, re-save
-reset_forecast_course <- function(opt) {
-  
-  if (is.null(opt$course)) {
-    stop("Please specify a course (-c or --course).")
-  }
-  
-  # for studio use...
-  # opt$course <- "HIST 491"
-  
-  # even though load_forecast_data can be used, we still need to set the filename for saving
-  forecast_rda_file <- paste0(cedar_data_dir,"/processed/forecasts.Rda")
-  load(forecast_rda_file) # loads forecast_data
-  
-  # a few ways of cleaning data for studio use.
-  # here we can find things we don't want...
-  unique(forecast_data$SUBJ_CRSE)
-  
-  forecast_data <- forecast_data[grep("JAPN",forecast_data$SUBJ_CRSE, invert=TRUE),]
-  forecast_data <- forecast_data[grep(" [0-9]{3}$",forecast_data$SUBJ_CRSE, invert=TRUE),]
-  
-  # save new data
-  message("saving forecasts.Rda...")
-  save(forecast_data,file=forecast_rda_file)
-}
-
 
 
 
@@ -394,11 +365,12 @@ create_forecast_report <- function(forecast_data, opt) {
   }
   
   # payload
-  d_params <- list("opt" = opt,
-                   "tables" = list(
-                    "forecasts" = forecast_data
-                     #"forecast_next_term" = forecast_next_term
-                   )
+  d_params <- list(
+    "opt" = opt,
+    "tables" = list(
+      "forecasts" = forecast_data
+      #"forecast_next_term" = forecast_next_term
+    )
   )
   
   message("rendering forecast report...")
@@ -406,7 +378,7 @@ create_forecast_report <- function(forecast_data, opt) {
   # set output data
   output_filename <- "forecast-report"
   d_params$output_filename <- output_filename
-  d_params$rmd_file <- "cones/forecast-report/forecast-report.Rmd"
+  d_params$rmd_file <- "Rmd/forecast-report.Rmd"
   d_params$output_dir_base <- paste0(cedar_output_dir,"forecast-reports/")
   
   create_report(opt,d_params)
