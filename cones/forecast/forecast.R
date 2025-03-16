@@ -1,82 +1,57 @@
 # This set of functions helps forecast enrollment for specified courses and terms
 # The actual methods for calculation are in separate files
-# Can be run from CEDAR, and is also called from course-report.R
-# REQUIRES: students, courses, opt 
 
 
-# get_forecast_data loads previously generated forecasting data
-get_forecast_data <- function (students,courses,opt) {
-  message("welcome to get_forecast_data! ")
-
-  #TODO: make course optional (for general reporting)
-  #TODO: don't automatically use tl_recents for term; allow override from opt
+########### UNFINISHED; code just for manual use; this never gets run
+########## RESET TABLE
+# load Rds, remove rows for specified course, re-save
+reset_forecast_course <- function(opt) {
   
-  # these should always be set this way
-  opt$status <- "A"
-  opt$uel <- TRUE
-
-  # print(opt)
-  
-  # if opt has only single course/term, make it into course list 
-  if (is.null(opt[["course"]]))  {
-    message("please specify either a course, comma-separated list of courses, or a named list of courses (from lists.R") 
-    stop()
+  if (is.null(opt$course)) {
+    stop("Please specify a course (-c or --course).")
   }
   
-  course_list <- convert_param_to_list(opt[["course"]])
+  # for studio use...
+  # opt$course <- "HIST 491"
   
-  # check if forecast.Rda exists and has data for desired course data
-  # default is to use tl_recents from lists.R, usually fall and spring terms since fall 2021
-  # if not, call forecast to create row and reload
+  # even though load_forecast_data can be used, we still need to set the filename for saving
+  forecast_rds_file <- paste0(cedar_data_dir,"/processed/forecasts.Rds")
+  forecast_data <- readRDS(forecast_rds_file) # loads forecast_data
   
-  # load existing forecast data
-  forecast_data <- load_forecasts()
+  # a few ways of cleaning data for studio use.
+  # here we can find things we don't want...
+  unique(forecast_data$SUBJ_CRSE)
+  forecast_data <- forecast_data %>% filter (SUBJ_CRSE != "HIST 1160")
+  forecast_data <- forecast_data[grep("JAPN",forecast_data$SUBJ_CRSE, invert=TRUE),]
+  forecast_data <- forecast_data[grep(" [0-9]{3}$",forecast_data$SUBJ_CRSE, invert=TRUE),]
   
-  # filter for specified course
-  message("filtering for specified course: ",course_list)
-  filtered_fd <- forecast_data %>% filter(SUBJ_CRSE %in% course_list) %>% filter(TERM %in% tl_recents)
-  
-  # if missing forecast data, create it
-  # if (nrow(filtered_fd) < length(tl_recents)) {
-  #   message("not enough forecast data found...forecasting!")
-  #   
-  #   # forecast doesn't yet return a value, but it saves an Rda file
-  #   message("setting  opt$term_list to 'tl_recents' (from includes/lists.R)")
-  #   opt$term_list <- "tl_recents"
-  #   forecast_summary <- forecast(students,courses,opt)
-  #   
-  #   message("loading forecast table AGAIN...")
-  #   load (forecast_rda_file) # DF is called summary
-  #   filtered_fd <- forecast_data %>% filter(SUBJ_CRSE %in% course_list) %>% filter(TERM %in% tl_recents)
-  # }
-  # else {
-  #   message("forecast data found for all specified terms!")
-  # }
-  # 
-  
-  message("returning forecast_data...")
-  return(filtered_fd)
+  # save new data
+  message("saving forecasts.Rds...")
+  saveRDS(forecast_data, file=forecast_rds_file)
 }
+
+
 
 
 # function to add a new row of data for a course to the forecasts.Rda table
 add_to_forecast_table <- function(new_forecast_row) {
-  message("welcome to add_to_forecast_table!")
-  
+  message("\nWelcome to add_to_forecast_table!")
   print(new_forecast_row)
   
-  # keep table in long format
-  #TERM   SUBJ_CRSE   forecast     method
-  #202410 MATH 1220   442.956522   basic
+  # check for empty table
+  if (nrow(new_forecast_row) == 0 ) {
+    message("new row data is empty.")
+    return()
+  }
   
   target_term <- new_forecast_row[["TERM"]]
   target_course <- new_forecast_row[["SUBJ_CRSE"]]
   forecast_method <- new_forecast_row[["method"]]
   
-  # load existing data or create new tibble to hold data
+  # always refresh data
   forecast_data <- load_forecasts()
 
-  # if any data in forecast table, remove previous rows w same course/term forecasts
+  # if any data in forecast table, remove previous rows with the same course/term forecasts
   if (nrow(forecast_data) > 0) {
     message("removing old forecasts from target term...")
     forecast_data <- forecast_data %>% filter (!(TERM == as.character(target_term) & SUBJ_CRSE == target_course & method == forecast_method))
@@ -89,7 +64,7 @@ add_to_forecast_table <- function(new_forecast_row) {
     forecast_data <- new_forecast_row
   }
   
-  # save new data
+  # save new data (for now, locally only)
   forecast_rds_file <- paste0(cedar_data_dir,"processed/forecasts.Rds")
   saveRDS(forecast_data, file=forecast_rds_file)
   message("updated ",forecast_rds_file, " with new forecast row.")
@@ -100,18 +75,12 @@ add_to_forecast_table <- function(new_forecast_row) {
 ############### GENERAL FUNCTION START ##################3
 
 forecast <- function(students, courses, opt) {
-  message("\n Welcome to FORECAST!")
+  message("\nWelcome to FORECAST!")
 
   # load methods
-  #source(paste0(cedar_base_dir,"cones/forecast/method-fall-to-spring.R"))
   source(paste0(cedar_base_dir,"cones/forecast/method-conduit.R"))
   source(paste0(cedar_base_dir,"cones/forecast/method-major.R"))
     
-  # these should always be set this way; tell user they are being overridden
-  message("setting opt$uel = TRUE; opt$aggregate = TRUE...")
-  opt$uel <- TRUE
-  opt$aggregate <- "course"
-  
   # for studio testing...
   # opt <- list()
   # opt$method <- "all" 
@@ -121,6 +90,10 @@ forecast <- function(students, courses, opt) {
   # opt$course <- "cl_comm1000"
   # opt$term <- "tl_recents"
   
+  # these should always be set this way; tell user they are being overridden
+  message("setting opt$uel = TRUE")
+  opt$uel <- TRUE
+
   req_message <- "Required params: -c (course), --t (term)  
     For example: forecast -c 'BIOL 2305' -t 202480"
   
@@ -133,7 +106,6 @@ forecast <- function(students, courses, opt) {
   # if course set to "forecasts", use list of courses already in forecast_table.
   else if (course == "forecasts") {
     message("course set to FORECASTS...")
-    forecast_data <- load_forecasts()
     course_list <- unique(as.list(forecast_data$SUBJ_CRSE))
     opt[["course"]] <- course_list
   }
@@ -237,25 +209,22 @@ if (is.null(opt$summer) ){
       
       message("processing term: ", term, "...")
       
-      # if (forecast_method == "fall-to-spring" || forecast_method == "all") {
-      #   sum_row <- fall_to_spring_forecast(students, courses, opt)
-      # } 
-      
       if(forecast_method == "conduit" || forecast_method == "all") {
-        sum_row <- conduit_forecast(students, courses, myopt)
+        conduits <- conduit_forecast(students, courses, myopt)
+        add_to_forecast_table(conduits)
       }
 
       if(forecast_method == "major" || forecast_method == "all") {
-        sum_row <- major_forecast(students, courses, myopt)
+        majors <- major_forecast(students, courses, myopt)
+        add_to_forecast_table(majors)
       }  
       
     } # end loop through term list
     counter <- counter + 1
   } # end loop through course list
   
-  message("done looping through terms and courses!")
+  message("done looping through terms and courses! returning new forecasts data...")
+  forecasts <- load_forecasts()
   
-  message("all done in forecast!")
-  
-  return(opt)
+  return(forecasts)
   }

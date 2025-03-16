@@ -16,23 +16,23 @@
 # then apply diff to total enrollment from prior year
 # REQUIRES: course and term
 
-conduit_forecast <- function(students,courses,opt) {
-  message("\n FORECASTING VIA CONDUIT...")
+conduit_forecast <- function(students, courses, opt) {
+  message("\nFORECASTING VIA CONDUIT...")
   
   #for studio testing...
   # students <- load_students()
   # courses <- load_courses()
-  # opt <- list()
-  # opt[["course"]] <- "ENGL 2993"
-  # opt[["term"]] <- "202560"
-  # opt[["custom_conduit"]]  <- "202480"
-  # opt[["conduit_for_term"]] <- "202560"
+  opt <- list()
+  opt[["course"]] <- "HIST 1160"
+  opt[["term"]] <- "202560"
+  #opt[["custom_conduit"]]  <- "202480"
+  #opt[["conduit_for_term"]] <- "202560"
   
   target_course <- opt[["course"]]
   target_term <- opt[["term"]]
-
+  
   message("target course: ",target_course,"; target_term: ",target_term,".")
-    
+  
   # see if user has supplied a conduit term besides default of target-1. (for projecting summer from fall...)
   # note: subtract_term defaults to ignoring summer, which is almost always want to do
   if (!is.null(opt[["custom_conduit"]]) && target_term == opt[["conduit_for_term"]]) {
@@ -40,33 +40,26 @@ conduit_forecast <- function(students,courses,opt) {
     conduit_term <- opt[["custom_conduit"]]  
   } else {
     # no special conduits; business as usual
+    message("setting conduit term to be target_term - 1.")
     conduit_term <- subtract_term(target_term)   
   }
   
   message("conduit term set to ",conduit_term,".")
   
-  message("subtracting year from target and conduit terms for enrollment refs...")
+  message("subtracting year from target and conduit terms for getting previous enrollment data...")
   prev_target_term <- as.integer(target_term) - 100
   prev_conduit_term <- as.integer(conduit_term) - 100
   
   # get unique ids from students in prev target course (1 year previous to target course/term)
   # in other words: who was in the this course a year prior to when we're forecasting?
   # this is the "baseline" enrollment to which we will apply adjustments
+  # NOTE: where_from is term agnostic, so it gets mean of contributing enrollments
   
-  # be careful with summer flag. if accidentally on, what's returned from where_from might not have any rows one of the conduit semesters
-  # note: where_from is term agnostic, so it gets mean of contributing enrollments
-  
-  #print(opt)
-  conduits_contributions <- where_from (students,opt)
-  #print(conduits_contributions)
-  
-  #  SUBJ_CRSE term_type avg_contrib to_crse
-  # ECON 2110 fall              4   HIST 412  
+  conduits_contributions <- where_from (students, opt)
   
   # keep only term_type of conduit course
   message("filtering conduit contributions by conduit term type...")
   conduits_contributions <- conduits_contributions %>% filter (term_type == get_term_type(conduit_term))
-  #print(conduits_contributions)
   
   # determine how conduit enrollments changed from one year to the next
   message("finding conduit enrollments...")
@@ -75,17 +68,15 @@ conduit_forecast <- function(students,courses,opt) {
   myopt <- opt
   myopt[["course"]] <- as.list(conduits_contributions$SUBJ_CRSE)
   myopt[["term"]] <- paste0(conduit_term,",",prev_conduit_term)
-  myopt[["aggregate"]] <- "course"
+  myopt[["group_cols"]] <- c("CAMP","COLLEGE","TERM", "term_type", "SUBJ","SUBJ_CRSE","level","gen_ed_area")
   
   # the summarize here combines enrolled col for same SUBJ_CRSE (like topics courses)
   # note that we can't forecast via conduits if we don't have prior term_type enrollments
   conduit_enrls <- get_enrl(courses,myopt) %>% 
-    group_by(SUBJ_CRSE,TERM) %>% 
-    summarize (enrolled = sum(enrolled)) %>% 
-    select(SUBJ_CRSE, TERM, enrolled) %>%  
-    arrange(SUBJ_CRSE)
+    group_by(CAMP, COLLEGE, SUBJ_CRSE, TERM) %>% 
+    select(CAMP, COLLEGE, SUBJ_CRSE, TERM, enrolled)
   
-  #if no conduit data, (ie we're forecasting for summer in the fall), make the conduits be one earlier semester
+  # if no conduit data, (ie we're forecasting for summer in the fall), make the conduits be one earlier semester
   if (nrow( conduit_enrls %>% filter (TERM == conduit_term)) == 0) {
     message("\n can't find any enrollment data for true conduit term. Trying one term back from original conduit term...")
     conduit_term <- subtract_term(conduit_term)
@@ -95,95 +86,130 @@ conduit_forecast <- function(students,courses,opt) {
     myopt[["term"]] <- paste0(conduit_term,",",prev_conduit_term)
     
     conduit_enrls <- get_enrl(courses,myopt) %>% 
-      group_by(SUBJ_CRSE,TERM) %>% 
-      summarize (enrolled = sum(enrolled)) %>% 
-      select(SUBJ_CRSE, TERM, enrolled) %>%  
-      arrange(SUBJ_CRSE)
+      group_by(CAMP,COLLEGE,SUBJ_CRSE,TERM) %>% 
+      select(CAMP,COLLEGE,SUBJ_CRSE, TERM, enrolled)
   }
   
   if (nrow(conduit_enrls > 0)) {
-  
-  # make sure each course has an enrollment (even if 0) for both terms
-  conduit_enrls <- conduit_enrls %>% ungroup() %>% complete(SUBJ_CRSE, TERM, fill=list(enrolled=0))
-  
-  # calc enrollment differences between conduit terms
-  message("calcuating differences between conduit terms...")
-  enrl_diffs <- conduit_enrls %>% group_by(SUBJ_CRSE) %>% 
-    mutate(conduit_enrl_diff = enrolled/lag(enrolled))
-
-  #print(enrl_diffs)
-  
-  
-  # filter out meaningless diffs (NAs and Infs)
-  # these result from one of the semesters having 0 enrollment; not much we can learn if a course wasn't offered 
-  enrl_diffs <- enrl_diffs %>% filter (TERM == conduit_term & is.finite(conduit_enrl_diff) & !is.na(conduit_enrl_diff) & enrolled > 0)
-
-  # merge conduit contributions with enrl_diffs
-  message("merging conduit contributions with enrl_diffs")
-  merged <- merge(conduits_contributions, enrl_diffs)
-
-  #print(merged)
-  
-  # get mean enrollments from previous TARGET courses **with same term type**
-  myopt <- opt
-  myopt[["course"]] <- target_course
-  myopt[["term"]] <- get_term_type(target_term)
-  myopt[["aggregate"]] <- "course"
-  
-  # TODO: provide mean or last term options
-  message("getting mean enrollment of target course in same term type of target term...")
-  
-  target_enrls <- get_enrl(courses,myopt) %>%
-    ungroup() %>%
-    # mutate (mean_enrl = mean(enrolled)) %>%
-    mutate (mean_enrl = enrolled) %>%
-    select (TERM,SUBJ_CRSE,mean_enrl)
-
     
-  # check to make sure we have some rows
-  message("checking for prior enrollments...")
-  if (nrow(target_enrls) > 0) {
-    message("prior enrollments found.")
-    target_enrls <- target_enrls %>% tail(n=1)
-    merged$target_mean_enrl <- target_enrls$mean_enrl
-  } else {
-    message("no enrollments found.")
-    merged$target_mean_enrl <- 0
-    message("target_mean_enrl (in target term type) set to 0.")
-  }
-  
-  
-  # calculate the percent of students in target course coming from conduit
-  message("calculating the percent of students from conduit course...")
-  merged <- merged %>% mutate(pct_from_conduit = avg_contrib / target_mean_enrl)   
-  
-  # we want to know how much the conduit courses have changed in enrollment compared to last year
-  # but they don't contribute equally to the target course, so use a weighted mean
-  mean_weighted <- weighted.mean(merged$conduit_enrl_diff, w = merged$pct_from_conduit)
-  print(paste0("mean weighted: ",mean_weighted))
-  
-  message("forecasting target enrollment from previous semester and weighted mean of contributions.")
-  proj <-  target_enrls$mean_enrl * mean_weighted
-  
-  message("forecast: ", class(proj))
-  print(paste0("proj: ",proj))
-  
-  if (is.nan(mean_weighted)) {
-    message("no projection! probably no prior enrollments.")
-    proj <- 0
-  } 
-  
+    # make sure each course has an enrollment (even if 0) for both terms
+    conduit_enrls <- conduit_enrls %>% ungroup() %>% complete(CAMP,COLLEGE,SUBJ_CRSE, TERM, fill=list(enrolled=0))
+    
+    # calc enrollment differences between conduit terms
+    message("calcuating differences between conduit terms...")
+    enrl_diffs <- conduit_enrls %>% group_by(CAMP,COLLEGE,SUBJ_CRSE) %>% 
+      arrange(CAMP,COLLEGE,SUBJ_CRSE) %>% 
+      mutate(conduit_enrl_diff = enrolled/lag(enrolled))
+    
+    
+    # filter out meaningless diffs (NAs and Infs)
+    # these result from one of the semesters having 0 enrollment; hard to forecast if a course wasn't offered 
+    enrl_diffs <- enrl_diffs %>% filter (TERM == conduit_term & is.finite(conduit_enrl_diff) & !is.na(conduit_enrl_diff) & enrolled > 0)
+    
+    # merge conduit contributions with enrl_diffs
+    message("merging conduit contributions with enrl_diffs")
+    enrl_diffs <- merge(conduits_contributions, enrl_diffs, by.x=c("Course Campus Code", "Course College Code","SUBJ_CRSE"), by.y=c("CAMP","COLLEGE","SUBJ_CRSE"))
+    
+    # TODO: provide option to use mean or previous_target_term options; maybe more accurate to use last year's enrollment only
+    # but this would mean finding change from mean conduit enrollment as well
+    # for now, just use previous_target_course enrollment 
+    myopt <- opt
+    myopt[["course"]] <- target_course
+    # myopt[["term"]] <- get_term_type(target_term) # use term type if getting mean or last instance of course
+    myopt[["term"]] <- prev_target_term 
+    myopt[["group_cols"]] <- c("CAMP","COLLEGE", "TERM", "SUBJ_CRSE")
+    
+    target_enrls <- get_enrl(courses,myopt)
+    
+    message("getting enrollment of previous target course...")
+    
+    target_enrls <- get_enrl(courses,myopt) %>%
+      #mutate (mean_enrl = avg_size) %>% # in case we want to do mean at some point
+      select (CAMP,COLLEGE,prev_target_term = TERM,SUBJ_CRSE, prev_target_enrl = enrolled)
+    
+    # TODO: if we don't have rows from prev_target, get closest enrls
+    # TODO: since enabling campuses, we need to check more carefully than just nrow.
+    # check to make sure we have some rows
+    message("checking for prior enrollments...")
+    if (nrow(target_enrls) > 0) {
+      message("prior enrollments found.")
+    } else {
+      message("no enrollments found.")
+      enrl_diffs$prev_target_enrl <- 0
+      message("target_mean_enrl (in target term type) set to 0.")
+    }
+
+    enrl_diffs <- merge(enrl_diffs, target_enrls, by.x=c("Course Campus Code", "Course College Code","to_crse"), by.y=c("CAMP","COLLEGE","SUBJ_CRSE"))
+    
+    # 
+    # 
+    
+    # # calculate the percent of students in target course coming from conduit
+    # message("calculating the percent of students from conduit course...")
+    # enrl_diffs <- enrl_diffs %>% group_by(`Course Campus Code`, `Course College Code`, SUBJ_CRSE)
+    # enrl_diffs <- enrl_diffs %>% mutate(prog_target_enrl = prev_target_enrl * conduit_enrl_diff)   
+    # enrl_diffs <- enrl_diffs %>% mutate(test = prog_target_enrl * (1+pct_from_conduit))   
+    # 
+    # enrl_diffs <- enrl_diffs %>% mutate(pct_from_conduit = avg_contrib / prev_target_enrl)   
+    # enrl_diffs <- enrl_diffs %>% mutate(adj_pct = pct_from_conduit * conduit_enrl_diff)   
+    # 
+    # # testing...
+    # enrl_diffs <- enrl_diffs %>% mutate (proj = prev_target_enrl * pct_from_conduit * conduit_enrl_diff)
+    # 
+    # ed_sum <- enrl_diffs %>% group_by(`Course Campus Code`, `Course College Code`, SUBJ_CRSE) %>% 
+    #   summarize (proj = sum(test)/n())
+    # 
+    # ed_sum <- ed_sum %>% group_by(`Course Campus Code`, `Course College Code`) %>% 
+    #   summarize (proj = mean(proj))
+    # 
+    
+    # we want to know how much the conduit courses in aggregate have changed in enrollment compared to last year
+    # but they don't contribute equally to the target course, so weight the means of their enrollment differnential by the amoun they contribute to the target course
+    #enrl_mean_weighted <- weighted.mean(enrl_diffs$conduit_enrl_diff, w = enrl_diffs$pct_from_conduit)
+    
+    message("forecasting target enrollment from previous semester and weighted mean of contributions...")
+    enrl_diffs <- enrl_diffs %>% mutate(pct_from_conduit = avg_contrib / prev_target_enrl)   
+    
+    enrl_diffs  <- enrl_diffs %>%  group_by(`Course Campus Code`, `Course College Code`) %>%  
+      mutate (mean_weighted = weighted.mean(conduit_enrl_diff, w = pct_from_conduit))
+    
+    enrl_diffs  <- enrl_diffs %>%  group_by(`Course Campus Code`, `Course College Code`) %>% 
+      mutate(proj = prev_target_enrl*mean_weighted)
+    
+    projections <- enrl_diffs %>% select (`Course Campus Code`,`Course College Code`, to_crse,TERM,proj) %>% 
+      distinct()
+    
   } else { # could not find conduit enrollments
     message("no projection! could not find conduit enrollments.")
-    proj <- 0
   }
   
-  # continuning and incoming columns used by major method, so need to be consistent with columns
-  new_summary <- data.frame(target_term, target_course, "conduit", round(proj,digits=0), 0, 0)
-  names(new_summary)<-c("TERM","SUBJ_CRSE","method","forecast","continuing_forecast","incoming_forecast")
   
-  # add to forecast table 
-  add_to_forecast_table(new_summary)
-  
+  if (nrow(enrl_diffs) > 0) {
+    message("combining incoming and continuing forecasts...")
     
+    # continuing and incoming columns used by major method, so use here to be consistent with columns
+    continuing_fc <- round(projections$proj,digits=0)
+    incoming_fc <- 0
+    total_fc <- round(continuing_fc + incoming_fc,digits=0)
+    
+    new_summary <- data.frame(
+      "CAMP" = projections$`Course Campus Code`,
+      "COLLEGE" = projections$`Course College Code`,
+      "TERM" = target_term,
+      "SUBJ_CRSE" = projections$to_crse, 
+      "method" = "conduit", 
+      "forecast" = total_fc,
+      "continuing_forecast" = continuing_fc,
+      "incoming_forecast" = incoming_fc
+    )
+    
+  } else {
+    message("unable to forecast because no previous target data.")
+    new_summary <- data.frame()
+  }                          
+  
+  message("conduit forecast complete! returning new rows...\n")
+  
+  # return new rows
+  return (new_summary) 
 } 

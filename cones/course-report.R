@@ -47,26 +47,28 @@ get_course_data <- function(students, courses, forecasts, opt) {
     message("need more fall forecasts. retroactively forecasting!")
     message("setting  myopt$term to 'tl_falls' (from includes/lists.R)")
     myopt$term <- "tl_falls"
-    forecast(students, courses, forecasts, myopt)
+    forecast(students, courses, myopt)
   }
   
   if (nrow(enrls %>% filter(term_type == "spring")) > 0 && nrow(forecast_data[forecast_data$term_type=="spring",]) < 6) {
     message("need more spring forecasts. retroactively forecasting!")
     message("setting  myopt$term to 'tl_springs' (from includes/lists.R)")
     myopt$term <- "tl_springs"
-    forecast(students, courses, forecasts, myopt)
+    forecast(students, courses, myopt)
   }
   
   if (nrow(enrls %>% filter(term_type == "summer")) > 0 && nrow(forecast_data[forecast_data$term_type=="summer",]) < 6) {
     message("need more summer forecasts. retroactively forecasting!")
     message("setting  myopt$term to 'tl_summers' (from includes/lists.R)")
     myopt$term <- "tl_summers"
-    forecast(students, courses, forecasts, myopt)
+    forecast(students, courses, myopt)
   } 
   
+  # reset term after forecasting
+  myopt$term <- NULL
   
-  # use forecast-report.R to load forecast data with enrollments and accuracy
-  forecasts <- calc_forecast_accuracy(students, courses, forecasts, myopt) # returns a list with short and long versions
+  # get forecast stats (w enrollments and accuracy)
+  forecasts <- calc_forecast_accuracy(students, courses, myopt) # returns a list with short and long versions
   forecasts <- forecasts[["forecast_short"]]
   course_data[["forecasts"]] <- forecasts %>% select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))
   
@@ -115,7 +117,7 @@ get_course_data <- function(students, courses, forecasts, opt) {
   # get grade data; opt term should be null to get all data
   message("getting gradebook data...")
   myopt[["aggregate"]] <- "course"
-  course_data[["grades"]] <- get_grades(students,myopt)
+  course_data[["grades"]] <- get_grades(students,myopt)[["course"]]
   
   return (course_data)
 }
