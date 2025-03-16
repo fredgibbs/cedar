@@ -24,13 +24,15 @@ get_dropped <- function(filtered_students) {
   return(dropped)
 }
 
+
+
 # produce summary of grades (how many students got each grade) for specified courses(s)
 # the output (grades_summary) is used to as input for additional aggregating and filtering
 get_grades_summary <- function(grades) {
   message("getting grades summary...")
   
-  grades_summary <- grades %>% group_by(`Academic Period Code`, SUBJ_CRSE, level, `Long Course Title`, `Primary Instructor Last Name`, `Instruction Delivery Mode Code`, `Sub-Academic Period Code` , `Final Grade`) %>% 
-    summarize (count=n())
+  grades_summary <- grades %>% group_by(`Course Campus Code`, `Course College Code`, `Academic Period Code`, SUBJ_CRSE, level, `Long Course Title`, `Primary Instructor Last Name`, `Instruction Delivery Mode Code`, `Sub-Academic Period Code` , `Final Grade`, .groups="keep") %>% 
+    summarize (count=n(), .groups="keep")
   
   # arranging by final grade helps the grades stay in order when pivoting to wide
   message("re-ordering grades...")
@@ -48,15 +50,18 @@ get_grades_summary <- function(grades) {
 # passing_grades defined in includes/lists.R
 get_pf_sum <- function(grades,dropped) {
   message("creating summaries for passing, not passing, etc...")
+  
+  group_cols <- c("Course Campus Code", "Course College Code", "Academic Period Code", "SUBJ_CRSE", "level", "Primary Instructor Last Name","Instruction Delivery Mode Code", "Sub-Academic Period Code") 
+  
   passed <- grades %>% filter (`Final Grade` %in% passing_grades) %>%  
-    group_by(`Academic Period Code`, SUBJ_CRSE, level, `Primary Instructor Last Name`,`Instruction Delivery Mode Code`, `Sub-Academic Period Code` ) %>% 
-    summarize (passed=n(),.groups="keep")
+    group_by_at(group_cols) %>% 
+    summarize (passed=n(), .groups="keep")
   failed   <- grades %>% filter (!`Final Grade` %in% passing_grades) %>% 
-    group_by(`Academic Period Code`, SUBJ_CRSE, level, `Primary Instructor Last Name`,`Instruction Delivery Mode Code`, `Sub-Academic Period Code` ) %>% 
-    summarize (failed=n(),.groups="keep")
+    group_by_at(group_cols) %>% 
+    summarize (failed=n(), .groups="keep")
   dropped_summary   <- dropped %>% 
-    group_by(`Academic Period Code`, SUBJ_CRSE, level, `Primary Instructor Last Name`,`Instruction Delivery Mode Code`, `Sub-Academic Period Code` ) %>% 
-    summarize (dropped=n(),.groups="keep")
+    group_by_at(group_cols) %>% 
+    summarize (dropped=n(), .groups="keep")
   
   # create row for each term/course/instructor/method/pt combo
   pf_sum <- merge(passed,failed,all="TRUE")
@@ -72,12 +77,9 @@ get_pf_sum <- function(grades,dropped) {
 # return a summary of pass / fail / drop / data by term and course
 # this usually gets appended to full grade data
 get_pf_sum_by_course <- function(pf_sum) {
-  pf_sum_by_course <- pf_sum %>% group_by(`Academic Period Code`, SUBJ_CRSE ) %>% 
+  pf_sum_by_course <- pf_sum %>% group_by(`Course Campus Code`, `Course College Code`, `Academic Period Code`, SUBJ_CRSE ) %>% 
     summarize (passed = sum(passed), failed = sum(failed), dropped = sum(dropped))
-  
-  # message("pass/fail/drop summary:")
-  # pf_sum_by_course %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-  
+
   return(pf_sum_by_course)
 }
 
@@ -90,8 +92,8 @@ get_grades_summary_by_course <- function(grades_summary,pf_sum_by_course) {
   # summarize WITHOUT INSTRUCTOR and WITHOUT COURSE TITLE (to group all topics titles together)
   # TODO: could add a grades_summary_by_course_topic if needed
   grades_summary_by_course  <- grades_summary %>% 
-    group_by(`Academic Period Code`, SUBJ_CRSE, level,`Final Grade`) %>% 
-    summarize (total = sum(count))
+    group_by(`Course Campus Code`, `Course College Code`, `Academic Period Code`, SUBJ_CRSE, level,`Final Grade`) %>% 
+    summarize (total = sum(count), .groups="keep")
   
   message("re-ordering grades...")
   grades_summary_by_course$`Final Grade` <- factor(grades_summary_by_course$`Final Grade`,levels=unlist(grades_to_points[1]))
@@ -111,80 +113,24 @@ get_grades_summary_by_course <- function(grades_summary,pf_sum_by_course) {
   
   # compute DFW %
   grades_summary_by_course <- grades_summary_by_course %>% 
-    #mutate (`DFW %`=round(failed/(passed+failed)*100,digits=2), .after = `Primary Instructor Last Name` ) %>% 
     mutate (`DFW %`=round((dropped+failed)/(dropped+passed+failed)*100,digits=2), .after=`SUBJ_CRSE` ) %>% 
-    arrange(`Academic Period Code`,SUBJ_CRSE)
+    arrange(`Course Campus Code`, `Course College Code`, `Academic Period Code`,SUBJ_CRSE)
   
-  # message("the master gradebook (w/o instructors): course grades (wide) by course and term:")
-  # grades_summary_by_course %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-
   return(grades_summary_by_course)
 }
 
 
-# summarize grades by course averages across all terms
-get_course_avg <- function(grades_summary_by_course) {
+summarize_grades <- function(grades_summary_by_course,opt) {
+  group_cols <- opt[["group_cols"]]
+  group_cols <- convert_param_to_list(group_cols)
   
-  # don't summarize with long course title because of variations that muck up aggregate reporting
-  grades_summary_by_course_avg <- grades_summary_by_course %>% 
-    group_by(SUBJ_CRSE, level) %>% 
+  summary <- grades_summary_by_course %>% 
+    group_by_at(group_cols) %>% 
     summarize(passed = sum(passed), failed = sum(failed), dropped = sum(dropped)) %>% 
-    mutate (`DFW %`=round((dropped+failed)/(passed+failed+dropped)*100,digits=2)) %>% 
-    arrange(desc(`DFW %`))
+    mutate (`DFW %`=round((dropped+failed)/(passed+failed+dropped)*100,digits=2))
   
-  # message("course averages:")
-  # grades_summary_by_course_avg %>% tibble::as_tibble() %>% print(n =20, width=Inf)
-  
-  return(grades_summary_by_course_avg)
+  return (summary)
 }
-
-
-get_grades_summary_by_course_term_avg <- function(grades_summary_by_course) {
-  
-  grades_summary_by_course_term_avg <- grades_summary_by_course %>% 
-    group_by(`Academic Period Code`, SUBJ_CRSE, level) %>% 
-    summarize(passed = sum(passed), failed = sum(failed), dropped = sum(dropped)) %>% 
-    mutate (`DFW %`=round((dropped+failed)/(passed+failed+dropped)*100,digits=2)) %>% 
-    arrange(`Academic Period Code`,SUBJ_CRSE)
-  
-  # message("course averages per semester:")
-  # grades_summary_by_course_term_avg %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  
-  return(grades_summary_by_course_term_avg)
-}
-
-
-# summarize grades by instructor averages for each term
-get_inst_term_avg <- function(grades_summary_w){
-  
-  grades_summary_by_inst_term_avg <- grades_summary_w %>% 
-    group_by(`Academic Period Code`, `Primary Instructor Last Name`, level) %>% 
-    summarize(passed = sum(passed), failed = sum(failed)) %>% 
-    mutate (`DFW %`=round(failed/(passed+failed)*100,digits=2), .after = `Primary Instructor Last Name` ) %>% 
-    arrange(`Academic Period Code`,`Primary Instructor Last Name`)
-  
-  # message("course + inst averages per semester:")
-  # grades_summary_by_inst_term_avg %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-  
-  return (grades_summary_by_inst_term_avg)
-}
-
-
-# summarize grades by instructor averages across all terms
-get_inst_avg <- function(grades_summary_w){
-  
-  grades_summary_by_inst_avg <- grades_summary_w %>% 
-    group_by(`Primary Instructor Last Name`, level) %>% 
-    summarize(passed = sum(passed), failed = sum(failed)) %>% 
-    mutate (`DFW %`=round(failed/(passed+failed)*100,digits=2), .after = `Primary Instructor Last Name` ) %>% 
-    arrange(`Primary Instructor Last Name`)
-  
-  # message("course + inst averages:")
-  # grades_summary_by_inst_avg %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-  
-  return(grades_summary_by_inst_avg)
-}
-
 
 
 
@@ -248,39 +194,27 @@ get_grades <- function(students,opt) {
   grades_summary_by_course <- get_grades_summary_by_course(grades_summary,pf_sum_by_course)
   
   
-  #TODO: restore inst info
-  # if (opt$aggregate == "inst_term_avg" || opt$aggregate == "all") {
-  #   grades_summary_by_inst_term_avg <- get_inst_term_avg(grades_summary_by_course)
-  # }
-  # 
-  # if (opt$aggregate == "inst_avg" || opt$aggregate == "all") {
-  #   grades_summary_by_inst_avg <- get_inst_avg(grades_summary_by_course)
-  # }
-  # 
-  
   message("processing gradebook_agg_by param...")
+  
+  grades <- list()
   
   # returns the basic grade summary by course, which is used for the other views
   # grades_summary_by_course is always called above for all functions, so we can just return it
   if (opt$aggregate == "course") {
-    return (grades_summary_by_course)
+    grades[["course"]] <- grades_summary_by_course
   }
   
   if (opt$aggregate == "course_term_avg") {
-    grades_summary_by_course_term_avg <- get_grades_summary_by_course_term_avg(grades_summary_by_course)
-    return(grades_summary_by_course_term_avg)
+    opt[["group_cols"]] <- c("Course Campus Code", "Course College Code", "Academic Period Code", "SUBJ_CRSE", "level")
+    grades[["course_term"]] <- summarize_grades(grades_summary_by_course, opt)
   }
   
   if (opt$aggregate == "course_avg") {
-    grades_summary_by_course_avg <- get_course_avg(grades_summary_by_course)
-    return (grades_summary_by_course_avg)
+    opt[["group_cols"]] <- c("Course Campus Code", "Course College Code", "SUBJ_CRSE", "level")
+    grades[["course_avg"]] <- summarize_grades(grades_summary_by_course, opt)
   }
-  
-  if (opt$aggregate == "all") {
-    # grades_summary_by_course is always outputted above
-    grades_summary_by_course_term_avg <- get_grades_summary_by_course_term_avg(grades_summary_by_course)
-    grades_summary_by_course_avg <- get_course_avg(grades_summary_by_course)
-  }
+
+  return (grades)  
 }
 
 
@@ -298,7 +232,7 @@ get_grades_for_dept_report <- function(students,opt,d_params) {
   grades_summary_by_course_avg <- get_grades(students,myopt)
   
   # for chart (with more details)
-  opt$gradebook_agg_by <- "course"
+  myopt$gradebook_agg_by <- "course"
   grades_summary_by_course <- get_grades(students,myopt)
   
   # filter for lower division, unless there aren't any (like MSST)
