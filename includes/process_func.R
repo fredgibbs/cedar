@@ -370,7 +370,6 @@ process_func <- function(opt) {
     # lookout controller doesn't yet return values, but saves 3 Rda files in the output/lookout folder
     lookout_out <- lookout(students, opt)
     process_output(lookout_out,"",opt) # don't need to supply csv name since we'll use list names
-    
   }
   
   
