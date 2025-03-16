@@ -7,7 +7,7 @@ if (interactive()) {
   conflicted::conflicts_prefer(dplyr::lag())
   
   message("loading external functions...")
-  #source("includes/config.R")
+  source("includes/config.R")
   source("includes/load_funcs.R")
   load_funcs("./")
   .GlobalEnv$courses <- load_courses()
