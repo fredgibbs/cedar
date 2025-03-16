@@ -128,7 +128,9 @@ load_data <- function() {
   message("loading data...")
   .GlobalEnv$courses <- load_courses()
   .GlobalEnv$students <- load_students()
-}
+  .GlobalEnv$academic_studies <- load_academic_studies()
+  # don't make forecasts global b/c it changes too often 
+  }
 
 
 cedar_init <- function() {
