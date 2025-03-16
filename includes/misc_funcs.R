@@ -25,8 +25,8 @@ cedar <- function(x="guide",...) {
 # TODO: handle a list/vector of named lists/vectors
 
 convert_param_to_list <- function(param) {
-  message("\nwelcome to convert_param_to_list!")
-  print(str(param))
+  message("\nWelcome to convert_param_to_list!")
+  #print(str(param))
   
   # check if list type already; if so, return it
   if (is.list(param)) {
@@ -221,14 +221,25 @@ load_datafile <- function(filename) {
   if (exists("cedar_cloud_data_urls") && !is.null(cedar_cloud_data_urls[[filename]])) {
     message("getting data from the cloud...")
     data <- readRDS(url(cedar_cloud_data_urls[[filename]] ))
-  } else {
+  } 
+  else {
     message("getting data from local file...")
-    data <- readRDS(paste0(cedar_data_dir,"processed/",filename,".Rds"))  
+    localfile <- paste0(cedar_data_dir,"processed/",filename,".Rds")
+    
+    if (file.exists(localfile)) {
+      data <- readRDS(paste0(cedar_data_dir,"processed/",filename,".Rds"))  
+    }
+    else {
+      message("no data file found.")
+      data <- tibble()
+    }
   }
   
   message("returning data...")
   return(data)
 }
+
+
 
 # TODO: replace these specific loads with load_datafile across codebase
 load_students <- function() {
