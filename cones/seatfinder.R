@@ -47,14 +47,14 @@ normalize_inst_method <- function (courses) {
 # need to take in incoming params from shiny (maybe opt is fine?)
 # takes set of students (for calling)
 seatfinder <- function (students, courses, opt) {
-
+  
   ########## for studio testing
   # opt <- list()
   # opt$term <- "202510"
   # opt$pt <- "2H"
   # courses <- load_courses()
   # students <- load_students()
-
+  
   message("\n","Welcome to seatfinder!")
   
   # set opt 
@@ -81,9 +81,7 @@ seatfinder <- function (students, courses, opt) {
   # list specified and implied options
   print(opt)
   
-  
   # filter courses according to options
-  #TODO: how to implement filtering separate from get_enrl across all code?
   f_courses <- filter_DESRs(courses,opt) 
   
   # ALWAYS WITHOUT AOP sections (the twin section is fine)
@@ -92,13 +90,12 @@ seatfinder <- function (students, courses, opt) {
   # normalize instructor method--replace ENH,0,HYB with f2f
   f_courses <- normalize_inst_method(f_courses)
   
-  # ensure distinct rows
-  f_courses <- f_courses %>% distinct(TERM,CRN, .keep_all = TRUE)
+  # ensure distinct rows/courses
+  f_courses <- f_courses %>% distinct(CAMP,COLLEGE,TERM,CRN, .keep_all = TRUE)
   
-  
-  # aggregate enrollments across courses (f_courses is already aggregated, so sections here are total courses)
+  # aggregate enrollments across courses (f_courses is already aggregated, so sections here is number of courses)
   # enrollment summaries get merged to course lists
-  opt[["group_cols"]] <- c("TERM","SUBJ_CRSE","PT","INST_METHOD","level","gen_ed_area")
+  opt[["group_cols"]] <- c("CAMP", "COLLEGE", "TERM","SUBJ_CRSE","PT","INST_METHOD","level","gen_ed_area")
   enrl_summary <- get_enrl(f_courses,opt)
   
   # filter out everything but specified current term
@@ -113,14 +110,14 @@ seatfinder <- function (students, courses, opt) {
   myopt$term <- NULL # remove term param to get dfw rates across all terms, not just seatfinder terms
   
   #TODO: document what get_grades is doing & getting
-  grades <- get_grades(students,myopt)
-  grades <- grades %>% select(SUBJ_CRSE,`DFW %`)
-  enrl_summary <- merge(enrl_summary, grades)
+  grades <- get_grades(students,myopt)[["course_avg"]]
+  grades <- grades %>% select(`Course Campus Code`, `Course College Code`, SUBJ_CRSE, `DFW %`)
+  enrl_summary <- merge(enrl_summary, grades, by.x=c("CAMP","COLLEGE","SUBJ_CRSE"), by.y=c("Course Campus Code","Course College Code","SUBJ_CRSE") )
   
   # get only course names to ignore diff and intersect comparison of extra data
   course_names <- f_courses %>% ungroup() %>% 
     filter (!is.na(gen_ed_area)) %>%
-    select(TERM, SUBJ_CRSE, CRSE_TITLE, gen_ed_area)
+    select(CAMP, COLLEGE, TERM, SUBJ_CRSE, CRSE_TITLE, gen_ed_area)
   
   # create separate DFs for start and end terms
   start_term_courses <- course_names %>% filter (TERM == opt[["term_start"]])
@@ -132,9 +129,9 @@ seatfinder <- function (students, courses, opt) {
   
   # need to subtract out the TERM col for the intersection and setdiffs
   message ("getting first and second term courses...")
-  term_courses[["start"]] <- start_term_courses %>% ungroup() %>% select (-TERM)  %>% arrange(SUBJ_CRSE,CRSE_TITLE)
-  term_courses[["end"]] <- end_term_courses %>% ungroup() %>% select (-TERM) %>% arrange(SUBJ_CRSE,CRSE_TITLE)
-
+  term_courses[["start"]] <- start_term_courses %>% ungroup() %>% select (-TERM)  %>% arrange(CAMP,COLLEGE,SUBJ_CRSE,CRSE_TITLE)
+  term_courses[["end"]] <- end_term_courses %>% ungroup() %>% select (-TERM) %>% arrange(CAMP,COLLEGE,SUBJ_CRSE,CRSE_TITLE)
+  
   
   # aggregate enrollments across COURSE TYPES (don't get specific course data, just PT,method, etc) 
   opt[["group_cols"]] <- c("TERM","PT","INST_METHOD","level","gen_ed_area")
@@ -148,49 +145,43 @@ seatfinder <- function (students, courses, opt) {
   
   # we only need the end term
   course_type_summary <- course_type_summary %>% filter (TERM == opt[["term_end"]])
-  # & !is.na(gen_ed_area) 
   courses_list[["type_summary"]] <- course_type_summary
   
   # find common courses between two terms
   courses_common <- get_courses_common(term_courses,enrl_summary)
   
   # to clean up list, filter for just the target term
-  # removing &  !is.na(gen_ed_area) b/c filtering shouldn't be hardcoded
   courses_common <- courses_common %>% 
     filter (TERM == opt[["term_end"]]) %>% 
     arrange(gen_ed_area,INST_METHOD,enrl_diff_from_last_year)
-  
   
   courses_list[["courses_common"]] <- courses_common
   
   
   # find difference between terms (courses offered previously, and courses offered now)
   courses_diff <- get_courses_diff(term_courses)
-  courses_list[["prev"]] <- merge(courses_diff[["prev"]], enrl_summary, by = c("SUBJ_CRSE","gen_ed_area"))
-  courses_list[["new"]] <- merge(courses_diff[["new"]], enrl_summary, by = c("SUBJ_CRSE","gen_ed_area"))
+  courses_list[["prev"]] <- merge(courses_diff[["prev"]], enrl_summary, by = c("CAMP","COLLEGE", "SUBJ_CRSE","gen_ed_area"))
+  courses_list[["new"]] <- merge(courses_diff[["new"]], enrl_summary, by = c("CAMP","COLLEGE","SUBJ_CRSE","gen_ed_area"))
   
-  
-  # filter out non gen ed
-  # non_gen_ed_summary <- summary %>% filter(is.na(gen_ed_area))
   
   # summarize gen ed courses
-  gen_ed_summary <- enrl_summary %>% group_by(TERM,SUBJ_CRSE,INST_METHOD,PT) %>% 
+  gen_ed_summary <- enrl_summary %>% group_by(CAMP, COLLEGE, TERM,SUBJ_CRSE,INST_METHOD,PT) %>% 
     filter (!is.na(gen_ed_area)) %>% 
     filter (avail > 0) %>% 
-    arrange(gen_ed_area,desc(avail),SUBJ_CRSE,INST_METHOD)
+    arrange(gen_ed_area,desc(avail),CAMP,COLLEGE,SUBJ_CRSE,INST_METHOD)
   
   # find courses that are active but likely capped at 0 for now
-  gen_ed_likely <- enrl_summary %>% group_by(TERM,SUBJ_CRSE,INST_METHOD,PT) %>% 
+  gen_ed_likely <- enrl_summary %>% group_by(CAMP,COLLEGE,TERM,SUBJ_CRSE,INST_METHOD,PT) %>% 
     filter (!is.na(gen_ed_area)) %>% 
     filter (avail == 0 & enrolled == 0) %>% 
-    arrange(gen_ed_area,SUBJ_CRSE,INST_METHOD)
+    arrange(gen_ed_area,CAMP,COLLEGE,SUBJ_CRSE,INST_METHOD)
   
   courses_list[["gen_ed_summary"]] <- gen_ed_summary
   courses_list[["gen_ed_likely"]] <- gen_ed_likely
   
   message("all done in seatfinder; returning course_list...")
   return (courses_list)
-  }
+}
 
 
 
@@ -216,15 +207,13 @@ create_seatfinder_report <- function (students, courses, opt) {
   d_params$tables[["gen_ed_summary"]] <- courses_list[["gen_ed_summary"]]
   d_params$tables[["gen_ed_likely"]] <- courses_list[["gen_ed_likely"]]
   
-  
   # set output data
   d_params$output_filename <- paste0("seatfinder-",opt[["term"]],"-",opt[["pt"]])
-  d_params$rmd_file <- "cones/seatfinder-report/seatfinder-report.Rmd"
+  d_params$rmd_file <- "Rmd/seatfinder-report.Rmd"
   d_params$output_dir_base <- paste0(cedar_output_dir,"seatfinder-reports/")
   
   # generate report
   create_report(opt,d_params)
-  
   
 } # end seatfinder_report
 

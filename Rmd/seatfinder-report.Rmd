@@ -35,10 +35,10 @@ params:
 
   gen_ed_summary <- params$tables[["gen_ed_summary"]]
   gen_ed_likely <- params$tables[["gen_ed_likely"]]
-  course_type_summary <- params$tables[["course_type_summary"]]
-  both_terms <- params$tables[["both_terms"]]
-  prev_offered <- params$tables[["prev_offered"]]
-  newly_offered <- params$tables[["newly_offered"]]
+  course_type_summary <- params$tables[["type_summary"]]
+  both_terms <- params$tables[["courses_common"]]
+  prev_offered <- params$tables[["courses_prev"]]
+  newly_offered <- params$tables[["courses_new"]]
 
 
 ```
@@ -76,9 +76,9 @@ datatable(course_type_summary,class = 'cell-border stripe')
 
 ### Seats Available by Gen Ed Area
 ```{r} 
-  gen_ed_summary <- gen_ed_summary %>% select(TERM,gen_ed_area,SUBJ_CRSE,CRSE_TITLE,PT,INST_METHOD,enrolled,sections,avg_size,avail,waiting,`DFW %`)
+  gen_ed_summary <- gen_ed_summary %>% select(TERM,gen_ed_area,SUBJ_CRSE,PT,INST_METHOD,enrolled,sections,avg_size,avail,waiting,`DFW %`)
   
-  colnames(gen_ed_summary) <- c("TERM","GE_AREA","SUBJ_CRSE","CRSE_TITLE", "PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT","DFW %")
+  colnames(gen_ed_summary) <- c("TERM","GE_AREA","SUBJ_CRSE","PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT","DFW %")
 
 datatable(gen_ed_summary,class = 'cell-border stripe') 
 # kbl(gen_ed_summary, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","hold_position","condensed","scale_down"), position="center", full_width=T)
@@ -89,9 +89,9 @@ datatable(gen_ed_summary,class = 'cell-border stripe')
 ### Seats LIKELY Available by Gen Ed Area
 These sections have 0 seats available, but also 0 enrolled. Likely the cap is 0 to delay enrollment.
 ```{r}
-  gen_ed_likely <- gen_ed_likely %>% select(TERM,gen_ed_area,SUBJ_CRSE,CRSE_TITLE,PT,INST_METHOD,enrolled,sections,avg_size,avail,waiting,`DFW %`)
+  gen_ed_likely <- gen_ed_likely %>% select(TERM,gen_ed_area,SUBJ_CRSE,PT,INST_METHOD,enrolled,sections,avg_size,avail,waiting,`DFW %`)
   
-  colnames(gen_ed_likely) <- c("TERM","GE_AREA","SUBJ_CRSE","CRSE_TITLE", "PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT","DFW %")
+  colnames(gen_ed_likely) <- c("TERM","GE_AREA","SUBJ_CRSE", "PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT","DFW %")
 
 datatable(gen_ed_likely,class = 'cell-border stripe') 
 
@@ -103,9 +103,9 @@ datatable(gen_ed_likely,class = 'cell-border stripe')
 ### Offered last year but not now
 ```{r} 
 
-  prev_offered <- prev_offered %>% select(TERM,gen_ed_area,SUBJ_CRSE,CRSE_TITLE,PT,method,enrolled,sections,avg_size,avail,waiting)
+  #prev_offered <- prev_offered %>% select(TERM,gen_ed_area,SUBJ_CRSE,PT,method,enrolled,sections,avg_size,avail,waiting)
   
-  colnames(prev_offered) <- c("TERM","GE_AREA","SUBJ_CRSE","CRSE_TITLE", "PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT")
+  #colnames(prev_offered) <- c("TERM","GE_AREA","SUBJ_CRSE","PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT")
 
 
 datatable(prev_offered,class = 'cell-border stripe') 
@@ -118,9 +118,9 @@ datatable(prev_offered,class = 'cell-border stripe')
 ### Offered now but not last year
 ```{r} 
 
-  newly_offered <- newly_offered %>% select(TERM,gen_ed_area,SUBJ_CRSE,CRSE_TITLE,PT,method,enrolled,sections,avg_size,avail,waiting)
+  #newly_offered <- newly_offered %>% select(TERM,gen_ed_area,SUBJ_CRSE,PT,method,enrolled,sections,avg_size,avail,waiting)
   
-  colnames(newly_offered) <- c("TERM","GE_AREA","SUBJ_CRSE","CRSE_TITLE", "PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT")
+  #colnames(newly_offered) <- c("TERM","GE_AREA","SUBJ_CRSE","PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT")
 
 
 datatable(newly_offered,class = 'cell-border stripe') 
@@ -132,9 +132,9 @@ datatable(newly_offered,class = 'cell-border stripe')
 ### Courses in common with last year
 The last column is the difference between end-of-term enrollments this term and last year. A positive number means more seats are available; negative means fewer.
 ```{r} 
-  both_terms <- both_terms %>% select(TERM,gen_ed_area,SUBJ_CRSE,CRSE_TITLE,PT,method,enrolled,sections,avg_size,avail,waiting, enrl_diff_from_last_year)
+  #both_terms <- both_terms %>% select(TERM,gen_ed_area,SUBJ_CRSE,PT,method,enrolled,sections,avg_size,avail,waiting, enrl_diff_from_last_year)
   
-  colnames(both_terms) <- c("TERM","GE_AREA","SUBJ_CRSE","CRSE_TITLE", "PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT","ENRL_DIFF")
+  #colnames(both_terms) <- c("TERM","GE_AREA","SUBJ_CRSE","CRSE_TITLE", "PT", "METHOD", "ENRL", "SECTS","SECT_SIZE","AVAIL","WAIT","ENRL_DIFF")
 
 
 datatable(both_terms,class = 'cell-border stripe') 
