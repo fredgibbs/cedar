@@ -120,15 +120,18 @@ get_grades_summary_by_course <- function(grades_summary,pf_sum_by_course) {
 }
 
 
+# summarize grades takes a vector of cols to group by and summarizes 
 summarize_grades <- function(grades_summary_by_course,opt) {
   group_cols <- opt[["group_cols"]]
   group_cols <- convert_param_to_list(group_cols)
+  group_cols <- as.character(group_cols)
   
   summary <- grades_summary_by_course %>% 
     group_by_at(group_cols) %>% 
     summarize(passed = sum(passed), failed = sum(failed), dropped = sum(dropped)) %>% 
     mutate (`DFW %`=round((dropped+failed)/(passed+failed+dropped)*100,digits=2))
   
+  message("returning summary...")
   return (summary)
 }
 
@@ -214,6 +217,7 @@ get_grades <- function(students,opt) {
     grades[["course_avg"]] <- summarize_grades(grades_summary_by_course, opt)
   }
 
+  message("returning grades...")
   return (grades)  
 }
 
