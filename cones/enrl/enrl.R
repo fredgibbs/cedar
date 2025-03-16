@@ -148,10 +148,7 @@ summarize_courses <- function (courses, opt) {
   else {
     group_cols <- opt[["group_cols"]]
     group_cols <- convert_param_to_list(group_cols)
-    print(str(group_cols))
     group_cols <- as.character(group_cols)
-    #group_cols <- c("SUBJ_CRSE","PT")
-    print(str(group_cols))
   }
   
   summary <- courses %>% ungroup() %>% group_by_at(group_cols) %>% 
