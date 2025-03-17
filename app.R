@@ -22,7 +22,7 @@ class_lists <- Sys.getenv("class_lists")
 academic_studies <- Sys.getenv("academic_studies") 
 degrees <- Sys.getenv("degrees") 
 forecasts <- Sys.getenv("forecasts") 
-shiny <- TRUE
+Sys.setenv("shiny" = TRUE)
 
 message("loading data...")
 courses <- readRDS(url(desrs))
