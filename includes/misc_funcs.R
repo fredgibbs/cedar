@@ -217,6 +217,11 @@ add_acad_year <- function(df, term_col) {
 load_datafile <- function(filename) {
   message("loading data for: ",filename,"...")
   
+  # temp hack until real solution
+  if (filename == "forecasts" && shiny) {
+    return(forecasts) # already loaded in app.R
+  }
+  
   # check for cloud data
   if (exists("cedar_cloud_data_urls") && !is.null(cedar_cloud_data_urls[[filename]])) {
     message("getting data from the cloud...")
