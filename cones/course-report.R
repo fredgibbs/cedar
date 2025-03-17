@@ -69,9 +69,15 @@ get_course_data <- function(students, courses, forecasts, opt) {
   
   # get forecast stats (w enrollments and accuracy)
   forecasts <- calc_forecast_accuracy(students, courses, myopt) # returns a list with short and long versions
-  forecasts <- forecasts[["forecast_short"]]
-  course_data[["forecasts"]] <- forecasts %>% select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))
+  forecast_short <- forecasts[["forecast_short"]]
   
+  # if any data, select cols
+  if (nrow(forecast_short) > 0) {
+    course_data[["forecasts"]] <- forecast_short %>% select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))
+  }
+  else {
+    course_data[["forecasts"]] <- forecast_short
+  }
   
   # use regstats to find flagged courses
   flagged <-  get_reg_stats(students,courses,myopt)
