@@ -5,7 +5,7 @@ get_courses_common <- function (term_courses, enrl_summary) {
   # find intersection of both terms and restore TERM col
   message ("finding courses common to both terms...")
   courses_intersect <- intersect(term_courses[["start"]], term_courses[["end"]])
-  courses_intersect <- merge(courses_intersect, enrl_summary, by = c("SUBJ_CRSE","gen_ed_area"))
+  courses_intersect <- merge(courses_intersect, enrl_summary, by = c("CAMP","COLLEGE","SUBJ_CRSE","gen_ed_area"))
   
   # compute enrollment difference between terms
   courses_intersect <- courses_intersect %>% group_by(SUBJ_CRSE) %>% arrange(SUBJ_CRSE,TERM) %>% 
@@ -134,7 +134,7 @@ seatfinder <- function (students, courses, opt) {
   
   
   # aggregate enrollments across COURSE TYPES (don't get specific course data, just PT,method, etc) 
-  opt[["group_cols"]] <- c("TERM","PT","INST_METHOD","level","gen_ed_area")
+  opt[["group_cols"]] <- c("CAMP","COLLEGE", "TERM","PT","INST_METHOD","level","gen_ed_area")
   enrl_type_summary <- get_enrl(f_courses,opt)
   
   # find enrollment differences compared to last year across course types
