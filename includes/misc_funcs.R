@@ -218,7 +218,7 @@ load_datafile <- function(filename) {
   message("loading data for: ",filename,"...")
   
   # temp hack until real solution
-  if (filename == "forecasts" && shiny) {
+  if (filename == "forecasts" && Sys.getenv("shiny")) {
     return(forecasts) # already loaded in app.R
   }
   
