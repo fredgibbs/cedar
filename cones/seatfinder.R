@@ -19,8 +19,8 @@ get_courses_common <- function (term_courses, enrl_summary) {
 get_courses_diff <- function (term_courses) {
   
   message ("finding difference between the terms...")
-  previously_offered <- setdiff(term_courses[["start"]], term_courses[["end"]]) %>% arrange(SUBJ_CRSE,CRSE_TITLE)
-  newly_offered <- setdiff(term_courses[["end"]], term_courses[["start"]]) %>% arrange(SUBJ_CRSE,CRSE_TITLE)
+  previously_offered <- setdiff(term_courses[["start"]], term_courses[["end"]]) %>% arrange(CAMP,COLLEGE,SUBJ_CRSE,CRSE_TITLE)
+  newly_offered <- setdiff(term_courses[["end"]], term_courses[["start"]]) %>% arrange(CAMP,COLLEGE,SUBJ_CRSE,CRSE_TITLE)
   
   courses_diff <- list()
   courses_diff[["prev"]] <- previously_offered
@@ -160,8 +160,8 @@ seatfinder <- function (students, courses, opt) {
   
   # find difference between terms (courses offered previously, and courses offered now)
   courses_diff <- get_courses_diff(term_courses)
-  courses_list[["prev"]] <- merge(courses_diff[["prev"]], enrl_summary, by = c("CAMP","COLLEGE", "SUBJ_CRSE","gen_ed_area"))
-  courses_list[["new"]] <- merge(courses_diff[["new"]], enrl_summary, by = c("CAMP","COLLEGE","SUBJ_CRSE","gen_ed_area"))
+  courses_list[["courses_prev"]] <- merge(courses_diff[["prev"]], enrl_summary, by = c("CAMP","COLLEGE", "SUBJ_CRSE","gen_ed_area"))
+  courses_list[["courses_new"]] <- merge(courses_diff[["new"]], enrl_summary, by = c("CAMP","COLLEGE","SUBJ_CRSE","gen_ed_area"))
   
   
   # summarize gen ed courses
