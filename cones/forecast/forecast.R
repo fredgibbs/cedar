@@ -224,7 +224,7 @@ if (is.null(opt$summer) ){
   } # end loop through course list
   
   message("done looping through terms and courses! returning new forecasts data...")
-  forecasts <- load_forecasts()
+  forecast_data <- load_forecasts()
   
-  return(forecasts)
+  return(forecast_data)
   }
