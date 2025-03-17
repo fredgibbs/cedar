@@ -22,6 +22,7 @@ class_lists <- Sys.getenv("class_lists")
 academic_studies <- Sys.getenv("academic_studies") 
 degrees <- Sys.getenv("degrees") 
 forecasts <- Sys.getenv("forecasts") 
+shiny <- TRUE
 
 message("loading data...")
 courses <- readRDS(url(desrs))
@@ -87,7 +88,7 @@ ui <- page_navbar(
       column(2,
              selectizeInput(
                inputId = "enrl_agg_by",
-               label = "Select Columns", 
+               label = "Aggregate by", 
                multiple = TRUE,
                choices = c("CAMP","COLLEGE","SUBJ_CRSE", "CRSE_TITLE", "DEPT","TERM","PT","INST_METHOD")),
       )
@@ -129,7 +130,7 @@ ui <- page_navbar(
     
     card( 
       card_header("Enrollment Summary"),
-      DT::DTOutput("enrl_summary")
+      DT::DTOutput("enrl_summary %>% arrange(TERM,CAMP,COLLEGE,SUBJ_CRSE")
     )
     
   ), # end nav_panel for enrollment
@@ -182,7 +183,7 @@ ui <- page_navbar(
                label = "Select Term", 
                multiple = TRUE,
                choices = sort(unique(courses$TERM))),
-              selected="202510"
+             selected="202510"
       ),
       
       column(2,
@@ -258,6 +259,21 @@ ui <- page_navbar(
       ),
       column(3,
              selectInput(
+               inputId = "rs_campus",
+               label = "Campus", 
+               multiple = TRUE,
+               choices = sort(unique(courses$CAMP))),
+      ),
+      column(3,
+             selectInput(
+               inputId = "rs_college",
+               label = "College", 
+               multiple = TRUE,
+               choices = sort(unique(courses$COLLEGE))),
+      ),
+      
+      column(3,
+             selectInput(
                inputId = "rs_pt",
                label = "Part of Term", 
                multiple = TRUE,
@@ -317,7 +333,7 @@ ui <- page_navbar(
              uiOutput("rs_report")
       )
     ) # end fluidRow
-  
+    
   ) # end nav panel regstats
 ) # end ui
 
@@ -411,16 +427,16 @@ server <- function(input, output, session) {
     output$courses_prev = DT::renderDataTable({
       data <- courses_list[["courses_prev"]]
     })
-
+    
     output$courses_new = DT::renderDataTable({
       data <- courses_list[["courses_new"]]
     })
     
-        
+    
     output$gen_ed_summary = DT::renderDataTable({
       data <- courses_list[["gen_ed_summary"]]
     })
-
+    
     output$gen_ed_likely = DT::renderDataTable({
       data <- courses_list[["gen_ed_likely"]]
     })
@@ -435,6 +451,8 @@ server <- function(input, output, session) {
     # get regstats data
     opt <- list()
     opt[["shiny"]] <- TRUE
+    opt[["campus"]] <- input$rs_campus
+    opt[["college"]] <- input$rs_college
     opt[["term"]] <- input$rs_term
     opt[["pt"]] <- input$rs_pt
     opt[["im"]] <- input$rs_im
@@ -444,7 +462,7 @@ server <- function(input, output, session) {
     opt[["thresholds"]][["pct_sd"]] <- input$rs_pct_sd
     opt[["thresholds"]][["min_squeeze"]] <- input$rs_min_squeeze
     
-        
+    
     flagged <- create_regstat_report(students, courses, opt)
     
     #html_file <- "/Users/fwgibbs/Dropbox/cedar/output/regstats-reports/html/regstats-202510-1.html"
