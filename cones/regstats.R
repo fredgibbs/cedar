@@ -181,10 +181,11 @@ get_reg_stats <- function(students,courses,opt) {
   
   print(flagged)
   
-  ##### COURSES AFTER BUMPS
+  ##### COURSES AFTER BUMPS (if not from shiny)
   message("finding courses students take after bumps...")
-  flagged[["courses_after_bumps"]] <- get_after_bumps(flagged[["bumps"]], students, courses)
-  
+  if (as.logical(Sys.getenv("shiny")) == FALSE) {
+    flagged[["courses_after_bumps"]] <- get_after_bumps(flagged[["bumps"]], students, courses)
+  }
   
   # gather SUBJ_CRSE col into separate list  
   message("gathering flagged courses...")
@@ -211,8 +212,10 @@ get_reg_stats <- function(students,courses,opt) {
   # save thresholds for adding to report
   flagged[["thresholds"]] <- thresholds 
   
-  # keep separate since we don't need to forecast for this all the time
-  flagged[["high_fall_sophs"]] <- get_high_fall_sophs(students, courses, myopt)
+  # keep separate from flagged courses since we don't need to forecast for this all the time
+  if (as.logical(Sys.getenv("shiny")) == FALSE) {
+    flagged[["high_fall_sophs"]] <- get_high_fall_sophs(students, courses, myopt)
+  }
   
   message("returning flagged courses...")
   return(flagged)
