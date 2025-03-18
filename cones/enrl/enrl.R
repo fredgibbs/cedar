@@ -152,7 +152,8 @@ summarize_courses <- function (courses, opt) {
   }
   
   summary <- courses %>% ungroup() %>% group_by_at(group_cols) %>% 
-    summarize(.groups="keep", sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT))
+    summarize(.groups="keep", sections=n(),avg_size=round(mean(ENROLLED),digits=1),enrolled=sum(ENROLLED),avail=sum(SEATS_AVAIL),waiting=sum(WAIT_COUNT)) %>% 
+    arrange (TERM,CAMP,COLLEGE,SUBJ_CRSE)
   
   return(summary)
 }

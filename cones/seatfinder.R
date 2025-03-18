@@ -8,7 +8,7 @@ get_courses_common <- function (term_courses, enrl_summary) {
   courses_intersect <- merge(courses_intersect, enrl_summary, by = c("CAMP","COLLEGE","SUBJ_CRSE","gen_ed_area"))
   
   # compute enrollment difference between terms
-  courses_intersect <- courses_intersect %>% group_by(SUBJ_CRSE) %>% arrange(SUBJ_CRSE,TERM) %>% 
+  courses_intersect <- courses_intersect %>% group_by(SUBJ_CRSE) %>% arrange(CAMP,COLLEGE,TERM,SUBJ_CRSE) %>% 
     mutate ( enrl_diff_from_last_year = enrolled - lag(enrolled))
   
   return (courses_intersect)
@@ -144,7 +144,8 @@ seatfinder <- function (students, courses, opt) {
     mutate ( avail_diff = avail - lag(avail))
   
   # we only need the end term
-  course_type_summary <- course_type_summary %>% filter (TERM == opt[["term_end"]])
+  course_type_summary <- course_type_summary %>% filter (TERM == opt[["term_end"]]) %>% 
+    arrange(CAMP,COLLEGE,gen_ed_area,SUBJ_CRSE)
   courses_list[["type_summary"]] <- course_type_summary
   
   # find common courses between two terms
