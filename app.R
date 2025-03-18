@@ -29,7 +29,7 @@ courses <- readRDS(url(desrs))
 students <- readRDS(url(class_lists))
 academic_studies <- readRDS(url(academic_studies))
 degrees <- readRDS(url(degrees))
-forecasts <- readRDS(url(forecasts))
+Sys.setsenv("forecasts" = readRDS(url(forecasts)))
 
 # message("loaded students with ",nrow(students)," rows.")
 
@@ -130,7 +130,7 @@ ui <- page_navbar(
     
     card( 
       card_header("Enrollment Summary"),
-      DT::DTOutput("enrl_summary %>% arrange(TERM,CAMP,COLLEGE,SUBJ_CRSE")
+      DT::DTOutput("enrl_summary %>% arrange(TERM,CAMP,COLLEGE,SUBJ_CRSE)")
     )
     
   ), # end nav_panel for enrollment
@@ -235,7 +235,7 @@ ui <- page_navbar(
     
     
     tabsetPanel(
-      tabPanel("Type Summary", DT::DTOutput("type_summary")),
+      tabPanel("Type Summary", DT::DTOutput("type_summary") %>% arrange(TERM,CAMP,COLLEGE,gen_ed_area ),
       tabPanel("Common", DT::DTOutput("courses_common")),
       tabPanel("Previously", DT::DTOutput("courses_prev")),
       tabPanel("New", DT::DTOutput("courses_new")),
