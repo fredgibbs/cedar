@@ -146,7 +146,9 @@ opt <- parse_args(opt_parser);
 print(opt)
 
 msg <- process_func(opt)
-message(message)
+if (is.character(msg)) { 
+  message(msg)
+}
 
 end.time <- Sys.time()
 time.taken <- round(end.time - start.time,2)
