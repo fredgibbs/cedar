@@ -12,9 +12,17 @@ cedar <- function(x="guide",...) {
   }
   print(opt)  
   
-  process_func(opt)
+  message("processing function: ", opt$func, "...")
+  msg <- process_func(opt)
+  message(msg)
+  message("cedar function done!")
 }
 
+resolve_conflicts <- function() {
+  conflicted::conflicts_prefer(dplyr::filter())
+  conflicted::conflicts_prefer(dplyr::lag())
+  conflicted::conflicts_prefer(plotly::layout)
+}
 
 # this function inspects and parses a param to a vector (not list as it did originally)
 # named vectors/lists should returned with their value
@@ -212,6 +220,15 @@ add_acad_year <- function(df, term_col) {
 #   message("returning forecast data...")
 #   return(forecast_data)
 # }
+
+
+load_global_data <- function() {
+  message("loading data...")
+  .GlobalEnv$courses <- load_courses()
+  .GlobalEnv$students <- load_students()
+  .GlobalEnv$academic_studies <- load_academic_studies()
+  # don't make forecasts global b/c it changes too often 
+}
 
 
 load_datafile <- function(filename) {

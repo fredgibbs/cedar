@@ -49,7 +49,7 @@ set_option_list <- function() {
     
     make_option(c("--gen_ed"), type="character",
                 help="gen ed area number"),
-
+    
     make_option(c("--group_cols"), type="character",
                 help="column names to aggregate results by"),
     
@@ -119,49 +119,35 @@ set_option_list <- function() {
                 help="us to automatically save file to ondrive directory as specified in config.R", metavar="character")
   ); 
   
-  
   return (option_list)
 }
 
 
-load_data <- function() {
-  message("loading data...")
-  .GlobalEnv$courses <- load_courses()
-  .GlobalEnv$students <- load_students()
-  .GlobalEnv$academic_studies <- load_academic_studies()
-  # don't make forecasts global b/c it changes too often 
-  }
-
-
-cedar_init <- function() {
-  pacman::p_load(tidyverse,fs,data.table, optparse, plotly)
-  conflicted::conflicts_prefer(dplyr::filter())
-  conflicted::conflicts_prefer(dplyr::lag())
-  
-  
-  message("loading external functions...")
-  source("includes/config.R")
-  source("includes/load_funcs.R")
-  load_funcs("./")
-  
-  load_data()
-}
-
-
 # run below when cedar.R is called from command line
-message("Welcome to CEDAR! starting timer...")
+message("Welcome to CEDAR CLI! starting timer...")
 start.time <- Sys.time()
 
 options("width"=300)
 
-cedar_init()
+pacman::p_load(tidyverse,fs,data.table, optparse, plotly)
+
+message("loading external functions...")
+source("includes/config.R")
+source("includes/load_funcs.R")
+load_funcs("./")
+
+resolve_conflicts() # defined in misc_funcs, loaded by load_funcs
+
+load_global_data()
 
 option_list <- set_option_list()
 opt_parser <- OptionParser(option_list = option_list);
 opt <- parse_args(opt_parser);
 print(opt)
-process_func(opt)
+
+msg <- process_func(opt)
+message(message)
 
 end.time <- Sys.time()
 time.taken <- round(end.time - start.time,2)
-message("all done. completed in ",time.taken," seconds.","\n")
+message("cedar.R all done. completed in ",time.taken," seconds.","\n")
