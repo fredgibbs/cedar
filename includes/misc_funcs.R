@@ -3,9 +3,9 @@
 # create controller function for running in RStudio
 # emulate CLI functionality from within RS
 # all code and env variables should have been loaded by .Rprofile
-cedar <- function(x="guide",...) {
+cedar <- function(func="guide",...) {
   opt <- list(...)
-  opt$func <- x
+  opt$func <- func
   
   if (is.null(opt$guide)) {
     opt$guide <- FALSE
@@ -14,7 +14,10 @@ cedar <- function(x="guide",...) {
   
   message("processing function: ", opt$func, "...")
   msg <- process_func(opt)
-  message(msg)
+  if (is.character(msg)) { 
+    message(msg)
+  }
+  
   message("cedar function done!")
 }
 
@@ -237,7 +240,9 @@ load_datafile <- function(filename) {
   # temp hack until real solution
   # when shiiny starts, forecasts is loaded from online location but saved immediately locally for session updates
   if (filename == "forecasts" && as.logical(Sys.getenv("shiny"))) {
-    data <- readRDS("forecasts.Rds")  
+    message("trying to load forecasts in Shiny...")
+    data <- readRDS("forecasts.Rds")
+    return(data)
   }
   
   # check for cloud data
