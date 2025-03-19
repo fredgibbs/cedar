@@ -232,12 +232,13 @@ get_grades_for_dept_report <- function(students,opt,d_params) {
   # for plotting
   myopt <- opt
   myopt["dept"] <- d_params$dept_code 
+  
   myopt$aggregate <- "course_avg"
-  grades_summary_by_course_avg <- get_grades(students,myopt)
+  grades_summary_by_course_avg <- get_grades(students,myopt)[["course_avg"]]
   
   # for chart (with more details)
-  myopt$gradebook_agg_by <- "course"
-  grades_summary_by_course <- get_grades(students,myopt)
+  myopt$aggregate <- "course"
+  grades_summary_by_course <- get_grades(students,myopt)[["course"]]
   
   # filter for lower division, unless there aren't any (like MSST)
   grades_summary_for_ld <- grades_summary_by_course %>% filter (level == "lower")
