@@ -35,6 +35,7 @@ get_course_data <- function(students, courses, forecasts, opt) {
   enrls <- get_enrl(courses,myopt)
   
   # get forecast data for course
+  message("filtering forecast data for course-report...")
   forecast_data <- forecasts
   forecast_data <- forecast_data %>% filter (SUBJ_CRSE == myopt[["course"]])
   forecast_data <- add_term_type_col(forecast_data,"TERM") 
