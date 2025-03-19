@@ -63,7 +63,7 @@ process_func <- function(opt) {
             
             Reports are saved in CEDAR_OUTPUT_DIR/course-reports. 
             ")
-      return(msg="no error, but missing params.")
+      return("no error, but missing params.")
     }
     
     
@@ -142,6 +142,9 @@ process_func <- function(opt) {
     myopt[["aggregate"]] <- "course"
     myopt[["nso"]] <- FALSE
     
+    # load forecasts just once here before looping through reports and loading for each report
+    # BUT, calc_forecast_accuracy loads file anyway to pick up new forecasts
+    message("loading forecasts for process_func...")
     forecasts <- load_forecasts()
     
     for (course in course_list) {
@@ -150,6 +153,8 @@ process_func <- function(opt) {
       create_course_report(students,courses,forecasts,myopt)
       counter <- counter + 1
     } # end course loop
+    
+    return("process_func done processing course-report!")
   }
   
   
@@ -164,6 +169,8 @@ process_func <- function(opt) {
     
     data_status_out <- get_data_status(opt)
     process_output(data_status_out,"data_status",opt) #.csv is added in process_output
+    
+    return("process_func done processing data_status!")
   }
   
   
@@ -176,11 +183,11 @@ process_func <- function(opt) {
       Otherwise data reflects aggregate of all degree programs.
             -d can also specify a pre-set list/vector of depts, defined in includes/lists.R.
             --output_format: html (default) or aspx")
-      return(msg="no error, but missing params.")
-      
+      return("no error, but missing params.")
     }
     
     create_dept_report(students,courses,opt)
+    return("process_func done processing dept-report!")
   }
   
   
@@ -247,7 +254,7 @@ process_func <- function(opt) {
             Output is basic forecast data for methods specified.
             
             ")
-      return(msg="no error, but missing params.")
+      return("no error, but missing params.")
     }
     
     forecasts <- forecast(students, courses, opt)
