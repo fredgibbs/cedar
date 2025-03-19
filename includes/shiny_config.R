@@ -1,8 +1,8 @@
 cedar_base_dir <- "./"
 
 # recommended to keep as is, but you can specify other folders you've created
-cedar_output_dir <- paste0(cedar_base_dir,"output/")
-cedar_data_dir <- paste0(cedar_base_dir,"data/")
+cedar_output_dir <- paste0(cedar_base_dir)
+cedar_data_dir <- paste0(cedar_base_dir)
 
 # define the current term
 cedar_current_term <- 202510
