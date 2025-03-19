@@ -19,8 +19,8 @@ get_courses_common <- function (term_courses, enrl_summary) {
 get_courses_diff <- function (term_courses) {
   
   message ("finding difference between the terms...")
-  previously_offered <- setdiff(term_courses[["start"]], term_courses[["end"]]) %>% arrange(CAMP,COLLEGE,SUBJ_CRSE,CRSE_TITLE)
-  newly_offered <- setdiff(term_courses[["end"]], term_courses[["start"]]) %>% arrange(CAMP,COLLEGE,SUBJ_CRSE,CRSE_TITLE)
+  previously_offered <- setdiff(term_courses[["start"]], term_courses[["end"]]) # %>% arrange(CAMP,COLLEGE,SUBJ_CRSE,CRSE_TITLE)
+  newly_offered <- setdiff(term_courses[["end"]], term_courses[["start"]]) # %>% arrange(CAMP,COLLEGE,SUBJ_CRSE,CRSE_TITLE)
   
   courses_diff <- list()
   courses_diff[["prev"]] <- previously_offered
@@ -144,8 +144,8 @@ seatfinder <- function (students, courses, opt) {
     mutate ( avail_diff = avail - lag(avail))
   
   # we only need the end term
-  course_type_summary <- course_type_summary %>% filter (TERM == opt[["term_end"]]) %>% 
-    arrange(CAMP,COLLEGE,gen_ed_area,SUBJ_CRSE)
+  course_type_summary <- course_type_summary %>% filter (TERM == opt[["term_end"]]) # %>% 
+    #arrange(CAMP,COLLEGE,gen_ed_area,SUBJ_CRSE)
   courses_list[["type_summary"]] <- course_type_summary
   
   # find common courses between two terms
