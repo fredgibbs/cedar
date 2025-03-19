@@ -159,14 +159,14 @@ for (report in report_list) {
       data <- new_data
     }
     
-    # encrypt student IDs
-    message("encypting IDs..")
-    if (!is.null(report_spec)) {
+    # encrypt student IDs if ID_col exists 
+    message("encypting IDs...")
+    if (!is.null(report_spec) && !is.null(report_spec$ID_col) ) {
       data[[report_spec$ID_col]] <- sapply(data[[report_spec$ID_col]], digest::digest, algo = "md5")
     }
     
     filename <- paste0(cedar_data_dir,"processed/",report_spec$data_file,".Rds")
-    message("saving Rds file: ",filename,"...")
+    message("saving Rds file: ", filename, "...")
     saveRDS(data,file=filename)
     message("saved ",nrow(data) ," rows.")
     
