@@ -5,7 +5,7 @@ count_degrees <- function() {
   
   # don't filter by college here to get majors/minors from other colleges who have an A&S program as a second majors, certificate, etc.
   # degrees <- grads %>% filter (`College`=="College of Arts and Sciences" | `College`=="Graduate Programs") 
-  degrees <- degrees %>% select(`Academic Period Code`,`Actual College`,`Translated College`,ID,`Student Last Name`, Department,Program,`Program Code`,`Award Category`,Degree, Major, `Major Code`,`Second Major`, `First Minor`,`Second Minor`)
+  degrees <- degrees %>% select(`Academic Period Code`,`Actual College`,`Translated College`,ID, Department,Program,`Program Code`,`Award Category`,Degree, Major, `Major Code`,`Second Major`, `First Minor`,`Second Minor`)
   degrees <- unique(degrees) # many degree duplicated because of student attribute field from original data
   degrees <- degrees %>% rename("term_code" = `Academic Period Code`)
   
