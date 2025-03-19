@@ -105,7 +105,7 @@ ui <- page_navbar(
                inputId = "enrl_term",
                label = "Term", 
                multiple = TRUE,
-               choices = sort(unique(courses$TERM))),
+               choices = sort(unique(c(courses$term_type,courses$TERM)))),
       ),
       column(2,
              selectInput(
@@ -366,6 +366,7 @@ server <- function(input, output, session) {
       opt[["pt"]] <- input$enrl_pt
       opt[["method"]] <- input$enrl_method
       opt[["term"]] <- input$enrl_term
+      #opt[["term"]] <- input$enrl_term_type
       opt[["level"]] <- input$enrl_level
       opt[["course"]] <- input$enrl_course
       
