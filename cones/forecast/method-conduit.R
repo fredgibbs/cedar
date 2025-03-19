@@ -22,11 +22,12 @@ conduit_forecast <- function(students, courses, opt) {
   #for studio testing...
   # students <- load_students()
   # courses <- load_courses()
-  opt <- list()
-  opt[["course"]] <- "HIST 1160"
-  opt[["term"]] <- "202560"
-  #opt[["custom_conduit"]]  <- "202480"
-  #opt[["conduit_for_term"]] <- "202560"
+  # opt <- list()
+  # opt[["course"]] <- "HIST 1160"
+  # opt[["term"]] <- "202560"
+
+  # opt[["custom_conduit"]]  <- "202480"
+  # opt[["conduit_for_term"]] <- "202560"
   
   target_course <- opt[["course"]]
   target_term <- opt[["term"]]
