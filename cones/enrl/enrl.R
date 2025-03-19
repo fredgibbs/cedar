@@ -220,8 +220,10 @@ agg_by_course_term <- function(courses,opt) {
 
 ############# aggregate function (for enrollment summaries)
 aggregate_courses <- function(courses, opt) {
-
+  
+  # for now, process old aggregate flag until totally phased out
   agg_by <- opt$aggregate
+  message("old aggregate param detected: ", agg_by)
   
   if (!is.null(opt[["group_cols"]])) {
     message("group_cols is not null...")
@@ -261,7 +263,7 @@ get_enrl_for_dept_report <- function(courses, d_params) {
   
   myopt <- list()
   myopt$dept <- d_params[["dept_code"]]
-  myopt$group_by <- c("SUBJ","SUBJ_CRSE","CRSE_TITLE","level","gen_ed_area")
+  myopt$group_cols <- c("SUBJ","SUBJ_CRSE","CRSE_TITLE","level","gen_ed_area")
   myopt$x <- "compress"
   myopt$uel <- TRUE 
   
