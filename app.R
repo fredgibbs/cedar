@@ -34,10 +34,10 @@ degrees <- readRDS(url(degrees))
 # forecast data works a bit differently b/c of reliance on local files
 message("loading and saving forecasts...")
 forecast_data <- readRDS(url(forecasts))
+forecasts <- forecast_data
+# need to have local copy for storing new forecasts, even if only temporarily
 saveRDS(forecast_data,file="forecasts.Rds")
 
-
-# message("loaded students with ",nrow(students)," rows.")
 
 # filter courses
 # opt <- list()
