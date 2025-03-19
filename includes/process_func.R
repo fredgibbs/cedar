@@ -1,8 +1,10 @@
 ########### PROCESS SPECIFIED FUNCTION  REQUEST  ##############
+# this func is run from either cedar.R from CLI, or from cedar() if running interactively
+
 process_func <- function(opt) {
   
   if (is.null(opt$func)){
-    stop("No function (-f or --func) specified. Specify '-f guide' to see options. ", call.=FALSE)
+    return("No function (-f or --func) specified. Specify '-f guide' to see options. ")
   }
   
   if (opt$func == "guide") {
@@ -61,7 +63,7 @@ process_func <- function(opt) {
             
             Reports are saved in CEDAR_OUTPUT_DIR/course-reports. 
             ")
-      stop("no error")
+      return(msg="no error, but missing params.")
     }
     
     
@@ -170,10 +172,12 @@ process_func <- function(opt) {
   ############### DEPARTMENT REPORT ############### 
   if (opt$func == "dept-report") {
     if (!is.null(opt$guide) && is.null(opt$dept)) {
-      message("Specify at least -d DEPT. In addition, you can ALSO use --prog PROG to focus on a particular degree program. Otherwise data reflects aggregate of all degree programs.
-            -d can also specify a pre-set list of depts, defined in includes/lists.R.
-            Specify --output_format as html (default) or aspx.")
-      quit()
+      message("Specify at least -d DEPT. In addition, you can ALSO use --prog PROG to focus on a particular degree program. 
+      Otherwise data reflects aggregate of all degree programs.
+            -d can also specify a pre-set list/vector of depts, defined in includes/lists.R.
+            --output_format: html (default) or aspx")
+      return(msg="no error, but missing params.")
+      
     }
     
     create_dept_report(students,courses,opt)
@@ -243,7 +247,7 @@ process_func <- function(opt) {
             Output is basic forecast data for methods specified.
             
             ")
-      quit()
+      return(msg="no error, but missing params.")
     }
     
     forecasts <- forecast(students, courses, opt)
