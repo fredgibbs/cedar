@@ -215,11 +215,12 @@ add_acad_year <- function(df, term_col) {
 
 
 load_datafile <- function(filename) {
-  message("loading data for: ",filename,"...")
+  message("loading data for: ", filename,"...")
   
   # temp hack until real solution
+  # when shiiny starts, forecasts is loaded from online location but saved immediately locally for session updates
   if (filename == "forecasts" && as.logical(Sys.getenv("shiny"))) {
-    return(forecasts) # already loaded in app.R
+    data <- readRDS("forecasts.Rds")  
   }
   
   # check for cloud data

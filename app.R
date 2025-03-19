@@ -22,6 +22,7 @@ class_lists <- Sys.getenv("class_lists")
 academic_studies <- Sys.getenv("academic_studies") 
 degrees <- Sys.getenv("degrees") 
 forecasts <- Sys.getenv("forecasts") 
+
 Sys.setenv("shiny" = TRUE)
 
 message("loading data...")
@@ -29,7 +30,12 @@ courses <- readRDS(url(desrs))
 students <- readRDS(url(class_lists))
 academic_studies <- readRDS(url(academic_studies))
 degrees <- readRDS(url(degrees))
-Sys.setenv("forecasts" = readRDS(url(forecasts)))
+
+# forecast data works a bit differently b/c of reliance on local files
+message("loading and saving forecasts...")
+forecast_data <- readRDS(url(forecasts))
+saveRDS(forecast_data,file="forecasts.Rds")
+
 
 # message("loaded students with ",nrow(students)," rows.")
 
