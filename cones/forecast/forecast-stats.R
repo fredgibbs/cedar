@@ -63,9 +63,9 @@ calc_forecast_accuracy <- function(students, courses, opt) {
   # students <- load_students()
   # 
   # opt <- list()
-  # opt$course <- "HIST 1160"
-  # # opt$term <- "202510"
-  
+  # opt$course <- "ANTH 1115"
+  # opt$term <- "202560"
+  # 
   # load existing forecast data
   forecast_data <- load_forecasts()
   
@@ -100,8 +100,6 @@ calc_forecast_accuracy <- function(students, courses, opt) {
   message("pivoting to wide...")
   forecast_data <- forecast_data %>% select (-c(continuing_forecast,incoming_forecast)) 
   forecast_data_wide <- forecast_data %>% pivot_wider(names_from = method, values_from = forecast)
-  #forecast_data_wide %>% tibble::as_tibble() %>% print(n = 10, width=Inf)
-  
   
   # get DESR enrollment data for courses in forecast_data, esp SEATS_AVAIL for later calcs (summarized as avail)
   myopt <- opt
@@ -139,6 +137,7 @@ calc_forecast_accuracy <- function(students, courses, opt) {
     select (c(CAMP,COLLEGE,SUBJ_CRSE,term_type, de_mean,dl_mean,da_mean)) %>% 
     distinct(CAMP,COLLEGE,SUBJ_CRSE,term_type, .keep_all = T)
   
+  # TODO: handle situation where there are no major or conduit rows; currently errors out
   enrl_w_forecast <- rows_patch(enrl_w_forecast, selected, by=c("CAMP","COLLEGE", "SUBJ_CRSE","term_type") )
   enrl_w_forecast <- enrl_w_forecast %>% mutate (conduit_wo_dr = round(conduit - (dr_early), digits=0), .after = conduit )
   enrl_w_forecast <- enrl_w_forecast %>% mutate (major_wo_dr = round(major - (dr_early), digits=0), .after = major )
