@@ -111,7 +111,6 @@ create_dept_report <- function (students,courses,opt) {
     # create report (defined in misc_funcs.R)
     create_report(opt, d_params)
     
+    return("dept-report success!")
   }
-  
-  
 }
