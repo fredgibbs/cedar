@@ -355,8 +355,8 @@ print(table)
 # filter for course in loop
 forecast_course <- forecasts %>% filter (SUBJ_CRSE == course)
 
-cols <- c("TERM","SUBJ_CRSE","enrolled","cl_total", "sections", "avg_size", "avail","conduit","major", "pref_enrl_method","pref_cl_method","avg_enrl_accr","avg_cl_accr","rec_enrl_sections","diff_fr_prev_enrl","rec_cl_sections","diff_fr_prev_enrl")
-forecast_filtered <- forecast_course %>% select(cols)
+cols <- c("CAMP", "TERM","SUBJ_CRSE","enrolled","cl_total", "sections", "avg_size", "avail","conduit","major", "pref_enrl_method","pref_cl_method","avg_enrl_accr","avg_cl_accr","rec_enrl_sections","diff_fr_prev_enrl","rec_cl_sections","diff_fr_prev_enrl")
+forecast_filtered <- forecast_course %>% select(cols) %>% arrange(CAMP,TERM,SUBJ_CRSE)
 
 forecast_filtered_fall <- forecast_filtered %>% filter (substring(TERM,5,6) == 80)
 forecast_filtered_spring <- forecast_filtered %>% filter (substring(TERM,5,6) == 10)
