@@ -356,7 +356,7 @@ server <- function(input, output, session) {
       opt[["college"]] <- input$enrl_college
       opt[["dept"]] <- input$enrl_dept
       opt[["pt"]] <- input$enrl_pt
-      opt[["method"]] <- input$enrl_im
+      opt[["im"]] <- input$enrl_im
       opt[["term"]] <- input$enrl_term
       opt[["level"]] <- input$enrl_level
       opt[["course"]] <- input$enrl_course
@@ -402,6 +402,7 @@ server <- function(input, output, session) {
     opt <- list()
     opt[["campus"]] <- input$sf_campus
     opt[["college"]] <- input$sf_college
+    opt[["dept"]] <- input$sf_dept
     opt[["term"]] <- input$sf_term
     opt[["pt"]] <- input$sf_pt
     opt[["im"]] <- input$sf_im
