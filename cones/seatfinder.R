@@ -52,6 +52,7 @@ seatfinder <- function (students, courses, opt) {
   # opt <- list()
   # opt$term <- "202510"
   # opt$pt <- "2H"
+  # opt$dept <- "HIST"
   # courses <- load_courses()
   # students <- load_students()
   
@@ -85,13 +86,14 @@ seatfinder <- function (students, courses, opt) {
   f_courses <- filter_DESRs(courses,opt) 
   
   # ALWAYS WITHOUT AOP sections (the twin section is fine)
-  f_courses <- f_courses %>% filter (INST_METHOD != "MOPS")
+  # disabling until better filtering solution b/c filter drops NAs also
+  # f_courses <- f_courses %>% filter (INST_METHOD != "MOPS")
   
   # normalize instructor method--replace ENH,0,HYB with f2f
   # f_courses <- normalize_inst_method(f_courses)
   
   # ensure distinct rows/courses
-  f_courses <- f_courses %>% distinct(CAMP,COLLEGE,TERM,CRN, .keep_all = TRUE)
+  f_courses <- f_courses %>% ungroup() %>% distinct(CAMP,COLLEGE,TERM,CRN, .keep_all = TRUE)
   
   # aggregate enrollments across courses (f_courses is already aggregated, so sections here is number of courses)
   # enrollment summaries get merged to course lists
