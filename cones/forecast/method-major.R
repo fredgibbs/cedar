@@ -118,8 +118,14 @@ major_forecast <- function(students, courses, opt) {
   
   #TODO: this throws an error if no data for previous term, b/c conduit_wide has only 2 columns
   # make NAs into 0s; first test to see if any NAs exist to avoid error
-  if (any(is.na(conduits_wide[5:6]))) { 
-    conduits_wide[5:6][is.na(conduits_wide[5:6])] <- 0
+  
+  # if (any(is.na(conduits_wide[5:6]))) { 
+  #   conduits_wide[5:6][is.na(conduits_wide[5:6])] <- 0
+  # }
+  # 
+  term_cols <- c(as.character(prev_conduit_term), as.character(conduit_term))
+  if (any(is.na(conduits_wide[term_cols]))) {
+    conduits_wide[term_cols][is.na(conduits_wide[term_cols])] <- 0
   }
 
   # compute differences between conduit terms
