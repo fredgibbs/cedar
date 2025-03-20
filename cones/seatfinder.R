@@ -112,7 +112,9 @@ seatfinder <- function (students, courses, opt) {
   #TODO: document what get_grades is doing & getting
   grades <- get_grades(students,myopt)[["course_avg"]]
   grades <- grades %>% select(`Course Campus Code`, `Course College Code`, SUBJ_CRSE, `DFW %`)
-  enrl_summary <- merge(enrl_summary, grades, by.x=c("CAMP","COLLEGE","SUBJ_CRSE"), by.y=c("Course Campus Code","Course College Code","SUBJ_CRSE") )
+  
+  # merge grade data with enrl data
+  enrl_summary <- merge(enrl_summary, grades, by.x=c("CAMP","COLLEGE","SUBJ_CRSE"), by.y=c("Course Campus Code","Course College Code","SUBJ_CRSE"), all.x = TRUE )
   
   # get only course names to ignore diff and intersect comparison of extra data
   course_names <- f_courses %>% ungroup() %>% 
