@@ -88,7 +88,7 @@ seatfinder <- function (students, courses, opt) {
   f_courses <- f_courses %>% filter (INST_METHOD != "MOPS")
   
   # normalize instructor method--replace ENH,0,HYB with f2f
-  f_courses <- normalize_inst_method(f_courses)
+  # f_courses <- normalize_inst_method(f_courses)
   
   # ensure distinct rows/courses
   f_courses <- f_courses %>% distinct(CAMP,COLLEGE,TERM,CRN, .keep_all = TRUE)
