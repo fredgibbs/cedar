@@ -85,16 +85,8 @@ ui <- page_navbar(
       ),
       column(2,
              selectizeInput(
-               inputId = "enrl_term_type",
-               label = "Select Term Type", 
-               multiple = TRUE,
-               choices = sort(unique(courses$term_type))),
-      ),
-      
-      column(2,
-             selectizeInput(
                inputId = "enrl_agg_by",
-               label = "Aggregate by", 
+               label = "Group by", 
                multiple = TRUE,
                choices = c("CAMP","COLLEGE","SUBJ_CRSE", "CRSE_TITLE", "DEPT","TERM","PT","INST_METHOD")),
       )
@@ -364,9 +356,8 @@ server <- function(input, output, session) {
       opt[["college"]] <- input$enrl_college
       opt[["dept"]] <- input$enrl_dept
       opt[["pt"]] <- input$enrl_pt
-      opt[["method"]] <- input$enrl_method
+      opt[["method"]] <- input$enrl_im
       opt[["term"]] <- input$enrl_term
-      #opt[["term"]] <- input$enrl_term_type
       opt[["level"]] <- input$enrl_level
       opt[["course"]] <- input$enrl_course
       
@@ -378,16 +369,10 @@ server <- function(input, output, session) {
   },ignoreInit = TRUE)
   
   
-  #Change country input optoins if continents change
   observeEvent(input$enrl_dept, {
-    
-    #Filter countries based on current continent selection
     deptsToShow = courses %>% 
       filter(DEPT %in% input$enrl_dept) %>% ungroup() %>% select(SUBJ_CRSE) %>% arrange(SUBJ_CRSE)
-    
-    #Update the actual input
     updateSelectInput(session, "enrl_course", choices = deptsToShow)
-    
   })
   
   
