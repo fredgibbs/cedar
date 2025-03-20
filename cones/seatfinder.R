@@ -116,7 +116,7 @@ seatfinder <- function (students, courses, opt) {
   
   # get only course names to ignore diff and intersect comparison of extra data
   course_names <- f_courses %>% ungroup() %>% 
-    filter (!is.na(gen_ed_area)) %>%
+    # filter (!is.na(gen_ed_area)) %>%
     select(CAMP, COLLEGE, TERM, SUBJ_CRSE, CRSE_TITLE, gen_ed_area)
   
   # create separate DFs for start and end terms
@@ -144,8 +144,8 @@ seatfinder <- function (students, courses, opt) {
     mutate ( avail_diff = avail - lag(avail))
   
   # we only need the end term
-  course_type_summary <- course_type_summary %>% filter (TERM == opt[["term_end"]]) # %>% 
-    #arrange(CAMP,COLLEGE,gen_ed_area,SUBJ_CRSE)
+  course_type_summary <- course_type_summary %>% filter (TERM == opt[["term_end"]])  %>% 
+    arrange(CAMP,COLLEGE,gen_ed_area)
   courses_list[["type_summary"]] <- course_type_summary
   
   # find common courses between two terms
@@ -154,7 +154,7 @@ seatfinder <- function (students, courses, opt) {
   # to clean up list, filter for just the target term
   courses_common <- courses_common %>% 
     filter (TERM == opt[["term_end"]]) %>% 
-    arrange(gen_ed_area,INST_METHOD,enrl_diff_from_last_year)
+    arrange(CAMP, COLLEGE, gen_ed_area, SUBJ_CRSE, INST_METHOD, enrl_diff_from_last_year)
   
   courses_list[["courses_common"]] <- courses_common
   
