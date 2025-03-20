@@ -36,12 +36,12 @@ resolve_conflicts <- function() {
 # TODO: handle a list/vector of named lists/vectors
 
 convert_param_to_list <- function(param) {
-  message("\nWelcome to convert_param_to_list!")
+  #message("\nWelcome to convert_param_to_list!")
   #print(str(param))
   
   # check if list type already; if so, return it
   if (is.list(param)) {
-    message("param is already list. returning it...")
+    #message("param is already list. returning it...")
     param_to_list <- param
     return(param_to_list)
   }
@@ -56,17 +56,17 @@ convert_param_to_list <- function(param) {
   }
   # check if param is a named object (probably defined in includes/lists.R)  
   else if (length(param) == 1 && exists(get("param"))) { 
-    message("param already defined: ", get("param"))
+    #message("param already defined: ", get("param"))
     return(get(param))
   }
   else if (is.character(param)) {
-    message("param is character. returning as list...")
+    #message("param is character. returning as list...")
     param_to_list <- as.list(param)
     return(param_to_list)
   }
   # quit if unsure what to do to prevent weird errors down the line
   else {
-    stop("not sure what to do with supplied param.")
+    stop(paste0("covert_param_to_list not sure what to do with supplied param: ", str(param)))
   }
 }
 
