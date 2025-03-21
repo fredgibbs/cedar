@@ -1,31 +1,38 @@
+# check for expected data files and report number of records per term and last updated date
 
 get_data_status <- function (opt) {
   message("Welcome to get_data_status!")
   
   status_list <- list()
   
-  # check for expected data files and report number of records per term and last updated date
-  
   message("getting class list status...")
-  class_list <- load_students()
-  class_list_status <- class_list %>% group_by(`Academic Period Code`,as_of_date) %>% summarize (rows = n())
+  if (!exists("students")) {
+    students <- load_students()
+  }
+  class_list_status <- students %>% group_by(`Academic Period Code`,as_of_date) %>% summarize (rows = n(), .groups="keep")
   status_list[["class_list"]] <- class_list_status
 
   message("getting DESRs status...")
-  DESRs <- load_courses()
-  DESR_status <- DESRs %>% group_by(`TERM`,as_of_date) %>% summarize (rows = n())
+  if (!exists("courses")) {
+    courses <- load_courses()
+  }
+  DESR_status <- courses %>% group_by(`TERM`,as_of_date) %>% summarize (rows = n(), .groups="keep")
   status_list[["DESR_status"]] <- DESR_status
 
   
-  message("academic study status:")
-  academic_studies <- load_academic_studies()
-  academic_study_status <- academic_studies %>% group_by(term_code ,as_of_date) %>% summarize (rows = n())
+  message("getting academic study status...")
+  if (!exists("academic_studies")) {
+    academic_studies <- load_academic_studies()
+  }
+  academic_study_status <- academic_studies %>% group_by(term_code ,as_of_date) %>% summarize (rows = n(), .groups="keep")
   status_list[["academic_study_status"]] <- academic_study_status
   
   
-  message("degrees status:")
-  degrees <- load_degrees()
-  degrees_status <- degrees %>% group_by(`Academic Period Code`,as_of_date) %>% summarize (rows = n())
+  message("getting degrees status...")
+  if (!exists("degrees")) {
+    degrees <- load_degrees()
+  }
+  degrees_status <- degrees %>% group_by(`Academic Period Code`,as_of_date) %>% summarize (rows = n(), .groups="keep")
   status_list[["degrees_status"]] <- degrees_status
   
   # TODO: need to add as_of_date to parse-HRreport.R and fac_by_term.Rda
