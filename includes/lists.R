@@ -19,7 +19,7 @@ cl_chem <- list("CHEM 1120C","CHEM 1215","CHEM 1225")
 cl_biol <- list("BIOL 1110","BIOL 1140","BIOL 2305")
 cl_fyex <- list("FYEX 1010","FYEX 1030")
 
-cl_math_1 <- list("MATH 1130", "MATH 1215","MATH 1215X","MATH 1220")
+cl_math_1 <- list("MATH 1130", "MATH 1215", "MATH 1215X", "MATH 1220")
 cl_math_2 <- list( "MATH 1230", "MATH 1240", "MATH 1250")
 cl_math_3 <- list("MATH 1350", "MATH 1430", "MATH 1440")
 
