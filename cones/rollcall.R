@@ -16,9 +16,7 @@ summarize_classifications <- function (filtered_students, opt) {
   }
   else {
     group_cols <- convert_param_to_list(group_cols)
-    print(str(group_cols))
     group_cols <- as.character(group_cols)
-    print(str(group_cols))
   }
   
   summary <- filtered_students %>% group_by_at(group_cols) %>% 
