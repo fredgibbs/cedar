@@ -54,10 +54,14 @@ convert_param_to_list <- function(param) {
     param_to_list <- as.list(param)
     return(param_to_list)
   }
-  # check if param is a named object (probably defined in includes/lists.R)  
+  # check if param is a named object (probably defined in includes/lists.R) 
+  # TODO: need to be explicit about where to look; this sometimes finds an R-level entity
   else if (length(param) == 1 && exists(get("param"))) { 
-    #message("param already defined: ", get("param"))
-    return(get(param))
+    message("param already defined: ", get("param"))
+    if (param == "as") { # hack for academic studies abbreviation
+     return (as.list(param))
+    }
+    else return(get(param))
   }
   else if (is.character(param)) {
     #message("param is character. returning as list...")
