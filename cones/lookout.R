@@ -77,7 +77,7 @@ where_to <- function (students,opt) {
     select(`Course Campus Code`,`Course College Code`, `Academic Period Code`,`Student ID`) %>% 
     distinct()
   
-  student_list <- student_list %>%  rename (target_term = 1)
+  student_list <- student_list %>%  rename (target_term = `Academic Period Code`)
   
   # create and populate next_term col
   student_list <- student_list %>% add_next_term_col("target_term",summer=incl_summer)
