@@ -376,7 +376,7 @@ get_enrl <- function (courses,opt,group_cols=NULL) {
   
   # remove dupes since we have final columns
   courses <- courses %>% distinct() %>% 
-    arrange(TERM,SUBJ_CRSE,CRSE_TITLE,INST_METHOD)
+    arrange(CAMP,COLLEGE,TERM,SUBJ_CRSE,CRSE_TITLE,PT,INST_METHOD,INST_NAME)
   
   # check if aggregating
   if(!is.null(opt$aggregate) || !is.null(opt$group_cols)) {
