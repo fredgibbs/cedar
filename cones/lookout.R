@@ -13,29 +13,29 @@ where_at <- function (students,opt) {
   
   # get unique ids from students in target_course
   student_list <- students %>% filter (SUBJ_CRSE == target_course ) %>% 
-    select(`Academic Period Code`,`Student ID`) %>% distinct()
+    select(`Course Campus Code`, `Course College Code`, `Academic Period Code`,`Student ID`) %>% distinct()
   
   # rename `Academic Period Code` to target_term
-  student_list <- student_list %>%  rename (target_term = 1)
+  student_list <- student_list %>%  rename (target_term = `Academic Period Code`)
   
   # merge all student data with IDs from target course to get all student data across courses
   # this provides all student data for all students enrolled in target_course for each term
-  student_courses <- merge(student_list, students, by.y=c("Student ID", "Academic Period Code"), by.x=c("Student ID", "target_term"))
+  student_courses <- merge(student_list, students, by.y=c("Course Campus Code", "Course College Code", "Student ID", "Academic Period Code"), by.x=c("Course Campus Code", "Course College Code", "Student ID", "target_term"))
   student_courses <- student_courses %>% distinct()
   
   # group by term, course, and classification and sum to get total enrollment
   student_courses_summary <- student_courses %>% 
-    group_by(target_term,SUBJ_CRSE,`Student Classification`,term_type) %>%  
-    summarize (enrolled=n())
+    group_by(`Course Campus Code`,`Course College Code`, target_term,SUBJ_CRSE,`Student Classification`,term_type) %>%  
+    summarize (enrolled=n(), .groups="keep")
   
   # drop term, but keep term_type to compute mean number of students in each course by term type
   student_courses_summary <- student_courses_summary %>% 
-    group_by(SUBJ_CRSE,`Student Classification`,term_type) %>% 
+    group_by(`Course Campus Code`,`Course College Code`, SUBJ_CRSE,`Student Classification`,term_type) %>% 
     mutate(enrl_from_target = mean(enrolled))
   
   # create summary table of courses and mean enrl
   courses_avgs <- student_courses_summary %>% 
-    select(SUBJ_CRSE,enrl_from_target) %>%  
+    select(`Course Campus Code`,`Course College Code`, SUBJ_CRSE,enrl_from_target) %>%  
     distinct()
   
   # filter out target course
@@ -44,7 +44,7 @@ where_at <- function (students,opt) {
   # create col to indicate target course
   courses_avgs$in_crse <- target_course
   
-  #TODO: as part of avg table, include target semester variance
+  #TODO: include target semester variance?
   # get enrollment for current term (via opt), avg for target course, and display delta
   
   message("returning where_AT results...")
@@ -74,42 +74,35 @@ where_to <- function (students,opt) {
   # differentiate spring from fall term in filter
   # and so will need to keep term_type in merge and hope that works
   student_list <- students %>% filter (SUBJ_CRSE == target_course ) %>% 
-    select(`Academic Period Code`,`Student ID`) %>% distinct()
+    select(`Course Campus Code`,`Course College Code`, `Academic Period Code`,`Student ID`) %>% 
+    distinct()
   
   student_list <- student_list %>%  rename (target_term = 1)
   
   # create and populate next_term col
   student_list <- student_list %>% add_next_term_col("target_term",summer=incl_summer)
-  #next_terms <- lapply(student_list$target_term,add_term,summer=incl_summer)
-  #student_list$next_term <- next_terms
-  
-  # student_list  <- student_list %>% mutate (next_term = add_term(target_term, TRUE))
-  # can i get the same thing by student_list %>% mutate (next_term = add_term(target_term))
   
   # merge students with student list to get just the student data from the course and term
-  disp_merge <- merge(student_list, students, by.y=c("Student ID", "Academic Period Code"), by.x=c("Student ID", "next_term"))
+  disp_merge <- merge(student_list, students, by.y=c("Course Campus Code", "Course College Code", "Student ID", "Academic Period Code"), by.x=c("Course Campus Code", "Course College Code","Student ID", "next_term"))
   disp_merge <- disp_merge %>% distinct()
   
   disp_merge_summary <- disp_merge %>% 
-    group_by(`next_term`,SUBJ_CRSE,`Student Classification`,term_type) %>%  
+    group_by(`next_term`,`Course Campus Code`, `Course College Code`, SUBJ_CRSE,`Student Classification`,term_type) %>%  
     summarize (enrolled=n(), .groups="keep")
   
   disp_merge_summary <- disp_merge_summary %>% 
-    group_by(SUBJ_CRSE,`Student Classification`,term_type) %>% 
+    group_by(`Course Campus Code`, `Course College Code`,SUBJ_CRSE,`Student Classification`,term_type) %>% 
     mutate(avg_contrib = mean(enrolled))
   
   # create summary table of courses and avg enrl
   dispersal_avgs <- disp_merge_summary %>% 
-    select(SUBJ_CRSE,`Student Classification`,term_type,avg_contrib) %>%  
+    select(`Course Campus Code`, `Course College Code`,SUBJ_CRSE,`Student Classification`,term_type,avg_contrib) %>%  
     distinct()
   
   dispersal_avgs_wo_class <- dispersal_avgs %>% 
-    group_by(SUBJ_CRSE,term_type) %>%  
+    group_by(`Course Campus Code`, `Course College Code`,SUBJ_CRSE,term_type) %>%  
     summarize(avg_contrib = sum(avg_contrib), .groups="keep") %>% 
     arrange(desc(avg_contrib))
-  
-  message("course contributions w/o classifications")
-  # dispersal_avgs_wo_class %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   # create col to indicate target course
   dispersal_avgs$from_crse <- target_course
@@ -165,7 +158,7 @@ where_from <- function (students, opt) {
   # add avg_contrib column
   where_from_dispersal_avgs_wo_class <- where_from_dispersal_avgs_wo_class %>%
     group_by(`Course Campus Code`, `Course College Code`, SUBJ_CRSE, term_type) %>%
-    summarize(avg_contrib = mean(term_contrib, .groups="keep"))
+    summarize(avg_contrib = mean(term_contrib), .groups="keep")
   
   # create col to indicate target course
   where_from_dispersal_avgs_wo_class$to_crse <- target_course
@@ -175,9 +168,8 @@ where_from <- function (students, opt) {
 }
 
 
-# main body
-# check for required course param
-# manage a loop to call calc functions above for each course specified (via comma string, named list, etc)
+# main function for external calls
+# primary work is to manage a loop to call functions above for each course specified in opt params
 lookout <- function (students,opt) {
   
   # for studio testing
