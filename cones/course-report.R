@@ -74,10 +74,11 @@ get_course_data <- function(students, courses, forecasts, opt) {
   
   # if any data, select cols
   if (nrow(forecast_short) > 0) {
-    course_data[["forecasts"]] <- forecast_short %>% select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))
+    course_data[["forecasts"]] <- forecast_short %>% select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))  %>% 
+      filter (SUBJ_CRSE %in% opt[["course"]])
   }
   else {
-    course_data[["forecasts"]] <- forecast_short
+    course_data[["forecasts"]] <- forecast_short 
   }
   
   # use regstats to find flagged courses
