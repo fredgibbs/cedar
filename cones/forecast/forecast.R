@@ -64,8 +64,15 @@ add_to_forecast_table <- function(new_forecast_row) {
     forecast_data <- new_forecast_row
   }
   
-  # save new data (for now, locally only)
-  forecast_rds_file <- paste0(cedar_data_dir,"processed/forecasts.Rds")
+  # save new data
+  if (as.logical(Sys.getenv("shiny"))) {
+    message("trying to save forecasts in Shiny...")
+    forecast_rds_file <- "forecasts.Rds"
+  }
+  else {
+    forecast_rds_file <- paste0(cedar_data_dir,"processed/forecasts.Rds")  
+  }
+  
   saveRDS(forecast_data, file=forecast_rds_file)
   message("updated ",forecast_rds_file, " with new forecast row.")
 }
