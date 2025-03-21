@@ -68,7 +68,8 @@ if (is.null(opt$report)){
 report_list <- convert_param_to_list(opt$report)
 
 # uncomment for studio testing
-#opt["report"] <- "desr"
+# opt <- list()
+# opt["report"] <- "as"
 
 
 # loop through reports as specified in command line
