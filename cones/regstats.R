@@ -47,8 +47,7 @@ get_after_bumps <- function (bumps, students, courses, opt) {
   
   after_bumps <- unique(tibble(SUBJ_CRSE = after_bumps))
   
-  message("done assembling after bumps:")
-  print(after_bumps)
+  message("done assembling, and returning after bumps...")
   
   return(after_bumps)
 }
@@ -60,48 +59,42 @@ get_reg_stats <- function(students,courses,opt) {
   message("\nWelcome to get_reg_stats!")
   
   # uncomment for studio testing
-  #opt <- list()
+  # opt <- list()
+  # opt[["term"]] <- "202510"
   #opt[["course"]] <- "HIST 1160"
-  #opt[["term"]] <- "202510"
+  
   
   # grab default thresholds from config.R
-  message("setting default thresholds...")
+  message("setting default thresholds (from config.R...")
   thresholds <- cedar_regstats_thresholds
   
+  # check for opt thresholds, esp from shiny
   if (!is.null(opt[["thresholds"]])) {
     message("overriding with opt$thresholds...")
     thresholds <- opt[["thresholds"]]
     print(thresholds)
   }
   
-  myopt <- opt
-  
-  # if no course specified, use all lower division AS courses
-  if (is.null(opt$course)) {
-    message("no course specified. defaulting to lower-division courses.")
-    myopt[["level"]] <- "lower"
-    course_list <- as.list(get_course_list(courses,myopt))
-  } 
-  else {
+  # process course param
+  if (!is.null(opt$course)) {
     message("processing opt$course...")
     course_list <- convert_param_to_list(opt[["course"]])
+    
+    # do course filtering early, but not term
+    message("filtering COURSES by course_list...")
+    filtered_courses <- courses %>% filter (SUBJ_CRSE %in% course_list)
+    
+    message("filtering STUDENTS by course_list...")
+    filtered_students <- students %>% filter (SUBJ_CRSE %in% course_list)
+    message("left with ",nrow(filtered_students)," students.")
+  } else {
+    filtered_students <- students
   }
   
-  
-  # do course filtering early, but not term
-  message("filtering COURSES by course_list...")
-  filtered_courses <- courses %>% filter (SUBJ_CRSE %in% course_list)
-  
-  message("filtering STUDENTS by course_list...")
-  filtered_students <- students %>% filter (SUBJ_CRSE %in% course_list)
-  message("left with ",nrow(filtered_students)," students.")
-  
-  # filter by term AFTER getting regstats, so calcs below can get mean values across terms
+  # filter by term LATER so calcs below can get mean values across terms
   
   # get registration and enrollment stats  
-  # regstats <- get_reg_data(filtered_students,myopt)
   regstats <- calc_cl_enrls(filtered_students)
-  
   
   # find potential anomalies
   # use biased SD calc, since we're not really sampling from a population
@@ -114,9 +107,8 @@ get_reg_stats <- function(students,courses,opt) {
   message("finding early drops...")
   drops <- regstats %>% select (all_of(std_fields), drop_early=dr_early, de_mean)
   drops <- drops %>% group_by_at(all_of(std_group_cols))
-  drops <- drops %>% mutate (sd = round(sd(drop_early) * thresholds[["pct_sd"]] /(sqrt(n()-1/n())),digits=2), impacted = round(drop_early-(de_mean+sd * thresholds[["pct_sd"]]),digits=2))
+  drops <- drops %>% mutate (sd = round(sd(drop_early) * thresholds[["pct_sd"]] /(sqrt(n()-1/n())),digits=2), impacted = round(drop_early-(de_mean + sd),digits=2))
   drops <- drops %>% filter (impacted > thresholds[["min_impacted"]])
-  drops <- drops %>% filter (sd > sd )
   drops <-  drops %>% arrange (desc(impacted))
   flagged[["early_drops"]] <- drops
   
@@ -125,7 +117,7 @@ get_reg_stats <- function(students,courses,opt) {
   message("finding late drops...")
   late_drops <- regstats %>% select (all_of(std_fields), drop_late=dr_late, dl_mean)
   late_drops <- late_drops %>% group_by_at(all_of(std_group_cols))
-  late_drops <- late_drops %>% mutate (sd = round(sd(drop_late) * thresholds[["pct_sd"]] /(sqrt(n()-1/n())),digits=2), impacted = round(drop_late-(dl_mean+sd * thresholds[["pct_sd"]]),digits=2))
+  late_drops <- late_drops %>% mutate (sd = round(sd(drop_late) * thresholds[["pct_sd"]] /(sqrt(n()-1/n())),digits=2), impacted = round(drop_late-(dl_mean+sd),digits=2))
   late_drops <- late_drops %>% filter (impacted > thresholds[["min_impacted"]])
   flagged[["late_drops"]]  <-  late_drops %>% arrange (desc(impacted))
   
@@ -134,7 +126,7 @@ get_reg_stats <- function(students,courses,opt) {
   message("finding dips...")
   dips <- regstats %>% select (all_of(std_fields), registered, reg_mean)
   dips <- dips %>% group_by_at(all_of(std_group_cols))
-  dips <- dips %>% mutate (sd = round(sd(registered) * thresholds[["pct_sd"]] / (sqrt(n()-1/n())),digits=2), impacted = round((reg_mean-sd * thresholds[["pct_sd"]])-registered,digits=2))
+  dips <- dips %>% mutate (sd = round(sd(registered) * thresholds[["pct_sd"]] / (sqrt(n()-1/n())),digits=2), impacted = round((reg_mean - sd) - registered, digits=2))
   dips <- dips %>% filter (impacted > thresholds[["min_impacted"]])
   flagged[["dips"]] <-  dips %>% arrange (desc(impacted))
   
@@ -143,7 +135,7 @@ get_reg_stats <- function(students,courses,opt) {
   message("finding bumps...")
   bumps <- regstats %>% select (all_of(std_fields), registered, reg_mean)
   bumps <- bumps %>% group_by_at(all_of(std_group_cols))
-  bumps <- bumps %>% mutate (sd = round(sd(registered) * thresholds[["pct_sd"]] / (sqrt(n()-1/n())),digits=2), impacted = round(registered-(reg_mean+ sd * thresholds[["pct_sd"]]),digits=2))
+  bumps <- bumps %>% mutate (sd = round(sd(registered) * thresholds[["pct_sd"]] / (sqrt(n()-1/n())),digits=2), impacted = round(registered - (reg_mean + sd), digits=2))
   bumps <- bumps %>% filter (impacted > thresholds[["min_impacted"]])
   flagged[["bumps"]] <-  bumps %>% arrange (desc(impacted))
   
@@ -177,15 +169,16 @@ get_reg_stats <- function(students,courses,opt) {
   if (!is.null(opt$term)) {
     message("filtering for term...")
     message(names(flagged))
-    flagged <- lapply(flagged, function(x) filter_by_term(x ,opt$term,"Academic Period Code"))
+    flagged <- lapply(flagged, function(x) filter_by_term(x, opt$term, "Academic Period Code"))
   }
   
-  print(flagged)
+  #print(flagged)
   
   ##### COURSES AFTER BUMPS (if not from shiny)
   message("finding courses students take after bumps...")
   if (as.logical(Sys.getenv("shiny")) == FALSE) {
-    flagged[["courses_after_bumps"]] <- get_after_bumps(flagged[["bumps"]], students, courses, opt)
+    # disabling until we have a better way of using these...
+    #flagged[["courses_after_bumps"]] <- get_after_bumps(flagged[["bumps"]], students, courses, opt)
   }
   
   # gather SUBJ_CRSE col into separate list  
@@ -202,7 +195,7 @@ get_reg_stats <- function(students,courses,opt) {
   # flagged_courses <- tibble(SUBJ_CRSE = unique(as.character(flagged_courses)))
   message("filtered flagged_courses has ", nrow(flagged_courses), " rows:")
   
-  flagged[["all_flagged_courses"]] <- flagged_courses 
+  flagged[["all_flagged_courses"]] <- sort(unique(flagged_courses))
   
   # save thresholds for adding to report
   flagged[["thresholds"]] <- thresholds 
