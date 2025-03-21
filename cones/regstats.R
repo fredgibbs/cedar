@@ -102,6 +102,7 @@ get_reg_stats <- function(students,courses,opt) {
   flagged <- list()
   std_fields <- c("Course Campus Code", "Course College Code","SUBJ_CRSE","Academic Period Code","term_type","registered")
   std_group_cols <- c("Course Campus Code", "Course College Code","SUBJ_CRSE","term_type")
+  std_arrange_cols <- c("Course Campus Code","Academic Period Code","impacted")
   
   ##### EARLY DROPS
   message("finding early drops...")
@@ -109,7 +110,7 @@ get_reg_stats <- function(students,courses,opt) {
   drops <- drops %>% group_by_at(all_of(std_group_cols))
   drops <- drops %>% mutate (sd = round(sd(drop_early) * thresholds[["pct_sd"]] /(sqrt(n()-1/n())),digits=2), impacted = round(drop_early-(de_mean + sd),digits=2))
   drops <- drops %>% filter (impacted > thresholds[["min_impacted"]])
-  drops <-  drops %>% arrange (desc(impacted))
+  drops <-  drops %>% arrange_at (std_arrange_cols)
   flagged[["early_drops"]] <- drops
   
   
