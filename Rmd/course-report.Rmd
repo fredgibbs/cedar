@@ -3,7 +3,7 @@ title: "Course Report"
 subtitle: " "
 output:
   html_document:
-    toc: true
+    toc: false
     toc_float:
       collapsed: false
       smooth_scroll: false    
@@ -47,7 +47,7 @@ late_drops <- flagged[["late_drops"]]
 dips <- flagged[["dips"]]
 bumps <- flagged[["bumps"]]
 
-dt_opts <- list(scrollY="300", scrollX="100%", paging=FALSE)
+dt_opts <- list(scrollY="300px", scrollX="100%", scrollCollapse = TRUE, paging=FALSE)
 dt_class <- 'cell-border stripe'
 
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, fig.pos = "H", fig.width = 9)
@@ -72,6 +72,14 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, fig.pos = 
 .tocify .list-group-item {
     font-size: 60%
     line-height:60%
+}
+
+.main-container {
+max-width:90%;
+}
+
+body {
+font-size:10px;
 }
 
 @media print {
@@ -133,11 +141,13 @@ datatable(enrl_summer, options=dt_opts, class = dt_class)
 ```    
 
 
-### More EARLY DROPS than usual
-```{r early_drops} 
-drops <- early_drops %>% arrange(term_type,`Academic Period Code`) 
 
+```{r early_drops, results="asis"} 
+early_drops <- early_drops %>% arrange(term_type,`Academic Period Code`) 
+if (nrow(early_drops > 0)) {
+cat("### More EARLY DROPS than usual")
 datatable(early_drops, options=dt_opts, class = dt_class)
+}
 
 # table <- kbl(drops,digits=2)  %>%
 #  kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
@@ -145,11 +155,13 @@ datatable(early_drops, options=dt_opts, class = dt_class)
 ```
 
 
-#### More LATE DROPS than usual
-```{r late_drops} 
-late_drops <- late_drops %>% arrange(term_type,`Academic Period Code`) 
 
+```{r late_drops, results="asis"} 
+late_drops <- late_drops %>% arrange(term_type,`Academic Period Code`) 
+if (nrow(late_drops > 0)) {
+cat("### More LATE DROPS than usual")
 datatable(late_drops, options=dt_opts, class = dt_class)
+}
 
 #table <- kbl(late_drops,digits=2)  %>%   
 #  kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
@@ -157,32 +169,32 @@ datatable(late_drops, options=dt_opts, class = dt_class)
 ```
 
 
-#### Bigger enrollment DIP than usual
-```{r dips} 
+```{r dips, results="asis"} 
 dips <- dips %>% arrange(term_type,`Academic Period Code`) 
+if (nrow(dips > 0)) {
+cat("### Bigger enrollment DIP than usual")
 datatable(dips, options=dt_opts, class = dt_class)
-
+}
 # table <- kbl(dips,digits=2)  %>%   
 #   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
 #                 latex_options = c("striped","hold_position","condensed"), position="left", full_width=F, font_size = 12) 
 ```
 
 
-####  Bigger enrollment BUMP than usual
-```{r bumps} 
-bumps <- bumps %>% arrange(term_type,`Academic Period Code`) 
-datatable(bumps, options=dt_opts, class = dt_class)
 
+```{r bumps, results="asis"} 
+bumps <- bumps %>% arrange(term_type,`Academic Period Code`) 
+if (nrow(bumps > 0)) {
+  cat("###  Bigger enrollment BUMP than usual")
+  datatable(bumps, options=dt_opts, class = dt_class)
+}
 # table <- kbl(bumps,digits=2)  %>%   
 #   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
 #                 latex_options = c("striped","hold_position","condensed"), position="left", full_width=F, font_size = 12) 
 ``` 
 
 
-<div style="border:1px solid white; clear:both">
-<div style="float:left; width:49%">
-
-#### SPRING courses students come from
+### SPRING courses students come from
 ```{r where_spring} 
 where_from_spring <- where_from_data %>% filter (to_crse == course & term_type =="spring") %>% 
   arrange (desc(avg_contrib)) %>% ungroup() %>% slice_head(n=5)
@@ -192,10 +204,8 @@ datatable(where_from_spring, options=dt_opts, class = dt_class)
 # table <- kbl(where_from_spring,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10, position = "float_left")
 ```
 
-</div>
 
-#### FALL courses students come from
-
+### FALL courses students come from
 ```{r where_fall} 
 where_from_fall <- where_from_data %>% filter (to_crse == course & term_type == "fall") %>% 
   arrange (desc(avg_contrib)) %>% ungroup() %>% slice_head(n=5)
@@ -206,12 +216,8 @@ datatable(where_from_fall, options=dt_opts, class = dt_class)
 # 
 # print(table)
 ```
-</div>
 
-<div style="border:1px solid white; clear:both">
-<div style="float:left; width:49%">
-
-#### FALL courses students go to
+### FALL courses students go to
 ```{r where_to_fall} 
 where_to_fall <- where_to_data %>% filter (from_crse == course & term_type == "fall") %>% 
   arrange (desc(avg_contrib)) %>% ungroup() %>% slice_head(n=5)
@@ -220,10 +226,9 @@ datatable(where_to_fall, options=dt_opts, class = dt_class)
 # table <- kbl(where_to_fall,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10,  position = "float_left")
 # print(table)
 ```
-</div>
 
 
-#### SPRING courses students go to
+### SPRING courses students go to
 ```{r where_to_spring} 
 where_to_spring <- where_to_data %>% filter (from_crse == course & term_type =="spring") %>% 
   arrange (desc(avg_contrib)) %>% ungroup() %>% slice_head(n=5)
@@ -234,18 +239,18 @@ datatable(where_to_spring, options=dt_opts, class = dt_class)
 # 
 # print(table)
 ```
-</div>
 
 
-#### % classifications in FALL sections
+```{r classifications, results="asis"} 
+agg_by_class <- agg_by_class %>%   arrange(`Course Campus Code`,`Course College Code`, `Student Classification`)
 
-```{r classifications, results='asis'} 
 agg_by_class_fall <- agg_by_class %>% select(`Student Classification`,ends_with("80"))
 agg_by_class_spring <- agg_by_class %>% select(`Student Classification`,ends_with("10"))
 agg_by_class_summer <- agg_by_class %>% select(`Student Classification`,ends_with("60"))
 
 
 if (ncol(agg_by_class_fall) > 3) {
+  cat("### % classifications in FALL sections")
   datatable(agg_by_class_fall, options=dt_opts, class = dt_class)
   # table <- kbl(agg_by_class_fall,digits=2)  %>%   
   #   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
@@ -256,33 +261,33 @@ if (ncol(agg_by_class_fall) > 3) {
 }
 
 if (ncol(agg_by_class_spring) > 3) {
-    datatable(agg_by_class_fall, options=dt_opts, class = dt_class)
+  cat(paste0("### % of classifications in SPRING sections"))
+  datatable(agg_by_class_spring, options=dt_opts, class = dt_class)
 
-  cat(paste0("#### ","% of classifications in SPRING sections \n"))
-  
-  table <- kbl(agg_by_class_spring,digits=2)  %>%   
-    kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                  latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
-    scroll_box(width = "100%", height = "300px")
-  
-  print(table)
+  # table <- kbl(agg_by_class_spring,digits=2)  %>%   
+  #   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+  #                 latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
+  #   scroll_box(width = "100%", height = "300px")
+  # 
+  # print(table)
 }
 
 if (ncol(agg_by_class_summer) > 3) {
-  
-  cat(paste0("#### ","% of classifications in SUMMER sections \n"))
-  
-  table <- kbl(agg_by_class_summer,digits=2)  %>%   
-    kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                  latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
-    scroll_box(width = "100%", height = "300px")
-  
-  print(table)
+  cat("### % of classifications in SUMMER sections")
+  datatable(agg_by_class_summer, options=dt_opts, class = dt_class)
+# 
+#   table <- kbl(agg_by_class_summer,digits=2)  %>%   
+#     kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+#                   latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
+#     scroll_box(width = "100%", height = "300px")
+#   
+#   print(table)
 }    
 ```
 
 
-```{r majors} 
+```{r majors, results="asis"} 
+agg_by_major <- agg_by_major %>%   arrange(`Course Campus Code`,`Course College Code`,Major)
 agg_by_major_fall <- agg_by_major  %>% select (Major,ends_with("80"))
 agg_by_major_spring <- agg_by_major  %>% select (Major,ends_with("10"))
 agg_by_major_summer <- agg_by_major  %>% select (Major,ends_with("60"))
@@ -290,52 +295,44 @@ agg_by_major_summer <- agg_by_major  %>% select (Major,ends_with("60"))
 
 if (ncol(agg_by_major_fall) > 3) {
   
-  cat(paste0("#### ","% of majors in FALL sections \n"))
-  
-  table <- kbl(agg_by_major_fall,digits=2)  %>%   
-    kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                  latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
-    scroll_box(width = "100%", height = "300px")
-  
-  
-  print(table)
+  cat(paste0("### ","% of majors in FALL sections \n"))
+  datatable(agg_by_major_fall, options=dt_opts, class = dt_class)
+  # table <- kbl(agg_by_major_fall,digits=2)  %>%   
+  #   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+  #                 latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
+  #   scroll_box(width = "100%", height = "300px")
+  # print(table)
 }
 
 
 if (ncol(agg_by_major_spring) > 3) {
   
-  cat(paste0("#### ","% of majors in SPRING sections \n"))
-  
-  
-  table <- kbl(agg_by_major_spring,digits=2)  %>%   
-    kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                  latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
-    scroll_box(width = "100%", height = "300px")
-  
-  
-  print(table)
+  cat(paste0("### ","% of majors in SPRING sections \n"))
+  datatable(agg_by_major_spring, options=dt_opts, class = dt_class)
+
+  # table <- kbl(agg_by_major_spring,digits=2)  %>%   
+  #   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+  #                 latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
+  #   scroll_box(width = "100%", height = "300px")
+  # 
+  # print(table)
 }
 
 if (ncol(agg_by_major_summer) > 3) {
-  
-  
-  cat(paste0("#### ","% of majors in SUMMER sections \n"))
-  
-  
-  table <- kbl(agg_by_major_summer,digits=2)  %>%   
-    kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
-                  latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
-    scroll_box(width = "100%", height = "300px")
-  
-  
-  print(table)
+  cat(paste0("### ","% of majors in SUMMER sections \n"))
+  datatable(agg_by_major_summer, options=dt_opts, class = dt_class)
+
+  # 
+  # table <- kbl(agg_by_major_summer,digits=2)  %>%   
+  #   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
+  #                 latex_options = c("striped","hold_position","condensed"), full_width=F, font_size = 10) %>% 
+  #   scroll_box(width = "100%", height = "300px")
+  # 
+  # print(table)
 }
-
-cat("\n")
-
 ```
 
-#### Gradebook
+### Gradebook
 ```{r gradebook} 
 grade_data <-  grade_data %>%  select(c(`Course Campus Code`, `Course College Code`, `Academic Period Code`,`DFW %`,8:ncol(grade_data)))
 
@@ -360,7 +357,7 @@ forecast_filtered_summer <- forecast_filtered %>% filter (substring(TERM,5,6) ==
 
 ```
 
-#### FALL forecasts
+### FALL forecasts
 ```{r fall_forecasts} 
 datatable(forecast_filtered_fall, options=dt_opts, class = dt_class)
 # table <- kbl(forecast_filtered_fall,digits=2)  %>% 
@@ -370,7 +367,7 @@ datatable(forecast_filtered_fall, options=dt_opts, class = dt_class)
 # print(table)
 ```
 
-#### SPRING forecasts
+### SPRING forecasts
 ```{r spring_forecasts} 
 datatable(forecast_filtered_spring, options=dt_opts, class = dt_class)
 # table <- kbl(forecast_filtered_spring,digits=2)  %>% 
@@ -380,7 +377,7 @@ datatable(forecast_filtered_spring, options=dt_opts, class = dt_class)
 # print(table)
 ```
 
-#### SUMMER forecasts
+### SUMMER forecasts
 ```{r summer_forecasts} 
 datatable(forecast_filtered_summer, options=dt_opts, class = dt_class)
 # table <- kbl(forecast_filtered_summer,digits=2)  %>% 
