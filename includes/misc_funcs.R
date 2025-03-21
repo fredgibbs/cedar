@@ -107,13 +107,13 @@ filter_by_term <- function(data,term,term_col_name) {
       data <- data %>% filter (!!rlang::parse_expr(term_str))
     } # end if not list
     
-    else if (term == "fall") {
+    else if (length(term) == 1 && term == "fall") {
       data <- data %>% filter (substring(get({{term_col_name}}),5,6) == 80)
     } 
-    else if (term == "spring") {
+    else if (length(term) == 1 && term == "spring") {
       data <- data %>% filter (substring(get({{term_col_name}}),5,6) == 10)
     }
-    else if (term == "summer") {
+    else if (length(term) == 1 && term == "summer") {
       data <- data %>% filter (substring(get({{term_col_name}}),5,6) == 60)
     }
     else {  # convert param to list and filter
