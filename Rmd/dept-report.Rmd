@@ -6,7 +6,7 @@ output:
     toc_float:
       collapsed: false
       smooth_scroll: false    
-  df_print: paged
+  pdf_print: paged
   pdf_document:
     fig_width: 7
 date: "`r format(Sys.time(), '%d %B, %Y')`"
