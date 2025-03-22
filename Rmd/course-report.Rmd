@@ -349,6 +349,8 @@ datatable(grade_data, options=dt_opts, class = dt_class)
 
 ```{r forecasts} 
 cols <- c("CAMP", "TERM","SUBJ_CRSE","enrolled","cl_total", "sections", "avg_size", "avail","conduit","major", "pref_enrl_method","pref_cl_method","avg_enrl_accr","avg_cl_accr","rec_enrl_sections","diff_fr_prev_enrl","rec_cl_sections","diff_fr_prev_enrl")
+
+if (!is.null(forecasts)) {
 forecast_filtered <- forecasts %>% select(cols) %>% arrange(CAMP,TERM,SUBJ_CRSE)
 
 forecast_filtered_fall <- forecast_filtered %>% filter (substring(TERM,5,6) == 80)
@@ -380,10 +382,13 @@ datatable(forecast_filtered_spring, options=dt_opts, class = dt_class)
 ### SUMMER forecasts
 ```{r summer_forecasts} 
 datatable(forecast_filtered_summer, options=dt_opts, class = dt_class)
+} # end if forecasts is not null
+
 # table <- kbl(forecast_filtered_summer,digits=2)  %>% 
 #   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
 #                 latex_options = c("striped","hold_position","condensed"), position="center", full_width=F, font_size = 11)
 # 
 # print(table)
+
 ```
 
