@@ -93,7 +93,8 @@ calc_forecast_accuracy <- function(students, courses, opt) {
   
   # check to see if we have any data
   if (!is.null(forecast_data) && nrow(forecast_data) == 0) {
-    stop("no forecast data for that course.")  
+    message("no forecast data for that course! returning NULL from calc_forecast_accuracy...")
+    return(NULL)
   }
   
   # make easier to read with wide format

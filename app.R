@@ -137,7 +137,7 @@ ui <- page_navbar(
     title = "Course Reports", 
     
     fluidRow(
-      column(8,
+      column(6,
              selectizeInput(
                inputId = "cr_course",
                label = "Select Course", 
@@ -146,10 +146,10 @@ ui <- page_navbar(
                choices = NULL),
       ),
       column(2,
-             actionButton("cr_button",label = "Create Report")
+             checkboxInput("cr_skip_forecast", "Skip Forecast", value = TRUE)
       ),
       column(2,
-             checkboxInput("cr_skip_forecast", "Skip Forecast", value = TRUE, width = NULL)
+             actionButton("cr_button",label = "Create Report")
       )
     ), # end fluidRow
     

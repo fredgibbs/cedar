@@ -76,15 +76,19 @@ get_course_data <- function(students, courses, forecasts, opt) {
   
   # get forecast stats (w enrollments and accuracy)
   forecasts <- calc_forecast_accuracy(students, courses, myopt) # returns a list with short and long versions
-  forecast_short <- forecasts[["forecast_short"]]
   
-  # if any data, select cols
-  if (nrow(forecast_short) > 0) {
-    course_data[["forecasts"]] <- forecast_short %>% select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))  %>% 
-      filter (SUBJ_CRSE %in% opt[["course"]])
-  }
-  else {
-    course_data[["forecasts"]] <- forecast_short 
+  if (!is.null(forecasts)) {
+    message("getting forecast_short data...")
+    forecast_short <- forecasts[["forecast_short"]]
+    
+    # if any forecast short data, select cols
+    if (nrow(forecast_short) > 0) {
+      course_data[["forecasts"]] <- forecast_short %>% select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))  %>% 
+        filter (SUBJ_CRSE %in% opt[["course"]])
+    }
+    else {
+      course_data[["forecasts"]] <- forecast_short 
+    }
   }
   
   # use regstats to find flagged courses
@@ -100,10 +104,10 @@ get_course_data <- function(students, courses, forecasts, opt) {
   regstats <- calc_cl_enrls(filtered_students)
   
   # TODO: very similar code duplicated in regstats.R
-  message("calculating squeeze...")
-  squeezes <- merge(enrls,regstats,by.x=c("CAMP","COLLEGE","TERM","SUBJ_CRSE"),by.y=c("Course Campus Code","Course College Code","Academic Period Code","SUBJ_CRSE"),all.x=TRUE )
-  squeezes <- squeezes %>% mutate(squeeze = round(avail/da_mean,digits=2))
-  course_data[["enrls"]] <- squeezes
+  message("calculating squeezes and merging enrls and regstats data...")
+  enrls <- merge(enrls,regstats,by.x=c("CAMP","COLLEGE","TERM","SUBJ_CRSE"),by.y=c("Course Campus Code","Course College Code","Academic Period Code","SUBJ_CRSE"),all.x=TRUE )
+  enrls <- enrls %>% mutate(squeeze = round(avail/da_mean,digits=2))
+  course_data[["enrls"]] <- enrls
   
   
   # run lookout functions to see where students are coming and going from  
