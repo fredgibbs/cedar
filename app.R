@@ -145,8 +145,11 @@ ui <- page_navbar(
                selected = "",
                choices = NULL),
       ),
-      column(4,
-             actionButton("cr_button",label = "Create Report"),
+      column(2,
+             actionButton("cr_button",label = "Create Report")
+      ),
+      column(2,
+             checkboxInput("cr_skip_forecast", "Skip Forecast", value = TRUE, width = NULL)
       )
     ), # end fluidRow
     
@@ -376,10 +379,12 @@ server <- function(input, output, session) {
   })
   
   
+  
   ##### COURSE REPORT #####
   observeEvent(input$cr_button,{
     opt <- list()
     opt[["shiny"]] <- TRUE
+    opt[["skip_forecast"]] <- input$cr_skip_forecast
     opt[["course"]] <- input$cr_course
     
     course_data <- create_course_report(students, courses, forecasts, opt)
@@ -392,6 +397,7 @@ server <- function(input, output, session) {
     })
     print("done rendering ui.")
   },ignoreInit = TRUE)
+  
   
   
   ##### SEATFINDER #####

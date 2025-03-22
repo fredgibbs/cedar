@@ -34,13 +34,17 @@ get_course_data <- function(students, courses, forecasts, opt) {
   message("getting basic enrollment data for course-report...")
   enrls <- get_enrl(courses,myopt)
   
+  
   # get forecast data for course
-  message("filtering forecast data for course-report...")
+  message("getting and filtering forecast data for course-report...")
   forecast_data <- forecasts
   forecast_data <- forecast_data %>% filter (SUBJ_CRSE == myopt[["course"]])
   forecast_data <- add_term_type_col(forecast_data,"TERM") 
   
-  # use 6 as threshold because the table has major and conduit projections (= to 3 term_types)
+  # check if skipping forecasts for shiny speed
+  if (is.null(opt[["skip_forecast"]]) || opt[["skip_forecast"]] == FALSE) {
+    
+  # TODO: need better way to determine if we have enough rows now that we have campus data
   # don't forecast in case we never offer a course that semester_type, since there's no previous target data
   message("checking forecast data for fall, spring, summer...")
   
@@ -64,6 +68,8 @@ get_course_data <- function(students, courses, forecasts, opt) {
     myopt$term <- "tl_summers"
     forecast(students, courses, myopt)
   } 
+  
+  } # end check if skip forecasting
   
   # reset term after forecasting
   myopt$term <- NULL
