@@ -357,9 +357,9 @@ if (!is.null(forecasts)) {
   forecast_filtered_spring <- forecast_filtered %>% filter (substring(TERM,5,6) == 10)
   forecast_filtered_summer <- forecast_filtered %>% filter (substring(TERM,5,6) == 60)
 } else {
-  forecast_filtered_fall <- data.table()
-  forecast_filtered_spring <- data.table()
-  forecast_filtered_summer <- data.table()
+  forecast_filtered_fall <- data.frame()
+  forecast_filtered_spring <- data.frame()
+  forecast_filtered_summer <- data.frame()
 }
 
 ```
