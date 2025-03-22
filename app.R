@@ -146,7 +146,7 @@ ui <- page_navbar(
                choices = NULL),
       ),
       column(2,
-             checkboxInput("cr_skip_forecast", "Skip Forecast", value = TRUE)
+             checkboxInput("cr_skip_forecast", "Skip New Forecasts (existing forecast data will be used)", value = TRUE)
       ),
       column(2,
              actionButton("cr_button",label = "Create Report")
