@@ -348,14 +348,19 @@ datatable(grade_data, options=dt_opts, class = dt_class)
 
 
 ```{r forecasts} 
-cols <- c("CAMP", "TERM","SUBJ_CRSE","enrolled","cl_total", "sections", "avg_size", "avail","conduit","major", "pref_enrl_method","pref_cl_method","avg_enrl_accr","avg_cl_accr","rec_enrl_sections","diff_fr_prev_enrl","rec_cl_sections","diff_fr_prev_enrl")
-
 if (!is.null(forecasts)) {
-forecast_filtered <- forecasts %>% select(cols) %>% arrange(CAMP,TERM,SUBJ_CRSE)
-
-forecast_filtered_fall <- forecast_filtered %>% filter (substring(TERM,5,6) == 80)
-forecast_filtered_spring <- forecast_filtered %>% filter (substring(TERM,5,6) == 10)
-forecast_filtered_summer <- forecast_filtered %>% filter (substring(TERM,5,6) == 60)
+  cols <- c("CAMP", "TERM","SUBJ_CRSE","enrolled","cl_total", "sections", "avg_size", "avail","conduit","major", "pref_enrl_method","pref_cl_method","avg_enrl_accr","avg_cl_accr","rec_enrl_sections","diff_fr_prev_enrl","rec_cl_sections","diff_fr_prev_enrl")
+  
+  forecast_filtered <- forecasts %>% select(cols) %>% arrange(CAMP,TERM,SUBJ_CRSE)
+  
+  forecast_filtered_fall <- forecast_filtered %>% filter (substring(TERM,5,6) == 80)
+  forecast_filtered_spring <- forecast_filtered %>% filter (substring(TERM,5,6) == 10)
+  forecast_filtered_summer <- forecast_filtered %>% filter (substring(TERM,5,6) == 60)
+} else {
+  forecast_filtered_fall <- data.table()
+  forecast_filtered_spring <- data.table()
+  forecast_filtered_summer <- data.table()
+}
 
 ```
 
@@ -382,7 +387,6 @@ datatable(forecast_filtered_spring, options=dt_opts, class = dt_class)
 ### SUMMER forecasts
 ```{r summer_forecasts} 
 datatable(forecast_filtered_summer, options=dt_opts, class = dt_class)
-} # end if forecasts is not null
 
 # table <- kbl(forecast_filtered_summer,digits=2)  %>% 
 #   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),
