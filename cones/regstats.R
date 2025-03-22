@@ -102,7 +102,8 @@ get_reg_stats <- function(students,courses,opt) {
   flagged <- list()
   std_fields <- c("Course Campus Code", "Course College Code","SUBJ_CRSE","Academic Period Code","term_type","registered")
   std_group_cols <- c("Course Campus Code", "Course College Code","SUBJ_CRSE","term_type")
-  std_arrange_cols <- c("Course Campus Code","Academic Period Code","impacted")
+  #std_arrange_cols <- c("Course Campus Code","Academic Period Code","impacted")
+  std_arrange_cols <- c("Course Campus Code", "Course College Code")
   
   ##### EARLY DROPS
   message("finding early drops...")
@@ -110,7 +111,7 @@ get_reg_stats <- function(students,courses,opt) {
   drops <- drops %>% group_by_at(all_of(std_group_cols))
   drops <- drops %>% mutate (sd = round(sd(drop_early) * thresholds[["pct_sd"]] /(sqrt(n()-1/n())),digits=2), impacted = round(drop_early-(de_mean + sd),digits=2))
   drops <- drops %>% filter (impacted > thresholds[["min_impacted"]])
-  drops <-  drops %>% arrange_at (std_arrange_cols)
+  drops <-  drops %>% arrange(across(std_arrange_cols))
   flagged[["early_drops"]] <- drops
   
   
@@ -120,7 +121,7 @@ get_reg_stats <- function(students,courses,opt) {
   late_drops <- late_drops %>% group_by_at(all_of(std_group_cols))
   late_drops <- late_drops %>% mutate (sd = round(sd(drop_late) * thresholds[["pct_sd"]] /(sqrt(n()-1/n())),digits=2), impacted = round(drop_late-(dl_mean+sd),digits=2))
   late_drops <- late_drops %>% filter (impacted > thresholds[["min_impacted"]])
-  flagged[["late_drops"]]  <-  late_drops %>% arrange_at (std_arrange_cols)
+  flagged[["late_drops"]]  <-  late_drops %>% arrange(across(std_arrange_cols))
   
   
   ##### DIPS
@@ -129,7 +130,7 @@ get_reg_stats <- function(students,courses,opt) {
   dips <- dips %>% group_by_at(all_of(std_group_cols))
   dips <- dips %>% mutate (sd = round(sd(registered) * thresholds[["pct_sd"]] / (sqrt(n()-1/n())),digits=2), impacted = round((reg_mean - sd) - registered, digits=2))
   dips <- dips %>% filter (impacted > thresholds[["min_impacted"]])
-  flagged[["dips"]] <-  dips %>% arrange_at (std_arrange_cols)
+  flagged[["dips"]] <-  dips %>% arrange (across(std_arrange_cols))
   
   
   ##### BUMPS
@@ -138,7 +139,7 @@ get_reg_stats <- function(students,courses,opt) {
   bumps <- bumps %>% group_by_at(all_of(std_group_cols))
   bumps <- bumps %>% mutate (sd = round(sd(registered) * thresholds[["pct_sd"]] / (sqrt(n()-1/n())),digits=2), impacted = round(registered - (reg_mean + sd), digits=2))
   bumps <- bumps %>% filter (impacted > thresholds[["min_impacted"]])
-  flagged[["bumps"]] <-  bumps %>% arrange_at (std_arrange_cols)
+  flagged[["bumps"]] <-  bumps %>% arrange (across(std_arrange_cols))
   
   
   ##### WAITS
