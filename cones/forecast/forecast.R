@@ -44,17 +44,17 @@ add_to_forecast_table <- function(new_forecast_row) {
     return()
   }
   
-  target_term <- new_forecast_row[["TERM"]]
-  target_course <- new_forecast_row[["SUBJ_CRSE"]]
-  forecast_method <- new_forecast_row[["method"]]
-  
   # always refresh data
   forecast_data <- load_forecasts()
 
   # if any data in forecast table, remove previous rows with the same course/term forecasts
-  if (nrow(forecast_data) > 0) {
+  fd_rows <- nrow(forecast_data)
+  if (fd_rows > 0) {
     message("removing old forecasts from target term...")
-    forecast_data <- forecast_data %>% filter (!(TERM == as.character(target_term) & SUBJ_CRSE == target_course & method == forecast_method))
+    
+    # anti-join by all columns except forecast
+    forecast_data <- forecast_data %>% anti_join(new_forecast_row, by = c("CAMP", "COLLEGE", "TERM", "SUBJ_CRSE", "method"))
+    message("removed ", fd_rows - nrow(forecast_data), " rows.")
     
     # add new forecast row to old forecast data
     message("adding new row to forecast table...")
