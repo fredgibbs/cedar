@@ -244,10 +244,12 @@ params$plots[["highest_mean_histo_plot"]]
 ## Grades
 If unit has no LD courses, all courses are used instead.
 
-### LD DWF rates
-```{r grades_summary_for_ld_plot} 
-params$plots[["grades_summary_for_ld_plot"]]
+### Lower Division DWF rates (ABQ=F2F; EA=online via ABQ)
+```{r grades_summary_for_ld_abq_ea_plot} 
+params$plots[["grades_summary_for_ld_abq_ea_plot"]]
 ```
+
+
 
 ### LD Grade Breakdown
 ```{r grades_summary_gened_by_course_w} 
