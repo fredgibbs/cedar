@@ -6,7 +6,7 @@ get_all_grades <- function(filtered_students) {
   filtered_students <- filtered_students %>% filter (substring(`Registration Status Code`,1,1) != "D") 
   
   # get distinct IDs in each course
-  filtered_students <- filtered_students %>% distinct(`Student ID`,SUBJ_CRSE, .keep_all=TRUE)
+  filtered_students <- filtered_students %>% distinct(`Student ID`,`Course Campus Code`,`Course College Code`,SUBJ_CRSE, .keep_all=TRUE)
   
   # calculate grade points from letter grade received and add col to student data 
   # grades_to_points is defined in mappings.R
@@ -128,7 +128,7 @@ summarize_grades <- function(grades_summary_by_course,opt) {
   
   summary <- grades_summary_by_course %>% 
     group_by_at(group_cols) %>% 
-    summarize(passed = sum(passed), failed = sum(failed), dropped = sum(dropped)) %>% 
+    summarize(passed = sum(passed), failed = sum(failed), dropped = sum(dropped), .groups="keep") %>% 
     mutate (`DFW %`=round((dropped+failed)/(passed+failed+dropped)*100,digits=2))
   
   message("returning summary...")
@@ -145,8 +145,10 @@ get_grades <- function(students,opt) {
   # opt <- list()
   # students <- load_students()
   # opt$course <- "AFST 1110"
+  # opt$dept <- "HIST"
   # opt$term <- "202460"
-
+  #opt <- myopt
+  
   if (is.null(opt$aggregate)) {
     message("no aggregate param found. setting -a to 'all'.")
     opt$aggregate <- "all"
@@ -156,20 +158,17 @@ get_grades <- function(students,opt) {
   message("procesing course: ",course)
   
   if (!is.null(course) && is.character(course)){
-    # if course set to "existing", use list of courses already in forecast_table.
-    # this is a good way to round out forecasts.
+    # if course set to "forecasts", use list of courses already in forecast_table.
+    # this is a good way to round out forecast data
     if (as.character(course) == "forecasts") {
       forecast_data <- load_forecasts()
       opt$course <- unique(as.list(forecast_data$SUBJ_CRSE))
       message("finished processing course as forecasts!")
     }
-    else if (as.character(course) == "dimps") {
-      opt$course <- get_dimp_courses(students,courses,opt)
-      message("finished processing course as dimps!")
-    }
+    # TODO: accept CSV file as input
   }
   
-  # filter students from opt params (usually course and term combination)
+  # filter students from opt params (usually course and term OR dept for dept reports)
   message("filtering students from opt params...")
   filtered_students <- filter_class_list(students,opt)
   
@@ -223,55 +222,90 @@ get_grades <- function(students,opt) {
 
 
 # this is specifically for creating dept report outputs using d_params 
-# it sets gradebook_agg_by to "course" and does additional filtering for lower division courses if available
+# it does additional filtering for lower division courses if available
 get_grades_for_dept_report <- function(students,opt,d_params) {
   
+  # studio testing set up  
   # opt <- list()
-  # opt$dept <- "POLS"
-  
+  # students <- load_students()
+
   # for plotting
   myopt <- opt
-  myopt["dept"] <- d_params$dept_code 
+  myopt[["dept"]] <- d_params$dept_code 
+  # myopt[["dept"]] <- "HIST"
   
-  myopt$aggregate <- "course_avg"
-  grades_summary_by_course_avg <- get_grades(students,myopt)[["course_avg"]]
+  # limit to ABQ campus until we have better plotting across campuses
+  myopt[["campus"]] <- c("ABQ","EA")
   
-  # for chart (with more details)
+  # get grades by each course and term for table in dept report
   myopt$aggregate <- "course"
   grades_summary_by_course <- get_grades(students,myopt)[["course"]]
   
   # filter for lower division, unless there aren't any (like MSST)
-  grades_summary_for_ld <- grades_summary_by_course %>% filter (level == "lower")
+  grades_summary_by_course_ld <- grades_summary_by_course %>% filter (level == "lower")
   
-  if (nrow(grades_summary_for_ld) == 0) {
-    grades_summary_for_ld <- grades_summary_by_course
+  if (nrow(grades_summary_by_course_ld) == 0) {
+    grades_summary_by_course_ld <- grades_summary_by_course
   }
   
-  message("adding grades_summary_for_ld to d_params...")
-  d_params$tables[["grades_summary_for_ld"]] <- grades_summary_for_ld 
+  message("adding grades_summary_by_course_ld to d_params...")
+  d_params$tables[["grades_summary_for_ld"]] <- grades_summary_by_course_ld 
   
   
-  # use course averages for plotting
-  grades_summary_for_ld <- grades_summary_by_course_avg %>% filter (level == "lower")
+  # get average grades for plot in dept report
+  myopt$aggregate <- "course_avg"
+  grades_summary_by_course_avg <- get_grades(students,myopt)[["course_avg"]]
   
-  if (nrow(grades_summary_for_ld) == 0) {
-    grades_summary_for_ld <- grades_summary_by_course
+  grades_summary_by_course_avg_ld <- grades_summary_by_course_avg %>% filter (level == "lower") 
+  # %>% 
+  #   filter (`Course Campus Code` =="ABQ")
+  # 
+  if (nrow(grades_summary_by_course_avg_ld) == 0) {
+    grades_summary_by_course_avg_ld <- grades_summary_by_course_avg
   }
   
-  grades_summary_for_ld <- grades_summary_for_ld %>% ungroup()
+  grades_summary_by_course_avg_ld <- grades_summary_by_course_avg_ld %>% ungroup()
   
-  grades_summary_for_ld_plot <- grades_summary_for_ld %>% 
+  grades_summary_for_ld_plot <- grades_summary_by_course_avg_ld %>% 
     mutate(SUBJ_CRSE = fct_reorder(SUBJ_CRSE, `DFW %`)) %>%
-    ggplot(aes(y=SUBJ_CRSE, x=`DFW %`)) + 
+    ggplot(aes(y=SUBJ_CRSE, x=`DFW %`, fill=`Course Campus Code`)) + 
     theme(legend.position="bottom") +
     guides(color = guide_legend(title = "")) +
-    geom_bar(stat="identity") +
+    geom_bar(stat="identity", position=position_dodge()) +
     ylab("Course") + xlab("mean DFW % (since 2019)") 
   
   grades_summary_for_ld_plot
   
-  message("adding grades_summary_for_ld_plot to d_params...")
-  d_params$plots[["grades_summary_for_ld_plot"]] <- grades_summary_for_ld_plot 
+  message("adding grades_summary_for_ld_abq_ea_plot to d_params...")
+  d_params$plots[["grades_summary_for_ld_abq_ea_plot"]] <- grades_summary_for_ld_plot 
+
+  # # repeat for EA campus
+  # grades_summary_by_course_avg_ld <- grades_summary_by_course_avg %>% filter (level == "lower") %>% 
+  #   filter (`Course Campus Code` == "EA")
+  # 
+  # if (nrow(grades_summary_by_course_avg_ld) == 0) {
+  #   grades_summary_by_course_avg_ld <- grades_summary_by_course_avg
+  # }
+  # 
+  # grades_summary_by_course_avg_ld <- grades_summary_by_course_avg_ld %>% ungroup()
+  # 
+  # grades_summary_for_ld_plot <- grades_summary_by_course_avg_ld %>% 
+  #   mutate(SUBJ_CRSE = fct_reorder(SUBJ_CRSE, `DFW %`)) %>%
+  #   ggplot(aes(y=SUBJ_CRSE, x=`DFW %`)) + 
+  #   theme(legend.position="bottom") +
+  #   guides(color = guide_legend(title = "")) +
+  #   geom_bar(stat="identity") +
+  #   ylab("Course") + xlab("mean DFW % (since 2019)") 
+  # 
+  # #grades_summary_for_ld_plot
+  # 
+  # message("adding grades_summary_for_ld_ea_plot to d_params...")
+  # d_params$plots[["grades_summary_for_ld_ea_plot"]] <- grades_summary_for_ld_plot 
+  # 
+  
+  
+  
+  
   
   message("returning d_params with new plot(s) and table(s)...")
   return(d_params)
