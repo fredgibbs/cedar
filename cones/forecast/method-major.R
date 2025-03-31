@@ -12,10 +12,10 @@ major_forecast <- function(students, courses, opt) {
   message("\n FORECASTING VIA MAJOR!")
   
   #for studio testing...
-  # students <- load_students()
-  # courses <- load_courses()
-  # opt <- list()
-  # opt[["course"]] <- "HIST 1160"
+  students <- load_students()
+  courses <- load_courses()
+  opt <- list()
+  # opt[["course"]] <- "CHEM 1225"
   # opt[["term"]] <- "202510"
   # opt[["custom_conduit"]]  <- "202480"
   # opt[["conduit_for_term"]] <- "202560"
@@ -115,14 +115,6 @@ major_forecast <- function(students, courses, opt) {
   message("convert to wide format, so each row is a major/classification combination and terms are cols: ")
   conduits_wide <- spread(conduits, `Academic Period Code`, n)
   
-  
-  #TODO: this throws an error if no data for previous term, b/c conduit_wide has only 2 columns
-  # make NAs into 0s; first test to see if any NAs exist to avoid error
-  
-  # if (any(is.na(conduits_wide[5:6]))) { 
-  #   conduits_wide[5:6][is.na(conduits_wide[5:6])] <- 0
-  # }
-  # 
   term_cols <- c(as.character(prev_conduit_term), as.character(conduit_term))
   if (any(is.na(conduits_wide[term_cols]))) {
     conduits_wide[term_cols][is.na(conduits_wide[term_cols])] <- 0
@@ -182,7 +174,7 @@ major_forecast <- function(students, courses, opt) {
   
   
   # merge target_demographics with conduits
-  conduits_w_prev_target <- merge(prev_target_class_count,conduits_wide,by=c("Course Campus Code", "Course College Code", "Major","Student Classification"),all.x=T)
+  conduits_w_prev_target <- merge(prev_target_class_count,conduits_wide,by=c("Course Campus Code", "Course College Code", "Major","Student Classification"))
   
   # if forecast term is current or past (not future), Academic Period Code col will have both prev_target_term and target_term
   # otherwise just the prev_target_term
@@ -220,7 +212,7 @@ major_forecast <- function(students, courses, opt) {
     message("creating new forecast rows...")
     continuing_fc <- round(projections$target_proj_enrl,digits=0)
     incoming_fc <- round(0,digits=0) # disabled for now
-    total_fc <- round(continuing_fc + incoming_fc,digits=0)
+    total_fc <- round(continuing_fc + incoming_fc, digits=0)
     
     # better column names
     new_summary <- data.frame(
