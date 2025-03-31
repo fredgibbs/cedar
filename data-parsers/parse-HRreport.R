@@ -151,21 +151,34 @@ message("Academic Titles not mapped to a job category:")
 nas <- dfs_by_term[is.na(dfs_by_term$job_cat),]
 unique(nas$`Academic Title`) %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
 
-# Extract download date from filename, supplied by MyReports
-file_date <- str_extract(file, "[0-9]{4}[0-9]{2}[0-9]{2}")
-
-# add column as_of_date so we know how recent data is
-dfs_by_term$as_of_date <- ymd(file_date)
-
+# note date of file processing and add column as_of_date so we know how recent data is
+dfs_by_term$as_of_date <- format(Sys.time(), "%Y-%m-%d")
 
 # select relevant fields 
 fac_by_term <- dfs_by_term %>% 
-    select (term_code, DEPT, `UNM ID`, `Full Name`, `Academic Title`, `Job Title`,  job_cat, `Home Organization Desc`, `Appt %`, as_of_date) %>% 
+    select (term_code, DEPT, `Full Name`, `Academic Title`, `Job Title`,  job_cat, `Home Organization Desc`, `Appt %`, as_of_date) %>% 
     distinct()
 
+# save file
+file_name <- "fac_by_term.Rds"
+local_filepath <- paste0(cedar_data_dir,"processed/",file_name)
 
-# save for other uses (esp combining with course data)
-file_name <- paste0(cedar_data_dir,"processed/fac_by_term.Rda")
-message("saving ", file_name,"...")
-save(fac_by_term,file=file_name)
+message("saving ", local_filepath, "...")
+saveRDS(fac_by_term, file = local_filepath)
+message("saved ", nrow(fac_by_term), " rows.")
+
+
+if (!is.null(cedar_cloud_data_dir)) {
+  cloud_filepath <- paste0(cedar_cloud_data_dir, file_name)
+  
+  message("copying Rds FROM local data folder: ",local_filepath)
+  message("copying Rds TO local Sharepoint folder: ",cloud_filepath,"...")
+  
+  file.copy(to =   cloud_filepath,
+            from = local_filepath,
+            overwrite = TRUE)
+  
+  message("Rds file copied to Sharepoint.")
+}
+
 message("parse HRreport complete!")

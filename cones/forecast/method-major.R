@@ -12,9 +12,9 @@ major_forecast <- function(students, courses, opt) {
   message("\n FORECASTING VIA MAJOR!")
   
   #for studio testing...
-  students <- load_students()
-  courses <- load_courses()
-  opt <- list()
+  # students <- load_students()
+  # courses <- load_courses()
+  # opt <- list()
   # opt[["course"]] <- "CHEM 1225"
   # opt[["term"]] <- "202510"
   # opt[["custom_conduit"]]  <- "202480"

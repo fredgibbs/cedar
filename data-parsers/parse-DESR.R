@@ -8,10 +8,9 @@ parse <- function (new_courses) {
   message("\nwelcome to merge_hr_data!")
   
   # get faculty data to associate title with person in course listings
-  file_name <- paste0(cedar_data_dir,"processed/fac_by_term.Rda")
-  message("loading ",file_name,"...")
-  load(file_name)
-  
+  message("loading faculty data...")
+  fac_by_term <- load_hr_data()
+
   message("adjusting data types...")
   courses$`PRIM_INST_ID` <- as.double(courses$`PRIM_INST_ID`)
   courses$`TERM` <- as.character(courses$`TERM`)

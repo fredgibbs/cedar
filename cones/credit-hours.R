@@ -234,7 +234,7 @@ credit_hours_by_fac <- function (students,d_params) {
   credit_hours_data <- add_acad_year(credit_hours_data, "Academic Period Code")
   
   message("loading and merging personnel data...")
-  load(paste0(cedar_data_dir,"processed/fac_by_term.Rda"))
+  fac_by_term <- load_hr_data()
   merged <- merge(credit_hours_data,fac_by_term,by.x=c("Academic Period Code","Primary Instructor ID","DEPT"),by.y=c("term_code","UNM ID","DEPT"),x.all=TRUE)
   
   #summarize total hours earned

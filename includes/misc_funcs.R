@@ -263,8 +263,8 @@ load_global_data <- function() {
 load_datafile <- function(filename) {
   message("loading data for: ", filename,"...")
   
-  # temp hack until real solution
-  # when shiiny starts, forecasts is loaded from online location but saved immediately locally for session updates
+  # temp hack until external data persistence 
+  # when shiny starts, forecasts is loaded from online location but saved immediately locally for session updates
   if (filename == "forecasts" && as.logical(Sys.getenv("shiny"))) {
     message("trying to load forecasts in Shiny...")
     data <- readRDS("forecasts.Rds")
@@ -296,6 +296,11 @@ load_datafile <- function(filename) {
 
 
 # TODO: replace these specific loads with load_datafile across codebase
+load_hr_data <- function() {
+  data <- load_datafile("hr_data")
+  return(data)
+}
+
 load_students <- function() {
   data <- load_datafile("class_lists")
   return(data)

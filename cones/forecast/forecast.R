@@ -201,6 +201,7 @@ if (is.null(opt$summer) ){
     
     # uncomment for studio testing
     # course <- "CHEM 1120C"
+    
     myopt <- opt
     myopt[["course"]] <- course
     

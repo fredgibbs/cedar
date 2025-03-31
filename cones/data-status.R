@@ -35,9 +35,9 @@ get_data_status <- function (opt) {
   degrees_status <- degrees %>% group_by(`Academic Period Code`,as_of_date) %>% summarize (rows = n(), .groups="keep")
   status_list[["degrees_status"]] <- degrees_status
   
-  # TODO: need to add as_of_date to parse-HRreport.R and fac_by_term.Rda
-  message("HRReport status:")
-  load(paste0(cedar_data_dir,"processed/fac_by_term.Rda")) # load fac_by_term DF
+  
+  message("getting HRReport status:")
+  fac_by_term <- load_hr_data()
   fac_by_term_status <- fac_by_term %>% group_by(as_of_date) %>% summarize (rows = n())
   status_list[["fac_by_term_status"]] <- fac_by_term_status
 

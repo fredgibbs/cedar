@@ -3,7 +3,9 @@ get_perm_faculty_count <- function() {
   
   # load faculty headcount data
   # this file is created by parse-HRreport.R
-  load(paste0(cedar_data_dir,"processed/fac_by_term.Rda")) # loads fac_by_term DF
+  #load(paste0(cedar_data_dir,"processed/fac_by_term.Rda")) # loads fac_by_term DF
+  fac_by_term <- load_hr_data()
+    
   
   # sum appointment percentages
   fac_by_term_counts <- fac_by_term %>% group_by(term_code,DEPT,job_cat) %>% 
@@ -14,9 +16,6 @@ get_perm_faculty_count <- function() {
   perm_fac_count <- fac_by_term_counts %>% filter (job_cat %in% c("Professor","Lecturer","Associate Professor","Assistant Professor"))
   perm_fac_count <- perm_fac_count %>% group_by(term_code,DEPT) %>% 
     summarize (count = sum(count))
-  
-  message("perm_fac_count:")
-  perm_fac_count %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   return(perm_fac_count)
 }
@@ -142,10 +141,6 @@ get_sfr_data_for_dept_report <- function(d_params) {
   # until there is better college-level sorting, remove NAs
   sfr_college <- sfr_college[!is.na(sfr_college$DEPT),]
   
-  
-  message("sfr_college:")
-  sfr_college %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-  
   # filter by DEPT code to highlight dept in college context
   sfr_college_dept <- sfr_college %>%
     filter(DEPT == d_params$dept_code)
@@ -156,11 +151,6 @@ get_sfr_data_for_dept_report <- function(d_params) {
     summarize (all_students = sum(students), sfr=all_students/count) %>% 
     distinct()
   
-  message("sfr_college simplified:")
-  sfr_college %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-  
-  message("sfr_college_dept:")
-  sfr_college_dept %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   # scatter plot to see dept in context of college for current semester
   if (nrow(sfr_college_dept) > 0) {
