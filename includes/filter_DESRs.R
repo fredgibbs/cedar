@@ -1,25 +1,4 @@
 
-check_num_rows <- function(courses) {
-  message("current courses data has ",nrow(courses)," rows.")
-}
-
-
-filter_by_col <- function(courses, col, val) {
-  message("filtering by ",col, "=", val)
-  
-  param_to_list <- convert_param_to_list(val)
-  message(param_to_list)
-  
-  ## use get instead of {{ }} because col is passed in as a string, rather than a variable
-  courses <- courses %>% filter (get(col) %in% param_to_list)
-  
-  check_num_rows(courses)
-  
-  return(courses)
-}
-
-
-
 filter_DESRs <- function(courses, opt) {
   message("Filtering DESRs with supplied options...")
   check_num_rows(courses)

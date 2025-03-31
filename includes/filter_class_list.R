@@ -7,8 +7,9 @@ filter_class_list <- function(students, opt) {
   
   # filter by campus
   if (!is.null(opt$campus)) {
-    message("filtering by campus")
-    students <- students %>% filter (`Course Campus Code`==opt$campus) 
+    message("filtering by campus...")
+    students <- filter_by_col(students,"Course Campus Code",opt[["campus"]])
+  
   } else {
     # if (opt$verbose) print("using campus defaults: ABQ or EA")
     # students <- students %>% filter (`Course Campus Code`=="ABQ" | `Course Campus Code`=="EA") 
@@ -16,8 +17,8 @@ filter_class_list <- function(students, opt) {
   
   # filter by student college
   if (!is.null(opt$studentcollege)) {
-    message("filtering by student college")
-    students <- students %>% filter (`Student College Code` == opt$studentcollege) 
+    message("filtering by student college...")
+    students <- filter_by_col(students,"Course College Code",opt[["studentcollege"]])
   }
   
   # filter by course college
