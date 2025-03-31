@@ -113,14 +113,17 @@ Rscript parse-degrees.R
 HR DATA (for job titles and categories)
 Raw data comes from HR Reports (from My UNM), Employee Reports.
 To get new data, Log into HR Reports, and use hamburger menu in upper left to select "Employees by Date Range"
-Click Select Criteria text box, then "Select By Level 3 Org", then make sure all the depts are on the right
-start date: 1 sep 2019 (could be anything, but i generally haven't been going beyond 2019 for data reporting)
+Click Select Criteria text box, then "Select By Level 3 Org"
+Move A&S to the right-side box with the arrow button
+Move all the Orgs to the right-side box with arrow button
+start date: 1 sep 2019 (could be anything, but i generally haven't been going beyond 2019 for SFR reporting)
 end date: current date
 Run Report
+[page takes a long time?...]
 Click Actions button to "Select Columns"
-ADD cols: add Appt %, Home Org, Home Org Desc
+ADD cols: Home Org, Home Org Desc; click Apply button
 Once refreshed, click Actions button to Download. 
-Save file as CSV, save to cedar/data/ HRreports/ 
-(keep original filename that is datestamped)
-On command line, go to cedar/data-parsers
+Save file as CSV, save to cedar/data/HRreports/ 
+(keep original filename)
+On command line, go to CEDAR_HOME_DIR/data-parsers
 Rscript parse-HRreport.R
