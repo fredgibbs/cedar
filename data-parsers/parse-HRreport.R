@@ -1,20 +1,8 @@
 ###############################################
 # new code for processing faculty employment history for use in CEDAR
-# this should be run from the data/parsers directory
+# this should be run from the data-parsers directory
 # it creates fac_by_term.Rda in the data/processed folder
-
-# Raw data comes from HR Reports (from MyUNM), Employee Reports.
-# To get new data, Log into HR Reports
-# Click on the hamburger menu (3 parallel lines) in the upper left to select "Employees by Date Range"
-# Click Select Criteria text box, then "Select By Level 3 Org", then make sure all the depts are on the right
-# start date: 1 sep 2019 (could be anything, but i generally haven't been going beyond 2019 for data reporting)
-# end date: current date
-# Run Report
-# Click Actions button to "Select Columns"
-# ADD cols: add Appt %, Home Org, Home Org Desc
-# once refreshed, click Actions button to Download. 
-# save file as CSV, put it in cedar/data/HRreports
-# keep original filename that is datestamped.
+# for data gathering instructions, see README.md
 
 # A note about JOB CODES
 # N1 = non-standard pay 
@@ -27,9 +15,12 @@
 
 pacman::p_load(tidyverse, readxl,dplyr,rvest,lubridate,fs,stringr, data.table,forcats)
 
-
 # load basic includes 
-source("load-parser-includes.R")
+source("../includes/config.R")
+source(paste0(cedar_base_dir,"/includes/mappings.R"))
+source(paste0(cedar_base_dir,"/includes/lists.R"))
+source(paste0(cedar_base_dir,"/includes/gen_ed_courses.R"))
+source(paste0(cedar_base_dir,"/includes//misc_funcs.R"))
 
 # load master csv file from HRreports
 data_dir <- paste0(cedar_data_dir,"downloads/HRreports")
@@ -41,31 +32,33 @@ all_emps <- read_csv(file)
 
 message("CSV file loaded. processing...")
 
-# remove summer research, since this isn't relevant to teaching duties
+# remove irrelevant job titles (necessary?)
 all_emps <- all_emps %>% filter (`Job Title` != "Summer Research" & `Job Title` != "#Summer Research")
 
 # find " Department" and remove it for easier conversion to subject codes
-message("removing 'Department' from values in 'Org Description' col...")
-all_emps$`Org Description` <- str_replace(all_emps$`Org Description`," Department", "")
+message("removing 'Department' from values in 'Home Organization Desc' col...")
+all_emps$`Home Organization Desc` <- str_replace(all_emps$`Home Organization Desc`," Department", "")
 
 # add department code for easier filtering later
+# this only adss A&S depts because it's all I have access to
 message("adding DEPT code...")
-all_emps$DEPT <- hr_org_desc_to_dept_map[all_emps$`Org Description`]
+all_emps$DEPT <- hr_org_desc_to_dept_map[all_emps$`Home Organization Desc`]
 
 # print any missing DEPTS 
 message("rows missing DEPT:")
-subj_nas <- all_emps$'Org Description'[is.na(all_emps$DEPT)]
+subj_nas <- all_emps$'Home Organization Desc'[is.na(all_emps$DEPT)]
 unique(subj_nas) %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
 
 # drop any rows without an assigned department
-all_emps <-all_emps %>% drop_na(DEPT)
+message("dropping rows without a department assignment...")
+all_emps <- all_emps %>% drop_na(DEPT)
 
-# the start date is original hire (not current job title) but there doesn't seem a more specific alternative
+# the start date is original hire title (rather than current job title) but there doesn't seem a more specific alternative
 # if end date is blank, use contract date
 # some job end dates will remain NA for emertius, retired employeee, widower
 all_emps <-  all_emps %>% mutate(`Job End Date` = coalesce(`Job End Date`,`Contract End Date`))
 
-# filter out rows without and End Date
+# filter out rows without an End Date
 all_emps <- all_emps %>% filter(!is.na(`Job End Date`))
 
 # add new date columns for easier processing
@@ -85,7 +78,7 @@ for (p in num.labs) {
   print (paste("processing: ", p))
   p_date <- ymd(code_to_date(p))
   print(p_date)
-  term_emps <- all_emps %>% filter (begin_date <= p_date & job_end_date >= p_date & `Job suffix` == "00")
+  term_emps <- all_emps %>% filter (begin_date <= p_date & job_end_date >= p_date & `Suffix` == "00")
   term_emps$term_code <-p
   dfs_by_term <- rbind(dfs_by_term,term_emps)
 }
@@ -102,7 +95,7 @@ dfs_by_term$job_cat <- as.character(NA)
 
 # TODO: maybe get all job titles for a given semester and combine into one string?
 
-#if academic title is NA, use Job Title
+# if academic title is NA, use Job Title
 dfs_by_term[is.na(dfs_by_term$`Academic Title`),]$`Academic Title` = dfs_by_term[is.na(dfs_by_term$`Academic Title`),]$`Job Title`
 
 # correct some outliers; prolly not a complete list!
@@ -134,6 +127,7 @@ dfs_by_term[dfs_by_term$`Academic Title` %like% "Lecture",]$job_cat = "Lecturer"
 dfs_by_term[dfs_by_term$`Academic Title` %like% "Term Teaching",]$job_cat = "Term Teacher"
 dfs_by_term[dfs_by_term$`Academic Title` %like% "Part Time Faculty",]$job_cat = "TPT"
 dfs_by_term[dfs_by_term$`Academic Title` %like% "Visiting Professor",]$job_cat = "TPT"
+dfs_by_term[dfs_by_term$`Academic Title` %like% "Visiting Asst Professor",]$job_cat = "TPT"
 dfs_by_term[dfs_by_term$`Academic Title` %like% "Visiting Instructor",]$job_cat = "TPT"
 dfs_by_term[dfs_by_term$`Academic Title` %like% "Adjunct Faculty",]$job_cat = "TPT"
 dfs_by_term[dfs_by_term$`Academic Title` %like% "Temp",]$job_cat = "TPT"
@@ -166,7 +160,7 @@ dfs_by_term$as_of_date <- ymd(file_date)
 
 # select relevant fields 
 fac_by_term <- dfs_by_term %>% 
-    select (term_code, DEPT, `UNM ID`, Name, `Academic Title`, `Job Title`,  job_cat, `Home Organization Desc`, `Appt %`, as_of_date) %>% 
+    select (term_code, DEPT, `UNM ID`, `Full Name`, `Academic Title`, `Job Title`,  job_cat, `Home Organization Desc`, `Appt %`, as_of_date) %>% 
     distinct()
 
 
