@@ -230,19 +230,19 @@ aggregate_courses <- function(courses, opt) {
     summary <- summarize_courses(courses,opt)
   }
   else if (agg_by == "course") {
-    stop("course is not implemented yet!")
+    stop("replace the aggregate param with group_cols, and specify column from DESR report.")
     summary <- agg_by_course(courses,opt)
   }
   else if (agg_by == "course_type") {
-    stop("course_type is not implemented yet!")
+    stop("replace the aggregate param with group_cols, and specify column from DESR report.")
     summary <- agg_by_course_type(courses,opt)
   }
   else if (agg_by == "subj_crse") {
-    stop("subj_crse is not implemented yet!")
+    stop("replace the aggregate param with group_cols, and specify column from DESR report.")
     summary <- agg_by_subj_crse(courses,opt)
   }
   else if (agg_by == "course_term") {
-    stop("course_term is not implemented yet!")
+    stop("replace the aggregate param with group_cols, and specify column from DESR report.")
     summary <- agg_by_course_term(courses,opt) 
   }
   else {
