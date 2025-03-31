@@ -63,9 +63,9 @@ calc_forecast_accuracy <- function(students, courses, opt) {
   # students <- load_students()
   # 
   # opt <- list()
-  # opt$course <- "ANTH 1115"
-  # opt$term <- "202560"
-  # 
+  # opt$course <- "CHEM 1225"
+  #opt$term <- "202560"
+
   # load existing forecast data
   forecast_data <- load_forecasts()
   
@@ -85,19 +85,20 @@ calc_forecast_accuracy <- function(students, courses, opt) {
     forecast_data <- forecast_data %>% filter (SUBJ_CRSE %in% course_list)
   }
   
-  # if (!is.null(opt$college)) {
-  #   message("filtering forecast data for college...")
-  #   course_list <- convert_param_to_list(opt$college)
-  #   forecast_data <- forecast_data %>% filter ( %in% course_list)
-  # }
-  
+  # filter for college
+  if (!is.null(opt$college)) {
+    message("filtering forecast data for college...")
+    college_list <- convert_param_to_list(opt$college)
+    forecast_data <- forecast_data %>% filter (COLLEGE %in% college_list)
+  }
+
   # check to see if we have any data
   if (!is.null(forecast_data) && nrow(forecast_data) == 0) {
-    message("no forecast data for that course! returning NULL from calc_forecast_accuracy...")
+    message("no forecast data for that course! returning NULL from calc_forecast_accuracy()...")
     return(NULL)
   }
   
-  # make easier to read with wide format
+  # make easier to read with wide format, so forecast methods have their own column
   message("pivoting to wide...")
   forecast_data <- forecast_data %>% select (-c(continuing_forecast,incoming_forecast)) 
   forecast_data_wide <- forecast_data %>% pivot_wider(names_from = method, values_from = forecast)
@@ -138,8 +139,15 @@ calc_forecast_accuracy <- function(students, courses, opt) {
     select (c(CAMP,COLLEGE,SUBJ_CRSE,term_type, de_mean,dl_mean,da_mean)) %>% 
     distinct(CAMP,COLLEGE,SUBJ_CRSE,term_type, .keep_all = T)
   
-  # TODO: handle situation where there are no major or conduit rows; currently errors out
+  
   enrl_w_forecast <- rows_patch(enrl_w_forecast, selected, by=c("CAMP","COLLEGE", "SUBJ_CRSE","term_type") )
+  print(enrl_w_forecast)
+  # TODO: handle situation where there are no major or conduit rows; currently errors out
+  if (nrow(enrl_w_forecast) == 0) {
+    message("no forecast data available; no stats to compute. returning empty data frame...")
+    return (data.frame())
+  }
+  
   enrl_w_forecast <- enrl_w_forecast %>% mutate (conduit_wo_dr = round(conduit - (dr_early), digits=0), .after = conduit )
   enrl_w_forecast <- enrl_w_forecast %>% mutate (major_wo_dr = round(major - (dr_early), digits=0), .after = major )
 
