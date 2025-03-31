@@ -27,6 +27,28 @@ resolve_conflicts <- function() {
   conflicted::conflicts_prefer(plotly::layout)
 }
 
+
+check_num_rows <- function(data) {
+  message("current data has ",nrow(data)," rows.")
+}
+
+
+filter_by_col <- function(data, col, val) {
+  message("filtering by ",col, "=", val)
+  
+  param_to_list <- convert_param_to_list(val)
+  message(param_to_list)
+  
+  ## use get instead of {{ }} because col is passed in as a string, rather than a variable
+  data <- data %>% filter (get(col) %in% param_to_list)
+  
+  check_num_rows(data)
+  
+  return(data)
+}
+
+
+
 # this function inspects and parses a param to a vector (not list as it did originally)
 # named vectors/lists should returned with their value
 # commma separated strings should be converted to a list
