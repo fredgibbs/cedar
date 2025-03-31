@@ -15,7 +15,7 @@ get_course_data <- function(students, courses, forecasts, opt) {
   # opt <- list()
   # opt[["course"]] <- "ENGL 1120"
   # opt[["term"]] <- 202510
-
+  
   message("\nWelcome to get_course_data!")
   
   # init payload list for return value
@@ -35,40 +35,47 @@ get_course_data <- function(students, courses, forecasts, opt) {
   enrls <- get_enrl(courses,myopt)
   
   
-  # get forecast data for course
-  message("getting and filtering forecast data for course-report...")
-  forecast_data <- forecasts
-  forecast_data <- forecast_data %>% filter (SUBJ_CRSE == myopt[["course"]])
-  forecast_data <- add_term_type_col(forecast_data,"TERM") 
   
-  # check if skipping forecasts for shiny speed
+  
+  
+  # check if skipping new forecasts for shiny speed
   if (is.null(opt[["skip_forecast"]]) || opt[["skip_forecast"]] == FALSE) {
     
-  # TODO: need better way to determine if we have enough rows now that we have campus data
-  # don't forecast in case we never offer a course that semester_type, since there's no previous target data
-  message("checking forecast data for fall, spring, summer...")
-  
-  if (nrow(enrls %>% filter(term_type == "fall")) > 0 && nrow(forecast_data[forecast_data$term_type=="fall",]) < 6  ) {
-    message("need more fall forecasts. retroactively forecasting!")
-    message("setting  myopt$term to 'tl_falls' (from includes/lists.R)")
-    myopt$term <- "tl_falls"
-    forecast(students, courses, myopt)
-  }
-  
-  if (nrow(enrls %>% filter(term_type == "spring")) > 0 && nrow(forecast_data[forecast_data$term_type=="spring",]) < 6) {
-    message("need more spring forecasts. retroactively forecasting!")
-    message("setting  myopt$term to 'tl_springs' (from includes/lists.R)")
-    myopt$term <- "tl_springs"
-    forecast(students, courses, myopt)
-  }
-  
-  if (nrow(enrls %>% filter(term_type == "summer")) > 0 && nrow(forecast_data[forecast_data$term_type=="summer",]) < 6) {
-    message("need more summer forecasts. retroactively forecasting!")
-    message("setting  myopt$term to 'tl_summers' (from includes/lists.R)")
-    myopt$term <- "tl_summers"
-    forecast(students, courses, myopt)
-  } 
-  
+    # get forecast data for course to see if we need to do more...
+    message("getting and filtering forecast data for course-report...")
+    forecast_data <- forecasts
+    
+    # check for rows in case forecasts file doesn't exist
+    if (!is.null(forecast_data) && nrow(forecast_data > 0) ) {
+      forecast_data <- forecast_data %>% filter (SUBJ_CRSE == myopt[["course"]])
+      forecast_data <- add_term_type_col(forecast_data,"TERM") 
+      
+      # TODO: need better way to determine if we have enough rows now that we have campus data
+      # don't forecast in case we never offer a course that semester_type, since there's no previous target data
+      message("checking forecast data for fall, spring, summer...")
+      
+      if (nrow(enrls %>% filter(term_type == "fall")) > 0 && nrow(forecast_data[forecast_data$term_type=="fall",]) < 6  ) {
+        message("need more fall forecasts. retroactively forecasting!")
+        message("setting  myopt$term to 'tl_falls' (from includes/lists.R)")
+        myopt$term <- "tl_falls"
+        forecast(students, courses, myopt)
+      }
+      
+      if (nrow(enrls %>% filter(term_type == "spring")) > 0 && nrow(forecast_data[forecast_data$term_type=="spring",]) < 6) {
+        message("need more spring forecasts. retroactively forecasting!")
+        message("setting  myopt$term to 'tl_springs' (from includes/lists.R)")
+        myopt$term <- "tl_springs"
+        forecast(students, courses, myopt)
+      }
+      
+      if (nrow(enrls %>% filter(term_type == "summer")) > 0 && nrow(forecast_data[forecast_data$term_type=="summer",]) < 6) {
+        message("need more summer forecasts. retroactively forecasting!")
+        message("setting  myopt$term to 'tl_summers' (from includes/lists.R)")
+        myopt$term <- "tl_summers"
+        forecast(students, courses, myopt)
+      } 
+      
+    } # end forecast table exists
   } # end check if skip forecasting
   
   # reset term after forecasting
@@ -82,8 +89,9 @@ get_course_data <- function(students, courses, forecasts, opt) {
     forecast_short <- forecasts[["forecast_short"]]
     
     # if any forecast short data, select cols
-    if (nrow(forecast_short) > 0) {
-      course_data[["forecasts"]] <- forecast_short %>% select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))  %>% 
+    if (!is.null(forecast_short) && nrow(forecast_short) > 0) {
+      course_data[["forecasts"]] <- forecast_short %>% 
+        select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))  %>% 
         filter (SUBJ_CRSE %in% opt[["course"]])
     }
     else {
@@ -118,7 +126,7 @@ get_course_data <- function(students, courses, forecasts, opt) {
   
   # get rollcall data and pivot to wide
   message("getting rollcall data...")
-
+  
   myopt[["group_cols"]] <- c("Course Campus Code", "Course College Code","Academic Period Code", "term_type", "Student Classification", "SUBJ_CRSE","Short Course Title","level")
   rollcall_out <- rollcall(students,myopt)
   rollcall_out <- rollcall_out %>% select(-c(term_type, mean)) %>% 
@@ -194,7 +202,7 @@ create_course_report <- function(students, courses, forecasts, opt) {
   # payload
   d_params <- list("opt" = opt,
                    "course_data" = course_data
-                   )
+  )
   
   message("rendering report for ", opt[["course"]],"...")
   
