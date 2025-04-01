@@ -156,8 +156,14 @@ dfs_by_term$as_of_date <- format(Sys.time(), "%Y-%m-%d")
 
 # select relevant fields 
 fac_by_term <- dfs_by_term %>% 
-    select (term_code, DEPT, `Full Name`, `Academic Title`, `Job Title`,  job_cat, `Home Organization Desc`, `Appt %`, as_of_date) %>% 
+    select (term_code, DEPT, `UNM ID`, `Full Name`, `Academic Title`, `Job Title`,  job_cat, `Home Organization Desc`, `Appt %`, as_of_date) %>% 
     distinct()
+
+
+# encrypt IDs
+message("encypting IDs...")
+fac_by_term$`UNM ID` <- sapply(fac_by_term$`UNM ID`, digest::digest, algo = "md5")
+
 
 # save file
 file_name <- "fac_by_term.Rds"
