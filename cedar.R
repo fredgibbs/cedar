@@ -4,9 +4,7 @@
 #install.packages("pacman", repos='http://cran.us.r-project.org')
 
 
-
 set_option_list <- function() {
-  message("setting up option list...")
   
   # set up option parser
   option_list = list(
@@ -131,6 +129,20 @@ options("width"=300)
 
 pacman::p_load(tidyverse,fs,data.table, optparse, plotly)
 
+
+message("setting up option list...")
+option_list <- set_option_list()
+opt_parser <- OptionParser(option_list = option_list);
+opt <- parse_args(opt_parser);
+print(opt)
+
+if (opt$func == "guide") {
+  message("
+          Available functions: course-report, credit-hours, data-status, dept-report, enrl, forecast, gradebook, headcount, lookout, rollcall, seatfinder, sfr, waitlist.
+          Specify -f FUNC (where FUNC is one of the terms above) --guide for instructions on each function, like '-f enrl --guide'")  
+  stop("no error")
+} 
+
 message("loading external functions...")
 source("includes/config.R")
 source("includes/load_funcs.R")
@@ -140,10 +152,6 @@ resolve_conflicts() # defined in misc_funcs, loaded by load_funcs
 
 load_global_data()
 
-option_list <- set_option_list()
-opt_parser <- OptionParser(option_list = option_list);
-opt <- parse_args(opt_parser);
-print(opt)
 
 msg <- process_func(opt)
 if (is.character(msg)) { 

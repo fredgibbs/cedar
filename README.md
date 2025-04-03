@@ -1,8 +1,7 @@
 CEDAR is a command line tool written in R.
 
-To use it, you need to have R installed, and to able to run Rscript from the command line.
+To use it, you need to have R installed and to able to run Rscript from the command line.
 
-Ideally, you can clone it from GitHub, but you can also just download the zip file of the code.
 ---
 
 ## CONFIGURING CEDAR
@@ -11,20 +10,23 @@ Using Finder (Mac) or the Windows File Manager, navigate to the "includes" folde
 
 Find the cedar/includes/config_template.R, and rename it to config.R
 Open the newly renamed config.R file in a text editor, like Notepad++ (Windows) or TextEdit (Mac).  
-DO NOT USE Notepad or Word! 
+*DO NOT USE Notepad or Word!* 
 
 You will see lines for "cedar_base_dir" and "cedar_data_archive_dir". For each, in between the quotes: 
-- cedar_base_dir: put the full path to your cedar directory. 
-- cedar_data_archive_dir: put the full path to where you will store the raw Excel files from my reports after you've ingested them into CEDAR. If you don't want to archive old MyReports, leave it blank
+- cedar_base_dir: specify the full path to your cedar folder. 
+- cedar_data_archive_dir: If you want to save downloaded Excel file from MyReports after you've ingested them into CEDAR, specify the full path to the folder where you want to store them. If you don't want to archive old MyReports, leave it blank.
 
 In both cases: Make sure the path BEGINS and END with a regular slash "/".
 On Windows, use either single forward slashes, or double backslashes anywhere they appear. 
 
-If you want to make reports, you need to make sure you have pandoc installed on your machine. See https://pandoc.org/installing.html. On a Mac, it will install to /usr/local/bin/. Set cedar_pandoc_path to "/usr/local/bin/"
+- cedar_pandoc_path:
+If you want to make reports, you need to have pandoc installed on your machine. See https://pandoc.org/installing.html. On a Mac, it will install to /usr/local/bin/, so set cedar_pandoc_path to "/usr/local/bin/"
 
 Make sure filename extension stays as .R  when you save your file.
 
----
+
+
+## Testing Installation
 
 Now, on the command line, change directories to the cedar folder.
 
@@ -34,9 +36,10 @@ If you get an error that Rscript is not found, there is a problem with your syst
 Otherwise, you should see a long list of options and a message that no function was specified. This means EVERYTHING IS WORKING!
 
 For fun, copy and paste the following onto the command line: 
-Rscript cedar.R -f enrl -c 'ENGL 1120' -t 202410 -a course
+Rscript cedar.R -f enrl -c 'ENGL 1120' -t 202410 --group_cols SUBJ_CRSE,TERM
 
 See the cookbook for examples of what you can do.
+
 
 
 ## Updating Data

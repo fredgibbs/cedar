@@ -6,17 +6,9 @@ process_func <- function(opt) {
   if (is.null(opt$func)){
     return("No function (-f or --func) specified. Specify '-f guide' to see options. ")
   }
-  
-  if (opt$func == "guide") {
-    message("
-          Available functions: course-report, credit-hours, data-status, dept-report, enrl, enrl-cl, forecast, gradebook, headcount, lookout, rollcall, seatfinder-report, sfr, waitlist.
-          Specify -f FUNC (where FUNC is one of the terms above) --guide for instructions on each function, like '-f enrl --guide'")  
-    stop("no error")
-  } else {
+  else {
     message("looking up function: ", opt$func)  
   }
-  
-  
   
   ############### CREDIT HOURS ############### 
   if (opt$func == "credit-hours") {
