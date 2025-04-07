@@ -78,7 +78,7 @@ for (p in num.labs) {
   print (paste("processing: ", p))
   p_date <- ymd(code_to_date(p))
   print(p_date)
-  term_emps <- all_emps %>% filter (begin_date <= p_date & job_end_date >= p_date & `Suffix` == "00")
+  term_emps <- all_emps %>% filter (begin_date <= p_date & job_end_date >= p_date & `Job suffix` == "00")
   term_emps$term_code <-p
   dfs_by_term <- rbind(dfs_by_term,term_emps)
 }
@@ -156,12 +156,13 @@ dfs_by_term$as_of_date <- format(Sys.time(), "%Y-%m-%d")
 
 # select relevant fields 
 fac_by_term <- dfs_by_term %>% 
-    select (term_code, DEPT, `UNM ID`, `Full Name`, `Academic Title`, `Job Title`,  job_cat, `Home Organization Desc`, `Appt %`, as_of_date) %>% 
+    select (term_code, DEPT, `UNM ID`, `Name`, `Academic Title`, `Job Title`,  job_cat, `Home Organization Desc`, `Appt %`, as_of_date) %>% 
     distinct()
 
 
 # encrypt IDs
 message("encypting IDs...")
+fac_by_term$`UNM ID` <- as.character(fac_by_term$`UNM ID`)
 fac_by_term$`UNM ID` <- sapply(fac_by_term$`UNM ID`, digest::digest, algo = "md5")
 
 
