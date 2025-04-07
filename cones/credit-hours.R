@@ -35,16 +35,16 @@ get_credit_hours <- function (students) {
   
   message("summarizing...")
   filtered_students_summary <- filtered_students %>% 
-    group_by(`Academic Period Code`,`Course College Code`,DEPT,level, `Subject Code`) %>% 
-    summarize(total_hours = sum(`Course Credits`))
+    group_by(`Academic Period Code`,`Course Campus Code`, `Course College Code`,DEPT,level, `Subject Code`) %>% 
+    summarize(total_hours = sum(`Course Credits`), .groups="keep")
   
   message("creating totals across levels...")
-  credit_hours_totals <- filtered_students %>% group_by(`Academic Period Code`,`Course College Code`,DEPT,`Subject Code`) %>% 
-    summarize(level="total",total_hours = sum(`Course Credits`))
+  credit_hours_totals <- filtered_students %>% group_by(`Academic Period Code`,`Course Campus Code`,`Course College Code`,DEPT,`Subject Code`) %>% 
+    summarize(level="total",total_hours = sum(`Course Credits`), .groups="keep")
   
   message("adding totals to level data...")
   credit_hours_data <- rbind(filtered_students_summary,credit_hours_totals) %>%  
-    arrange(`Academic Period Code`,`Course College Code`,DEPT,`Subject Code`, factor(level,levels=c("lower","upper","grad","total")))
+    arrange(`Academic Period Code`,`Course Campus Code`,`Course College Code`,DEPT,`Subject Code`, factor(level,levels=c("lower","upper","grad","total")))
   
   # add academic year col
   credit_hours_data <- add_acad_year(credit_hours_data,"Academic Period Code")
@@ -219,36 +219,45 @@ credit_hours_by_major <- function (students,d_params) {
 }
 
 
-# this function generates raw student credit hour data by faculty and graph for use in reports
+# this function generates raw student credit hour data by faculty and graph for use in dept-reports
 # called from dept-report.R
-credit_hours_by_fac <- function (students,d_params) {
-  message("welcome to credit_hours_by_fac!")
+credit_hours_by_fac <- function (students, d_params) {
+  message("\nWelcome to credit_hours_by_fac!")
+  
+  # for studio testing
+  # d_params <- list(dept_code="CJ",subj_codes=c("CJ","COMM"),palette="Spectral")
   
   # filter out non credit earning students; passing_grades defined in includes/map_to_subj_code.R
   filtered_students <- students %>%  filter(`Final Grade` %in% passing_grades & DEPT == d_params$dept_code)
   
   # filter for term params
-  credit_hours_data <- filtered_students %>%  filter (`Academic Period Code` >= d_params$term_start & `Academic Period Code` <= d_params$term_end)
+  filtered_students <- filtered_students %>%  filter (`Academic Period Code` >= d_params$term_start &
+                                                      `Academic Period Code` <= d_params$term_end)
   
-  # add academic_year column
-  credit_hours_data <- add_acad_year(credit_hours_data, "Academic Period Code")
   
-  message("loading and merging personnel data...")
+  message("loading and merging faculty data with course lists...")
   fac_by_term <- load_hr_data()
-  merged <- merge(credit_hours_data,fac_by_term,by.x=c("Academic Period Code","Primary Instructor ID","DEPT"),by.y=c("term_code","UNM ID","DEPT"),x.all=TRUE)
+  fac_by_term <- fac_by_term %>% select(-c("as_of_date"))
+  merged <- merge(filtered_students,fac_by_term,by.x=c("Academic Period Code","Primary Instructor ID","DEPT"),by.y=c("term_code","UNM ID","DEPT"),x.all=TRUE)
   
-  #summarize total hours earned
+  # summarize total hours earned by job_cat (in faculty data)
   credit_hours_data <- merged %>% 
-    group_by(`acad_year`,`Course College Code`,DEPT,level, job_cat) %>% 
-    summarize(total_hours = sum(`Course Credits`))
+    group_by(`Academic Period Code`, `Course Campus Code`, `Course College Code`, DEPT, level, job_cat) %>% 
+    summarize(total_hours = sum(`Course Credits`), .groups="keep")
   
   
-  # TODO: instead of faceting, which tends to get blown out by lower division counts, have one plot for LD and facet upper and grad
-  # create BAR PLOT (colored by job_cat) FACETED by course level 
+  credit_hours_data_main <- credit_hours_data %>%  filter (`Course Campus Code` %in% c("ABQ","EA")) 
+
+  credit_hours_data_main <- credit_hours_data_main %>% 
+    group_by(`Academic Period Code`, `Course College Code`, DEPT, level, job_cat) %>% 
+    summarize(total_hours = sum(total_hours), .groups="keep")
+  
+
+  # create BAR PLOT (colored by job_cat), and FACETED by course level 
   if (nrow(credit_hours_data) > 0) {
-  chd_by_fac_facet_plot <- credit_hours_data %>% 
+  chd_by_fac_facet_plot <- credit_hours_data_main %>% 
     #mutate(job_cat = fct_reorder(job_cat, total_hours)) %>%
-    ggplot(aes(x=acad_year, y=total_hours)) + 
+    ggplot(aes(x=`Academic Period Code`, y=total_hours)) + 
     ggtitle(paste0("using SUBJ codes: ",paste(d_params$subj_codes, collapse=", "))) +
     theme(legend.position="bottom") +
     guides(color = guide_legend(title = "")) +
@@ -256,33 +265,34 @@ credit_hours_by_fac <- function (students,d_params) {
     facet_wrap(~level) +
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
     scale_fill_brewer(palette=d_params$palette) +
-    xlab("Academic Year") + ylab("Credit Hours")
+    xlab("Academic Period") + ylab("Credit Hours")
   }
   else {
     chd_by_fac_facet_plot <- "insufficient data."
   }
   
-  #chd_by_fac_facet_plot
+  chd_by_fac_facet_plot
+  
   d_params$plots[["chd_by_fac_facet_plot"]] <- chd_by_fac_facet_plot
   
   
+  
   # remove level from summaries
-  credit_hours_data <- credit_hours_data %>% 
-    group_by(`acad_year`,`Course College Code`,DEPT, job_cat) %>% 
+  credit_hours_data_main <- credit_hours_data_main %>% 
+    group_by(`Academic Period Code`, `Course College Code`,DEPT, job_cat) %>% 
     summarize(total_hours = sum(`total_hours`))
   
-  
   # create BAR PLOT of CH TOTALS colored by job_cat
-  chd_by_fac_plot <-  credit_hours_data %>% 
+  chd_by_fac_plot <-  credit_hours_data_main %>% 
     #mutate(job_cat = fct_reorder(job_cat, total_hours)) %>%
-    ggplot(aes(x=acad_year, y=total_hours)) + 
+    ggplot(aes(x=`Academic Period Code`, y=total_hours)) + 
     ggtitle(paste0("using SUBJ codes: ",paste(d_params$subj_codes, collapse=", "))) +
     theme(legend.position="bottom") +
     guides(color = guide_legend(title = "")) +
     geom_bar(aes(fill=job_cat),stat="identity", position="stack") +
     scale_fill_brewer(palette=d_params$palette) +
     #scale_fill_discrete(limits=c("lower","upper","grad")) +
-    xlab("Academic Year") + ylab("Credit Hours")
+    xlab("Academic Period") + ylab("Credit Hours")
   
   chd_by_fac_plot
   d_params$plots[["chd_by_fac_plot"]] <- chd_by_fac_plot
@@ -295,169 +305,157 @@ credit_hours_by_fac <- function (students,d_params) {
 
 # called from dept-report.R
 get_credit_hours_for_dept_report <- function (students,d_params) {
+  message("\nWelcome to get_credit_hours_for_dept_report!")
   
   # get basic credit hours data
   credit_hours_data <- get_credit_hours(students)
   
-  # TODO: does summary need BOTH subj and dept?
-  # TODO: create error message that flags filter params that don't exist /or ignores them.
-  
+  # TODO: add SUBJ to data?
+
   # filter for term params
   message("filtering for d_params terms...")
   credit_hours_data <- credit_hours_data %>%  filter (`Academic Period Code` >= d_params$term_start & `Academic Period Code` <= d_params$term_end)
   
   
   # group by academic year and dept to create summary of college hours
-  college <- "AS" # this should be sent through d_params
-  college_credit_hours <- credit_hours_data %>%  filter (`Course College Code` ==  college) %>% 
-    group_by(acad_year, DEPT) %>% 
+  # FILTER FOR AS, ABQ (ABQ and EA have the same totals)
+  # group only by period code and dept, so all campuses  (ABE and EA) and subject codes are included 
+  college_credit_hours <- credit_hours_data %>%  filter (`Course College Code` ==  "AS") %>% 
+    filter(`Course Campus Code` %in% c("ABQ","EA")) %>%
+    group_by(`Academic Period Code`, DEPT) %>% 
     filter (level == "total") %>% 
-    #filter (!DEPT %in% c("ASCP","ARTS","PUBP","ARSC","PCST","ARTH")) %>% 
-    summarize (acad_year_hours = sum(total_hours))
+    summarize (total_hours = sum(total_hours))
   
   
-  college_credit_hours_plot <- ggplot(college_credit_hours, aes(x=acad_year, y=acad_year_hours)) + 
+  college_credit_hours_plot <- ggplot(college_credit_hours, aes(x=`Academic Period Code`, y=total_hours)) + 
     #ggtitle(d_params$prog_name) +
     theme(legend.position="bottom") +
     guides(color = guide_legend(title = "")) +
     geom_bar(aes(fill=DEPT),stat="identity",position="stack") + 
     scale_color_brewer(palette="Spectral") +
-    xlab("Academic Year") + ylab("Credit Hours") 
+    xlab("Academic Period") + ylab("Credit Hours") 
   
   college_credit_hours_plot <- ggplotly(college_credit_hours_plot)
+  college_credit_hours_plot
   d_params$plots[["college_credit_hours_plot"]] <- college_credit_hours_plot
   
-  
-  #compute per-year % change in dept compared to that of college
-  college_credit_hours <- college_credit_hours %>%  group_by (acad_year,DEPT) %>% arrange(DEPT,acad_year) 
-  
-  # add percent diff from prev year
-  college_credit_hours <- college_credit_hours %>%  group_by (DEPT)  %>% mutate (diff_d = acad_year_hours / lag(acad_year_hours,n=1) * 100)
+  # add term type col
+  college_credit_hours <- add_term_type_col(college_credit_hours,"Academic Period Code") %>% distinct()
   
   # create totals for college, grouped by academic year
-  college_credit_hours <- college_credit_hours %>% group_by (acad_year) %>% mutate (college = sum(acad_year_hours))
-  
-  # add percent diff from prev year
-  college_credit_hours <- college_credit_hours %>%  group_by (DEPT)  %>% mutate (diff_c = college / lag(college,n=1) * 100)
-  
-  # calc diff between college and department deltas
-  college_credit_hours <- college_credit_hours %>%  group_by (DEPT)  %>% mutate (diff_heavy = diff_d  -  diff_c )
+  college_credit_hours <- college_credit_hours %>%  group_by (`Academic Period Code`) %>% mutate (college_total = sum(total_hours))
   
   # filter by dept code
-  college_credit_hours <- college_credit_hours %>% filter (DEPT == d_params$dept_code)
+  dept_credit_hours <- college_credit_hours %>% filter (DEPT == d_params$dept_code)
   
-  # calc 5-year change
-  college_credit_hours <- college_credit_hours %>%  group_by (DEPT)  %>% mutate (diff_c6 = college / lag(college,n=5) * 100)
-  college_credit_hours <- college_credit_hours %>%  group_by (DEPT)  %>% mutate (diff_d6 = acad_year_hours / lag(acad_year_hours,n=5) * 100)
-  diff_from_college <- college_credit_hours[[nrow(college_credit_hours),9]] - college_credit_hours[[nrow(college_credit_hours),8]]
   
+  # compute per-year % change in dept compared to that of college
+  diff_fr_college_hours <- dept_credit_hours %>%  group_by (term_type, `Academic Period Code`, DEPT) %>% arrange(DEPT,term_type,`Academic Period Code`) 
+  
+  # add percent diff from prev term_type
+  diff_fr_college_hours <- diff_fr_college_hours %>% group_by(term_type) %>% mutate (diff_d = total_hours / lag(total_hours,n=1) * 100)
+  
+  
+  
+  
+  # add percent diff from prev year
+  diff_fr_college_hours <- diff_fr_college_hours %>%  group_by(term_type) %>% mutate (diff_c = college_total / lag(college_total,n=1) * 100)
+  
+  # calc diff between college and department deltas
+  diff_fr_college_hours <- diff_fr_college_hours %>%  group_by (term_type)  %>% mutate (diff_heavy = diff_d  -  diff_c )
+  
+  
+
   label <- paste0("period change for ",d_params$dept_code,": ")
   
-  college_credit_hours_comp_plot <- ggplot(college_credit_hours, aes(x=acad_year, y=diff_heavy)) + 
+  college_credit_hours_comp_plot <- ggplot(diff_fr_college_hours, aes(x=`Academic Period Code`, y=diff_heavy)) + 
     #ggtitle(d_params$prog_name) +
     theme(legend.position="bottom") +
     guides(color = guide_legend(title = "")) +
     geom_bar(aes(),stat="identity",position="stack") + 
-    geom_hline(aes(yintercept = diff_from_college), linetype=2,color="red") +
-    scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1))))) +
     scale_color_brewer(palette=d_params$palette) +
-    geom_text(aes(3,diff_from_college,label = paste0(label, round(diff_from_college,digits=2),"%") , vjust = -1)) + 
-    #scale_color_manual( name = "stats", values = c(dept="red")) +
-    
     xlab("Academic Year") + ylab("% diff from College") 
   
+  college_credit_hours_comp_plot
   d_params$plots[["college_credit_hours_comp_plot"]] <- college_credit_hours_comp_plot
   
   
   
   # since this is a unit report, filter by param$dept_code 
   # TODO: enable filter by subj code or program code
-  credit_hours_data <- credit_hours_data %>%
+  
+  credit_hours_data_main <- credit_hours_data %>%
     filter (DEPT == d_params$dept_code) %>% 
-    arrange(acad_year,`Course College Code`,DEPT,`Subject Code`,level)
+    filter (`Course Campus Code` %in% c("ABQ","EA")) %>% 
+    arrange(`Academic Period Code`, `Course College Code`,DEPT,`Subject Code`,level)
   
-  # create totals by academic year and subject
-  chd_by_year <- credit_hours_data %>% 
+  # create acad_year_hours column
+  credit_hours_data_main <- credit_hours_data_main %>% 
     group_by(acad_year, `Course College Code`,DEPT,`Subject Code`,level) %>% 
-    summarize (acad_year_hours = sum(total_hours)) %>% 
-    arrange(acad_year,`Course College Code`,DEPT,`Subject Code`,level)
+    mutate (acad_year_hours = sum(total_hours)) 
   
-  chd_by_year_facet_subj <- chd_by_year %>% filter (level != "total")
-  
-  #chd_by_year_facet_subj$level <- factor(chd_by_year_facet_subj$level, levels=c("grad","upper","lower"))
+  # remove level totals so we can facet by level
+  chm_by_subj_level <- credit_hours_data_main %>% filter (level != "total")
   
   # create plot line plot of CREDIT HOURS FACETED BY SUBJECT  
-  chd_by_year_facet_subj_plot <- ggplot(chd_by_year_facet_subj, aes(x=acad_year, y=acad_year_hours, col=level)) + 
-    #ggtitle(d_params$prog_name) +
-    
+  chd_by_year_facet_subj_plot <- ggplot(chm_by_subj_level, aes(x=`Academic Period Code`, y=total_hours)) + 
     theme(legend.position="bottom") +
     guides(color = guide_legend(title = "")) +
-    geom_line(aes(group=level)) + 
-    geom_point(aes(group=`level`)) +
+    geom_bar(aes(fill=level),stat="identity",position="stack") + 
+    # geom_line(aes(group=level)) + 
+    # geom_point(aes(group=`level`)) +
     scale_color_brewer(palette=d_params$palette) +
     facet_wrap(~`Subject Code`,ncol = 3) + 
+    theme(axis.text.x=element_text(angle = 75, hjust = 1)) +
     xlab("Academic Year") + ylab("Credit Hours") 
   
   chd_by_year_facet_subj_plot
   d_params$plots[["chd_by_year_facet_subj_plot"]] <- chd_by_year_facet_subj_plot
   
   
-  # filter only totals to show total hours for each SUBJ code
-  chd_by_year_subj <- chd_by_year %>% filter (level == "total")
+  
+  # filter only totals to show TOTAL HOURS WITHOUT LEVELS
+  chm_by_subj <- credit_hours_data_main %>% filter (level == "total")
   
   # create line plot of TOTAL CREDIT HOURS BY SUBJECT (no faceting)
-  chd_by_year_subj_plot <- ggplot(chd_by_year_subj, aes(x=acad_year, y=acad_year_hours, col=`Subject Code`)) + 
+  chd_by_year_subj_plot <- ggplot(chm_by_subj, aes(x=`Academic Period Code`, y=total_hours)) + 
     theme(legend.position="bottom") +
     guides(color = guide_legend(title = "")) +
-    geom_point(aes(group=`Subject Code`)) + 
-    geom_line(aes(group=`Subject Code`)) + 
+    geom_bar(aes(fill=`Subject Code`),stat="identity",position="stack") + 
+    theme(axis.text.x=element_text(angle = 75, hjust = 1)) +
+    
+    # geom_point(aes(group=`Subject Code`)) + 
+    # geom_line(aes(group=`Subject Code`)) + 
     xlab("Academic Year") + ylab("Credit Hours") 
   
-  #chd_by_year_subj_plot
+  chd_by_year_subj_plot
   d_params$plots[["chd_by_year_subj_plot"]] <- chd_by_year_subj_plot
   
-  chd_by_year_table <- chd_by_year %>% mutate(level = factor(level, levels = unique(level))) %>% spread(key=level, value=acad_year_hours)
-  
+  # create tables for display
+  chd_by_year_table <- chm_by_subj %>% mutate(level = factor(level, levels = unique(level))) %>% spread(key=level, value=acad_year_hours)
   chd_by_year_table <- chd_by_year_table %>% ungroup() %>% 
     select(acad_year,DEPT, 4:ncol(chd_by_year_table))
-  
-  # save table for report  
   d_params$tables[["chd_by_year_table"]] <- chd_by_year_table
   
   
+  
+  
   # create totals by academic year WITHOUT subject
-  chd_by_year <- credit_hours_data %>% 
-    group_by(acad_year, `Course College Code`,DEPT,level) %>% filter (level != "total") %>% 
-    summarize (acad_year_hours = sum(total_hours)) %>% 
+  chd_by_year <- credit_hours_data_main %>% 
+    group_by(acad_year, `Course Campus Code`, `Course College Code`,DEPT,level) %>% filter (level != "total") %>% 
+    mutate (acad_year_hours = sum(total_hours)) %>% 
     arrange(acad_year,`Course College Code`,DEPT,level)
   
-  
-  #chd_by_year$level <- factor(chd_by_year$level, levels=c("grad","upper","lower"))
-  
-  
-  #TODO: make wide version for easier table reading
-  
+
   # create plot of STACKED BAR showing credit hours colored by CREDIT HOURS BY COURSE LEVEL
-  chd_by_year_plot <- ggplot(chd_by_year, aes(x=acad_year, y=acad_year_hours)) + 
+  chd_by_year_plot <- ggplot(chd_by_year, aes(x=`Academic Period Code`, y=total_hours)) + 
     ggtitle(paste0("using SUBJ codes: ",paste(d_params$subj_codes, collapse=", "))) +
     theme(legend.position="bottom") +
     guides(color = guide_legend(title = "")) +
-    #geom_line(data=totals,aes(x=TERM.c,y=term_total,group=level), linetype="dashed", alpha=.5) + 
-    #geom_line(data=totals,aes(x=as.numeric(TERM.c),y=term_total,col=level), stat="smooth", method=lm, se=FALSE) + 
-    #geom_line(aes(group=level),linetype="dashed",alpha=.5) + 
-    # geom_line(aes(group=level)) + 
-    # geom_point(aes(group=level)) +
-    # geom_smooth(formula = y ~ x, method = "loess",se = FALSE, aes(group = level)) +
     geom_bar(aes(fill=level),stat="identity", position="stack") +
-    #geom_line(aes(x=factor(acad_year)), stat="smooth", linetype = "solid",method=lm, se=FALSE) +   
-    #geom_label_repel(show.legend =FALSE, data = repel, aes(col=level,x=as.factor(x),y=y,label=paste(round(per_change*100,digits=0),"%, ",round(slope.term_bin ,digits=1),sep="")),nudge_x=1,nudge_y=1 ) +
-    # geom_label_repel(data=totals,show.legend = FALSE,aes(x=TERM.c,y=term_total,label = if_else(is.na(change_total_disp),NA_character_,paste(change_total_disp,"%",sep=""))),
-    #                  nudge_x = 1,
-    #                  na.rm = TRUE) +
-    #scale_fill_discrete(limits=c("lower","upper","grad")) +
+    theme(axis.text.x=element_text(angle = 75, hjust = 1)) +
     scale_fill_brewer(palette=d_params$palette) +
-    #scale_fill_manual(values=mypal)+
-    xlab("Academic Year") + ylab("Credit Hours")
+    xlab("Academic Period") + ylab("Credit Hours")
   
   chd_by_year_plot
   d_params$plots[["chd_by_year_plot"]] <- chd_by_year_plot
