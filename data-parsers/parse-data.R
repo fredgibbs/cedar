@@ -22,7 +22,7 @@ report_specs <- list(
     dir = "class_lists/",
     data_file = "class_lists",
     term_col = "Academic Period",
-    ID_col = "Student ID",
+    ID_col = c("Primary Instructor ID", "Student ID"),
     parser = "parse-class-list.R"
   ),
   as = list(
@@ -151,7 +151,7 @@ for (report in report_list) {
       message("cols in NEW not in OLD data")
       print(setdiff(names(new_data),names(old_data)))
       
-      # combine data if not rebuilding 
+      # combine data
       message("combining new data with old data...")
       data <- rbind(old_data, new_data)
     } 
@@ -161,9 +161,16 @@ for (report in report_list) {
     }
     
     # encrypt student IDs if ID_col exists 
-    message("encypting IDs...")
+    message("checking for ID cols...")
     if (!is.null(report_spec) && !is.null(report_spec$ID_col) ) {
-      data[[report_spec$ID_col]] <- sapply(data[[report_spec$ID_col]], digest::digest, algo = "md5")
+      for (col in report_spec$ID_col) {
+        if (!col %in% names(data)) {
+          stop("ID column not found in data: ", col)
+        }
+        message("encrypting ID column: ", col, "...")
+        data$col <- as.character(data$col)
+        data[[col]] <- sapply(data[[col]], digest::digest, algo = "md5")
+      } # end for each ID_col
     }
     
     filename <- paste0(cedar_data_dir,"processed/",report_spec$data_file,".Rds")
@@ -171,11 +178,7 @@ for (report in report_list) {
     saveRDS(data,file=filename)
     message("saved ",nrow(data) ," rows.")
     
-    
-    # message("saving feather file...") 
-    # write_feather(students,paste0(cedar_data_dir,"/processed/class-list.feather"))
-    # message("saved ",nrow(students) ," rows.")
-    
+  
     # if data archiving enabled, archive downloaded file to archive folder (from config.R)
     if (!is.null(cedar_data_archive_dir)) {
       archive_dir <- paste0(cedar_data_archive_dir, report_spec$dir)
@@ -191,7 +194,7 @@ for (report in report_list) {
     } # end if archiving data files
   } # end process excel file
   
-  
+  # if cloud_data_dirs are specified in config.R, copy the Rds file to OneDrive
   if (!is.null(cedar_cloud_data_dir)) {
     cloud_filepath <- paste0(cedar_cloud_data_dir, report_spec$data_file,".Rds")
     local_filepath <- paste0(cedar_data_dir,"processed/",report_spec$data_file,".Rds")
