@@ -356,7 +356,7 @@ get_enrl <- function (courses,opt,group_cols=NULL) {
   # TODO: move into load_courses or parser?
   courses <- add_acad_year (courses, "TERM")
   
-  select_cols <- c("CAMP","COLLEGE","TERM","term_type","CRN","SUBJ","SUBJ_CRSE","SECT","level","CRSE_TITLE","INST_METHOD","PT","INST_NAME","ENROLLED","total_enrl","XL_SUBJ","SEATS_AVAIL","WAIT_COUNT","gen_ed_area")
+  select_cols <- c("CAMP","COLLEGE","TERM","term_type","CRN","SUBJ","SUBJ_CRSE","SECT","level","CRSE_TITLE","INST_METHOD","PT","INST_NAME", "job_cat", "ENROLLED","total_enrl","XL_SUBJ","SEATS_AVAIL","WAIT_COUNT","gen_ed_area")
   
   ### AOP COMPRESSION
   if (!is.null(opt$aop) && opt$aop == "compress") {
