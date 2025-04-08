@@ -168,7 +168,7 @@ for (report in report_list) {
           stop("ID column not found in data: ", col)
         }
         message("encrypting ID column: ", col, "...")
-        data$col <- as.character(data$col)
+        data[[col]] <- as.character(data[[col]])
         data[[col]] <- sapply(data[[col]], digest::digest, algo = "md5")
       } # end for each ID_col
     }
