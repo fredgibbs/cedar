@@ -14,8 +14,9 @@ get_perm_faculty_count <- function() {
   # only count permanent faculty in ratio calcs
   # job_cats are assigned in parse-HRreport.R
   perm_fac_count <- fac_by_term_counts %>% filter (job_cat %in% c("Professor","Lecturer","Associate Professor","Assistant Professor"))
-  perm_fac_count <- perm_fac_count %>% group_by(term_code,DEPT) %>% 
-    summarize (count = sum(count))
+  perm_fac_count <- perm_fac_count %>% group_by(term_code,DEPT, job_cat) %>% 
+    summarize (count = sum(count)) %>% 
+    mutate(total = sum(count))
   
   return(perm_fac_count)
 }

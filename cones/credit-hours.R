@@ -238,6 +238,7 @@ credit_hours_by_fac <- function (students, d_params) {
   message("loading and merging faculty data with course lists...")
   fac_by_term <- load_hr_data()
   fac_by_term <- fac_by_term %>% select(-c("as_of_date"))
+  
   merged <- merge(filtered_students,fac_by_term,by.x=c("Academic Period Code","Primary Instructor ID","DEPT"),by.y=c("term_code","UNM ID","DEPT"),x.all=TRUE)
   
   # summarize total hours earned by job_cat (in faculty data)

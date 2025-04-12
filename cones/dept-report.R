@@ -40,9 +40,6 @@ create_dept_report <- function (students,courses,opt) {
   # convert dept param to dept_list for processing
   dept_list <- convert_param_to_list(opt[["dept"]]) 
   
-  # set processed data dir
-  data_processed_dir <- paste0(cedar_data_dir,"processed/")
-  
   # for studio testing...
   #opt <- list()
   #opt$output <- "html"
