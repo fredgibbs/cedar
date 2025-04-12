@@ -142,6 +142,21 @@ for (report in report_list) {
     new_data <- parse(new_data)
     
     
+    # encrypt student IDs if ID_col exists 
+    # only encrypt new data!
+    message("checking new_data for ID cols...")
+    if (!is.null(report_spec) && !is.null(report_spec$ID_col) ) {
+      for (col in report_spec$ID_col) {
+        if (!col %in% names(new_data)) {
+          stop("ID column not found in data: ", col)
+        }
+        message("encrypting ID column: ", col, "...")
+        new_data[[col]] <- as.character(new_data[[col]])
+        new_data[[col]] <- sapply(new_data[[col]], digest::digest, algo = "md5")
+      } # end for each ID_col
+    }
+    
+    
     # TODO handle different number of columns
     # meanwhile, print out the diffs for some clue
     if (!rebuild) {
@@ -160,19 +175,7 @@ for (report in report_list) {
       data <- new_data
     }
     
-    # encrypt student IDs if ID_col exists 
-    message("checking for ID cols...")
-    if (!is.null(report_spec) && !is.null(report_spec$ID_col) ) {
-      for (col in report_spec$ID_col) {
-        if (!col %in% names(data)) {
-          stop("ID column not found in data: ", col)
-        }
-        message("encrypting ID column: ", col, "...")
-        data[[col]] <- as.character(data[[col]])
-        data[[col]] <- sapply(data[[col]], digest::digest, algo = "md5")
-      } # end for each ID_col
-    }
-    
+
     filename <- paste0(cedar_data_dir,"processed/",report_spec$data_file,".Rds")
     message("saving Rds file: ", filename, "...")
     saveRDS(data,file=filename)
