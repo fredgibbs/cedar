@@ -98,13 +98,12 @@ get_headcount_data_for_dept_report <- function (d_params,opt=list()) {
   
   # studio testing
   # opt <- list()
-  # opt$aggregate <- "level"
   # opt$term <- 202480
-  # opt$dept <- "HIST"
+  # opt$dept <- "ANTH"
   # d_params <- list()
-  # d_params$term_start <- 201980
-  # d_params$term_end <- 202460
-  # d_params$prog_names <- "History"
+  # d_params$term_start <- 202480
+  # d_params$term_end <- 202480
+  # d_params$prog_names <- c("Anthropology","Forensic Science","Forensic Anthropology")
 
   
   # define function to create plots, since we there are several with slightly different filtering
@@ -116,24 +115,10 @@ get_headcount_data_for_dept_report <- function (d_params,opt=list()) {
     
     if (nrow(data) > 0) {
       plot <- data %>% 
-        # mutate(Degree = fct_reorder(Degree, students)) %>%
-        # arrange(desc(students)) %>% 
-        # slice_head(n=10) %>% 
-        # ggplot(aes(x=term_code,y=students)) + 
-        # ggtitle(paste(d_params$dept_name, ":",  paste(d_params$prog_codes, collapse=", "))) +  
-        # theme(legend.position="bottom") +
-        # guides(color = guide_legend(title = "")) +
-        # geom_bar(aes(fill=Degree),position="stack", stat="identity") + 
-        # theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-        # scale_fill_brewer(palette=d_params$palette) +
-        # xlab( p_params$x_lab) + ylab(  p_params$y_lab) 
-      
-        arrange(desc(students)) %>%
-        slice_head(n=10) %>%
         ggplot(aes(x=term_code,y=students)) +
         theme(legend.position="bottom") +
         guides(color = guide_legend(title = "")) +
-        geom_bar(aes(fill=major_type),position="dodge", stat="identity") +
+        geom_bar(aes(fill=major_name),position="stack", stat="identity") +
         theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
       
         
@@ -144,7 +129,7 @@ get_headcount_data_for_dept_report <- function (d_params,opt=list()) {
         )
     } else {plot <- "No data to plot..."}
     
-    #hc_progs_under_long_majors_plot
+    plot
     plot_name <- paste0(p_params$data,"_plot")
     
     message("adding plot to d_params$plots...")
@@ -203,6 +188,8 @@ get_headcount_data_for_dept_report <- function (d_params,opt=list()) {
   p_params <- list()
   p_params$x_lab <- "Term"
   p_params$y_lab <- "Undergraduate Students"
+  
+  
   p_params$data <- "hc_progs_under_long_majors" # should be string of DF name
   d_params <- create_headcount_plot(p_params,d_params)
   
@@ -215,6 +202,9 @@ get_headcount_data_for_dept_report <- function (d_params,opt=list()) {
   
   p_params$data <- "hc_progs_grad_long_minors"
   d_params <- create_headcount_plot(p_params,d_params)
+  
+  d_params$plots[["hc_progs_under_long_minors"]]
+  
   
   message("returning d_params with new plot(s) and table(s)...")
   return(d_params)
