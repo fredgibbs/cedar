@@ -78,6 +78,14 @@ ui <- page_navbar(
       ),
       column(2,
              selectizeInput(
+               inputId = "enrl_inst",
+               label = "Select Instructor", 
+               multiple = TRUE,
+               choices = sort(unique(courses$INST_NAME))),
+      ),
+
+      column(2,
+             selectizeInput(
                inputId = "enrl_course",
                label = "Select Course", 
                multiple = TRUE,
@@ -88,7 +96,7 @@ ui <- page_navbar(
                inputId = "enrl_agg_by",
                label = "Group by", 
                multiple = TRUE,
-               choices = c("CAMP","COLLEGE","SUBJ_CRSE", "CRSE_TITLE", "DEPT","TERM","PT","INST_METHOD")),
+               choices = c("CAMP","COLLEGE","SUBJ_CRSE", "CRSE_TITLE", "DEPT", "INST_NAME", "TERM","PT","INST_METHOD")),
       )
     ), # end fluidRow 
     fluidRow(
@@ -358,6 +366,7 @@ server <- function(input, output, session) {
       opt[["campus"]] <- input$enrl_campus
       opt[["college"]] <- input$enrl_college
       opt[["dept"]] <- input$enrl_dept
+      opt[["inst"]] <- input$enrl_inst
       opt[["pt"]] <- input$enrl_pt
       opt[["im"]] <- input$enrl_im
       opt[["term"]] <- input$enrl_term
