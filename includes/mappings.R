@@ -205,6 +205,8 @@ major_to_program_map <- c(
   "French"="FREN",
   "French Studies"="FRNS",
   "Foreign Languages Literatures"="LCL",
+  "Forensic Anthropology"="ANTH",
+  "Forensic Science"="ANTH",
   "Geography"="GEOG",
   "German"="GRMN",
   "German Studies"="GRMS",
