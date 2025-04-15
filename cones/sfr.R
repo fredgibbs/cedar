@@ -42,8 +42,11 @@ get_sfr <- function () {
   message("combining student and faculty tables...")
   studfac_ratios <- merge(headcount_all, perm_faculty_count, by.x=c("term_code","DEPT"), by.y=c("term_code","DEPT"),all.x=TRUE)
   
+  studfac_ratios <- studfac_ratios %>% select (-c(job_cat,count)) %>% distinct()
+  
   message("studfac_ratios:")
   studfac_ratios %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  
   
   # filter out summer, which is meaningless for sfr purposes
   message("filtering out summer...")
@@ -51,7 +54,8 @@ get_sfr <- function () {
   
   # calc sums of majors and minors
   studfac_ratios <- studfac_ratios %>% 
-    group_by(term_code,`Academic Year`,DEPT,`Student Level`,major_name, PRGM, count)
+    group_by(term_code,`Academic Year`,DEPT,`Student Level`,major_name, PRGM, total)
+  
   majors <- studfac_ratios %>% filter (major_type %in% c("Major","Second Major")) 
   #majors <- majors %>%  mutate(major_type = major_type, all_majors = sum(students))
   majors <- majors %>%  summarize(major_type="all_majors", students = sum(students))
@@ -75,7 +79,7 @@ get_sfr <- function () {
   # compute and add actual student faculty ratios
   message("studfac_ratios:")
   #studfac_ratios$all_majors_sfr <- studfac_ratios$all_majors / studfac_ratios$count
-  studfac_ratios$sfr <- studfac_ratios$students / studfac_ratios$count
+  studfac_ratios$sfr <- studfac_ratios$students / studfac_ratios$total
   studfac_ratios %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   # get mean of fall and spring headcounts to calc AY ratios
@@ -109,6 +113,7 @@ get_sfr_data_for_dept_report <- function(d_params) {
       xlab("Term") + ylab("Students per Faculty Member")
   } else {ug_sfr_plot <- "Insufficient Data"}
   
+  ug_sfr_plot
   d_params$plots[["ug_sfr_plot"]] <- ug_sfr_plot
   
   
@@ -139,7 +144,7 @@ get_sfr_data_for_dept_report <- function(d_params) {
     filter(`Student Level` == "Undergraduate") %>% 
     filter(major_type == "all_majors")
   
-  # until there is better college-level sorting, remove NAs
+  # until there is better college-level sorting, remove rows with NAs for DEPT (meaning non-AS in mappings)
   sfr_college <- sfr_college[!is.na(sfr_college$DEPT),]
   
   # filter by DEPT code to highlight dept in college context
@@ -148,8 +153,8 @@ get_sfr_data_for_dept_report <- function(d_params) {
   
   # compress all college sfrs by dept (lose program info for simplicity)
   sfr_college <- sfr_college %>%
-    ungroup() %>% group_by(term_code,DEPT,count) %>% 
-    summarize (all_students = sum(students), sfr=all_students/count) %>% 
+    ungroup() %>% group_by(term_code,DEPT,total) %>% 
+    mutate (all_students = sum(students), sfr=all_students/total) %>% 
     distinct()
   
   
@@ -173,7 +178,7 @@ get_sfr_data_for_dept_report <- function(d_params) {
     } 
   } else {sfr_scatterplot <- "Insufficient HR data"}
   
-  # sfr_scatterplot
+  sfr_scatterplot
   d_params$plots[["sfr_scatterplot"]] <- sfr_scatterplot
   
   message("returning d_params with new plot(s) and table(s)...")
