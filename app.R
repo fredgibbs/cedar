@@ -65,7 +65,7 @@ ui <- page_navbar(
     fluidRow(
       column(12,
              data_dates[["DESR_status"]] %>% 
-               slice_tail(n=3) %>% 
+               slice_tail(3) %>% 
                #mutate(as_of_date = format(as_of_date, "%Y-%m-%d")) %>% 
                #rename("Last Updated" = as_of_date) %>% 
                DT::datatable(rownames=FALSE, options = list(dom = 't', paging = FALSE))
