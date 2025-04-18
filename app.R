@@ -63,7 +63,7 @@ ui <- page_navbar(
   
     fluidRow(
       column(12,
-             data_dates[["DESR_status"]] %>% 
+             data_dates %>% 
                slice(3) %>% 
                mutate(as_of_date = format(as_of_date, "%Y-%m-%d")) %>% 
                rename("Last Updated" = as_of_date) %>% 
