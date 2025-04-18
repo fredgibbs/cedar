@@ -31,6 +31,8 @@ students <- readRDS(url(class_lists))
 academic_studies <- readRDS(url(academic_studies))
 degrees <- readRDS(url(degrees))
 
+data_dates <- get_data_status()
+
 # forecast data works a bit differently b/c of reliance on local files
 message("loading and saving forecasts...")
 forecast_data <- readRDS(url(forecasts))
@@ -53,7 +55,13 @@ ui <- page_navbar(
   
   nav_panel(
     title = "Enrollment", 
-    
+  
+    fluidRow(
+      column(12,
+             data_dates[["DESR_status"]]
+      )
+    ),
+      
     fluidRow(
       column(2,
              selectizeInput(
