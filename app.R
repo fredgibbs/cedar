@@ -147,6 +147,13 @@ ui <- page_navbar(
                choices = sort(unique(courses$level))),
       ),
       column(2,
+             selectInput(
+               inputId = "enrl_gen_ed",
+               label = "Gen Ed", 
+               multiple = TRUE,
+               choices = sort(unique(courses$gen_ed_area))),
+      ),
+      column(2,
              actionButton("enrl_button",label = "Refresh table"),
       )
     ), # end fluidRow
@@ -389,6 +396,7 @@ server <- function(input, output, session) {
       opt[["im"]] <- input$enrl_im
       opt[["term"]] <- input$enrl_term
       opt[["level"]] <- input$enrl_level
+      opt[["gen_ed_area"]] <- input$enrl_gen_ed
       opt[["course"]] <- input$enrl_course
       
       print(opt)
