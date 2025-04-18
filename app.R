@@ -31,9 +31,12 @@ students <- readRDS(url(class_lists))
 academic_studies <- readRDS(url(academic_studies))
 degrees <- readRDS(url(degrees))
 
-Sys.setenv("courses" = courses)
-
-data_dates <- get_data_status()
+data_dates <- get_data_status(courses=courses, 
+                              students=students, 
+                              academic_studies=academic_studies, 
+                              degrees=degrees,
+                              fac_by_term=NULL
+                              )
 
 # forecast data works a bit differently b/c of reliance on local files
 message("loading and saving forecasts...")

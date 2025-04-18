@@ -159,7 +159,12 @@ process_func <- function(opt) {
       stop("no error")
     }
     
-    data_status_out <- get_data_status(opt)
+    data_status_out <- get_data_status(students=students, 
+                                       courses=courses, 
+                                       academic_studies=academic_studies, 
+                                       degrees=degrees, 
+                                       fac_by_term=fac_by_term)
+    
     process_output(data_status_out,"data_status",opt) #.csv is added in process_output
     
     return("process_func done processing data_status!")
