@@ -8,46 +8,71 @@ get_data_status <- function (students = NULL,
   
   message("Welcome to get_data_status!")
   
-  status_list <- list()
+  data_status <- tibble(
+    MyReport = character(),
+    Term = character(),
+    Last_Updated = character(),
+    Num_Rows = numeric()
+  )
+  
+  
+  normalize_summary <- function(list_name, term_col, summary, data_status) {
+    summary <- summary %>% 
+      rename(`Term` = !!term_col, 
+             `Last_Updated` = as_of_date, 
+             `Num_Rows` = rows)
+    
+    summary <- summary %>% add_column(MyReport = list_name, .before = "Term")
+    
+    data_status <- rbind(data_status, summary)
+    
+    return(data_status)
+  }
+  
   
   message("getting class list status...")
   if (!is.null(students)) {
     # students <- load_students()
-    class_list_status <- students %>% group_by(`Academic Period Code`,as_of_date) %>% summarize (rows = n(), .groups="keep")
-    status_list[["class_list"]] <- class_list_status
+    summary_status <- students %>% group_by(`Academic Period Code`,as_of_date) %>% summarize (rows = n(), .groups="keep")
+    
+    data_status <- normalize_summary("class_list", "Academic Period Code", summary_status, data_status)
   }
 
   message("getting DESRs status...")
   if (!is.null(courses)) {
     # courses <- load_courses()
-    DESR_status <- courses %>% group_by(`TERM`,as_of_date) %>% summarize (rows = n(), .groups="keep")
-    status_list[["DESR_status"]] <- DESR_status
+    summary_status <- courses %>% group_by(`TERM`,as_of_date) %>% summarize (rows = n(), .groups="keep")
+    
+    data_status <- normalize_summary("DESR", "TERM", summary_status, data_status)
   }
 
   
   message("getting academic study status...")
   if (!is.null(academic_studies)) {
     # academic_studies <- load_academic_studies()
-    academic_study_status <- academic_studies %>% group_by(term_code ,as_of_date) %>% summarize (rows = n(), .groups="keep")
-    status_list[["academic_study_status"]] <- academic_study_status
+    summary_status <- academic_studies %>% group_by(term_code ,as_of_date) %>% summarize (rows = n(), .groups="keep")
+    data_status <- normalize_summary("academic_study", "term_code", summary_status, data_status)
   }
   
   
   message("getting degrees status...")
   if (!is.null(degrees)) {
     # degrees <- load_degrees()
-    degrees_status <- degrees %>% group_by(`Academic Period Code`,as_of_date) %>% summarize (rows = n(), .groups="keep")
-    status_list[["degrees_status"]] <- degrees_status
+    summary_status <- degrees %>% group_by(`Academic Period Code`,as_of_date) %>% summarize (rows = n(), .groups="keep")
+    data_status <- normalize_summary("degree", "Academic Period Code", summary_status, data_status)
   }
   
   
   message("getting HRReport status:")
   if (!is.null(fac_by_term)) {
     # fac_by_term <- load_hr_data()
-    fac_by_term_status <- fac_by_term %>% group_by(as_of_date) %>% summarize (rows = n())
-    status_list[["fac_by_term_status"]] <- fac_by_term_status
+    
+    summary_status <- fac_by_term %>% group_by(as_of_date) %>% summarize (rows = n())
+    summary_status <- summary_status %>% add_column(`Academic Period Code` = "202510", .before = "as_of_date")
+    
+    data_status <- normalize_summary("hr_data", "Academic Period Code", summary_status, data_status)
+    
   }
   
-  return(status_list)
-   
+  return(data_status)
 }

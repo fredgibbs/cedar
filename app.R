@@ -31,7 +31,7 @@ students <- readRDS(url(class_lists))
 academic_studies <- readRDS(url(academic_studies))
 degrees <- readRDS(url(degrees))
 
-data_dates <- get_data_status(courses=courses, 
+data_status <- get_data_status(courses=courses, 
                               students=students, 
                               academic_studies=academic_studies, 
                               degrees=degrees,
@@ -44,8 +44,6 @@ forecast_data <- readRDS(url(forecasts))
 forecasts <- forecast_data
 # need to have local copy for storing new forecasts, even if only temporarily
 saveRDS(forecast_data,file="forecasts.Rds")
-
-print(data_dates[["DESR_status"]])
 
 # filter courses
 # opt <- list()
@@ -64,7 +62,7 @@ ui <- page_navbar(
   
     fluidRow(
       column(12,
-             data_dates[["DESR_status"]] %>% ungroup() %>%
+             data_status %>% group_by(MyReport) %>%
                slice_tail(n=4) %>% 
                #mutate(as_of_date = format(as_of_date, "%Y-%m-%d")) %>% 
                #rename("Last Updated" = as_of_date) %>% 
