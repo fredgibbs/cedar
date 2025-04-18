@@ -62,10 +62,8 @@ ui <- page_navbar(
   
     fluidRow(
       column(12,
-             data_status %>% group_by(MyReport) %>%
+             data_status %>% group_by(MyReport) %>% filter (MyReport %in% c("DESR","class_list")) %>% 
                slice_tail(n=4) %>% 
-               #mutate(as_of_date = format(as_of_date, "%Y-%m-%d")) %>% 
-               #rename("Last Updated" = as_of_date) %>% 
                DT::datatable(rownames=FALSE, options = list(dom = 't', paging = FALSE))
       )
     ),
