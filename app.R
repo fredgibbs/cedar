@@ -62,7 +62,7 @@ ui <- page_navbar(
     
     card( 
       card_header("Data Summary"),
-      data_status %>% group_by(MyReport) %>% filter (MyReport %in% c("DESR","class_list")) %>% 
+      data_status %>% group_by(MyReport) %>% #filter (MyReport %in% c("DESR","class_list")) %>% 
         slice_tail(n=4) %>% 
         DT::datatable(rownames=FALSE, options = list(dom = 't', paging = FALSE))
     )
@@ -114,7 +114,7 @@ ui <- page_navbar(
                inputId = "enrl_agg_by",
                label = "Group by", 
                multiple = TRUE,
-               choices = c("CAMP","COLLEGE","SUBJ_CRSE", "CRSE_TITLE", "DEPT", "INST_NAME", "TERM","PT","INST_METHOD")),
+               choices = c("CAMP","COLLEGE","SUBJ_CRSE", "CRSE_TITLE", "DEPT", "TERM","PT","INST_METHOD", "INST_NAME", "gen_ed_area" )),
       )
     ), # end fluidRow 
     fluidRow(
