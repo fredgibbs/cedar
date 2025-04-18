@@ -32,11 +32,11 @@ academic_studies <- readRDS(url(academic_studies))
 degrees <- readRDS(url(degrees))
 
 data_status <- get_data_status(courses=courses, 
-                              students=students, 
-                              academic_studies=academic_studies, 
-                              degrees=degrees,
-                              fac_by_term=NULL
-                              )
+                               students=students, 
+                               academic_studies=academic_studies, 
+                               degrees=degrees,
+                               fac_by_term=NULL
+)
 
 # forecast data works a bit differently b/c of reliance on local files
 message("loading and saving forecasts...")
@@ -58,16 +58,20 @@ ui <- page_navbar(
   title = "CEDAR",
   
   nav_panel(
-    title = "Enrollment", 
+    title = "Data Status",
+    
+    card( 
+      card_header("Data Summary"),
+      data_status %>% group_by(MyReport) %>% filter (MyReport %in% c("DESR","class_list")) %>% 
+        slice_tail(n=4) %>% 
+        DT::datatable(rownames=FALSE, options = list(dom = 't', paging = FALSE))
+    )
+  ), # end nav_panel for data
   
-    fluidRow(
-      column(12,
-             data_status %>% group_by(MyReport) %>% filter (MyReport %in% c("DESR","class_list")) %>% 
-               slice_tail(n=4) %>% 
-               DT::datatable(rownames=FALSE, options = list(dom = 't', paging = FALSE))
-      )
-    ),
-      
+  
+  nav_panel( 
+    title = "Enrollment", 
+    
     fluidRow(
       column(2,
              selectizeInput(
@@ -97,7 +101,7 @@ ui <- page_navbar(
                multiple = TRUE,
                choices = sort(unique(courses$INST_NAME))),
       ),
-
+      
       column(2,
              selectizeInput(
                inputId = "enrl_course",
