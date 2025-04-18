@@ -63,7 +63,13 @@ ui <- page_navbar(
   
     fluidRow(
       column(12,
-             data_dates[["DESR_status"]]
+             data_dates[["DESR_status"]] %>% 
+               select(`Academic Period Code`,as_of_date) %>% 
+               arrange(desc(as_of_date)) %>% 
+               slice(1) %>% 
+               mutate(as_of_date = format(as_of_date, "%Y-%m-%d")) %>% 
+               rename("Last Updated" = as_of_date) %>% 
+               DT::datatable(rownames=FALSE, options = list(dom = 't', paging = FALSE))
       )
     ),
       
