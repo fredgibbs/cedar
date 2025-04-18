@@ -45,6 +45,7 @@ forecasts <- forecast_data
 # need to have local copy for storing new forecasts, even if only temporarily
 saveRDS(forecast_data,file="forecasts.Rds")
 
+print(data_dates[["DESR_status"]])
 
 # filter courses
 # opt <- list()
@@ -63,7 +64,7 @@ ui <- page_navbar(
   
     fluidRow(
       column(12,
-             data_dates %>% 
+             data_dates[["DESR_status"]] %>% 
                slice(3) %>% 
                mutate(as_of_date = format(as_of_date, "%Y-%m-%d")) %>% 
                rename("Last Updated" = as_of_date) %>% 
