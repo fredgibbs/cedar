@@ -396,7 +396,7 @@ server <- function(input, output, session) {
       opt[["im"]] <- input$enrl_im
       opt[["term"]] <- input$enrl_term
       opt[["level"]] <- input$enrl_level
-      opt[["gen_ed_area"]] <- input$enrl_gen_ed
+      opt[["gen_ed"]] <- input$enrl_gen_ed
       opt[["course"]] <- input$enrl_course
       
       print(opt)
