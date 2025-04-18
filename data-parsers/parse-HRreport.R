@@ -159,6 +159,8 @@ fac_by_term <- dfs_by_term %>%
     select (term_code, DEPT, `UNM ID`, `Name`, `Academic Title`, `Job Title`,  job_cat, `Home Organization Desc`, `Appt %`, as_of_date) %>% 
     distinct()
 
+# rename column to match old data (to handle recent HR report update)
+#fac_by_term <- fac_by_term %>% rename(`Full Name` = Name)
 
 # encrypt IDs
 message("encypting IDs...")

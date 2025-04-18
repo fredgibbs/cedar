@@ -64,18 +64,18 @@ if (is.null(opt$report)){
   stop("No function (-r or --report) specified. Specify '-f guide' to see options. ", call.=FALSE)
 }
 
-# convert report to list
-report_list <- convert_param_to_list(opt$report)
-
 # uncomment for studio testing
 # opt <- list()
-# opt["report"] <- "as"
+# opt["report"] <- "desr"
+
+# convert report to list
+report_list <- convert_param_to_list(opt$report)
 
 
 # loop through reports as specified in command line
 for (report in report_list) {
   # uncomment for studio testing
-  #report <- report_list[[1]]
+  # report <- report_list[[1]]
   
   message("processing report type: ", report)
   
@@ -93,7 +93,7 @@ for (report in report_list) {
   
   for (file in file_list) {
     # uncomment for studio testing
-    #file <- file_list[1]
+    # file <- file_list[1]
     
     message("processing file: ", file, "..." )
     
