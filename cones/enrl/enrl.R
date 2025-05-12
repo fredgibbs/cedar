@@ -332,7 +332,7 @@ get_enrl <- function (courses,opt,group_cols=NULL) {
   # opt$aggregate <- "course"
   # opt$course <- "ENGL 1110"
   
-  message("\n","welcome to get_enrl!")
+  message("\n","Welcome to get_enrl!")
   
   # default status to A for active courses
   if (is.null(opt$status)) {
@@ -344,11 +344,6 @@ get_enrl <- function (courses,opt,group_cols=NULL) {
     opt$uel <- TRUE
   }
   
-  # default to use ABQ campus (EA is ABQ online courses)
-  if (is.null(opt$campus)) {
-    #opt$campus <- c("ABQ","EA")
-  }
-  
   # filter courses according to options
   courses <- filter_DESRs(courses, opt)
 
@@ -356,7 +351,7 @@ get_enrl <- function (courses,opt,group_cols=NULL) {
   # TODO: move into load_courses or parser?
   courses <- add_acad_year (courses, "TERM")
   
-  select_cols <- c("CAMP","COLLEGE","TERM","term_type","CRN","SUBJ","SUBJ_CRSE","SECT","level","CRSE_TITLE","INST_METHOD","PT","INST_NAME", "job_cat", "ENROLLED","total_enrl","XL_SUBJ","SEATS_AVAIL","WAIT_COUNT","gen_ed_area")
+  select_cols <- c("CAMP","COLLEGE", "DEPT", "TERM","term_type","CRN","SUBJ","SUBJ_CRSE","SECT","level","CRSE_TITLE","INST_METHOD","PT","INST_NAME", "job_cat", "ENROLLED","total_enrl","XL_SUBJ","SEATS_AVAIL","WAIT_COUNT","gen_ed_area")
   
   ### AOP COMPRESSION
   if (!is.null(opt$aop) && opt$aop == "compress") {
@@ -370,7 +365,7 @@ get_enrl <- function (courses,opt,group_cols=NULL) {
     courses <- courses %>% select(all_of(select_cols))
   }
   
-  # courses get listed multiple times b/c of crosslisting (inc aop, but also general)
+  # courses get listed multiple times b/c of crosslisting (inc aop, but also in general)
   # also, a course can also be listed multiple times depending on the lecture/recitation model (b/c of XL_CRSE column)
   #courses <- courses %>% ungroup() %>% subset(select = -c(XL_CRSE,XL_CRN,XL_CODE))
   
