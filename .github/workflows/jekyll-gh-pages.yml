@@ -39,11 +39,11 @@ jobs:
         uses: actions/jekyll-build-pages@v1
         with:
           source: ./
-          destination: docs/_site
+          destination: docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/_site
+          path: docs
 
         
   # Deployment job
@@ -58,4 +58,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
         with:
-          publish_dir: ./docs/_site
+          publish_dir: docs
