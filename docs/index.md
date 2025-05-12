@@ -3,12 +3,8 @@ title: Home
 layout: home
 ---
 
-<<<<<<< Updated upstream
-This is a *bare-minimum* tttemplate to crrreate a Jekyll site that uses the [Just the Docs] theme. You can easily set the created site to be published on [GitHub Pages] – the [README] file explains how to do that, along with other details.
-=======
 # CEDAR
 ### Curriculum + Enrollment Data Analysis & Reporting
->>>>>>> Stashed changes
 
 ## What is CEDAR?
 CEDAR is a suite of R scripts developed as a quick aggregation and analysis tool for MyReports data, particularly with the following reports:
