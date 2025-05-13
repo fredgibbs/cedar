@@ -1,5 +1,6 @@
+#TODO: all these functions are effectively private and should be scoped in get_grades 
+
 # this function uses class lists to report all grades
-# grade points are added as new column
 get_all_grades <- function(filtered_students) {
   
   message("filtering out drops from students with grades...")
@@ -15,6 +16,8 @@ get_all_grades <- function(filtered_students) {
   
   return(grades)
 }
+
+
 
 # create DF of just students who dropped specified courses(s)
 # DR codes omitted here, for student who drop before drop deadline 
@@ -46,6 +49,7 @@ get_grades_summary <- function(grades) {
 }
 
 
+
 # create a summary of pass / fail / drop
 # passing_grades defined in includes/lists.R
 get_pf_sum <- function(grades,dropped) {
@@ -74,6 +78,7 @@ get_pf_sum <- function(grades,dropped) {
 }
 
 
+
 # return a summary of pass / fail / drop / data by term and course
 # this usually gets appended to full grade data
 get_pf_sum_by_course <- function(pf_sum) {
@@ -82,6 +87,7 @@ get_pf_sum_by_course <- function(pf_sum) {
 
   return(pf_sum_by_course)
 }
+
 
 
 # produces a wide view of how many students got each grade BY COURSE, aggregating across all instructors
@@ -104,8 +110,6 @@ get_grades_summary_by_course <- function(grades_summary,pf_sum_by_course) {
     arrange(`Academic Period Code`)
   
   # change NAs to zeros
-  message("changing NAs to 0s...")
-  #grades_summary_by_course[is.na(grades_summary_by_course)] <- 0
   grades_summary_by_course <- grades_summary_by_course %>% mutate_if(is.numeric, ~replace_na(., 0))
   
   # merge with pass/fail rates
@@ -131,7 +135,6 @@ summarize_grades <- function(grades_summary_by_course,opt) {
     summarize(passed = sum(passed), failed = sum(failed), dropped = sum(dropped), .groups="keep") %>% 
     mutate (`DFW %`=round((dropped+failed)/(passed+failed+dropped)*100,digits=2))
   
-  message("returning summary...")
   return (summary)
 }
 
@@ -147,12 +150,8 @@ get_grades <- function(students,opt) {
   # opt$course <- "AFST 1110"
   # opt$dept <- "HIST"
   # opt$term <- "202460"
-  #opt <- myopt
   
-  if (is.null(opt$aggregate)) {
-    message("no aggregate param found. setting -a to 'all'.")
-    opt$aggregate <- "all"
-  }
+  # opt <- myopt
   
   course <- opt[["course"]]
   message("procesing course: ",course)
@@ -195,30 +194,28 @@ get_grades <- function(students,opt) {
   # this gets passed to more specific aggregating functions specified by opt params
   grades_summary_by_course <- get_grades_summary_by_course(grades_summary,pf_sum_by_course)
   
+  # check for old aggregate param
+  if (!is.null(opt[["aggregate"]])) {
+    message("WARNING: aggregate param is depricated. All aggregating done by default and returned in grades list.")
+  }    
   
-  message("processing gradebook_agg_by param...")
-  
+  # initialize grades list for return data
   grades <- list()
   
   # returns the basic grade summary by course, which is used for the other views
   # grades_summary_by_course is always called above for all functions, so we can just return it
-  if (opt$aggregate == "course") {
-    grades[["course"]] <- grades_summary_by_course
-  }
-  
-  if (opt$aggregate == "course_term_avg") {
-    opt[["group_cols"]] <- c("Course Campus Code", "Course College Code", "Academic Period Code", "SUBJ_CRSE", "level")
-    grades[["course_term"]] <- summarize_grades(grades_summary_by_course, opt)
-  }
-  
-  if (opt$aggregate == "course_avg") {
-    opt[["group_cols"]] <- c("Course Campus Code", "Course College Code", "SUBJ_CRSE", "level")
-    grades[["course_avg"]] <- summarize_grades(grades_summary_by_course, opt)
-  }
+  grades[["course"]] <- grades_summary_by_course
+
+  opt[["group_cols"]] <- c("Course Campus Code", "Course College Code", "Academic Period Code", "SUBJ_CRSE", "level")
+  grades[["course_term"]] <- summarize_grades(grades_summary_by_course, opt)
+
+  opt[["group_cols"]] <- c("Course Campus Code", "Course College Code", "SUBJ_CRSE", "level")
+  grades[["course_avg"]] <- summarize_grades(grades_summary_by_course, opt)
 
   message("returning grades...")
   return (grades)  
 }
+
 
 
 # this is specifically for creating dept report outputs using d_params 
@@ -234,8 +231,10 @@ get_grades_for_dept_report <- function(students,opt,d_params) {
   myopt[["dept"]] <- d_params$dept_code 
   # myopt[["dept"]] <- "HIST"
   
-  # limit to ABQ campus until we have better plotting across campuses
+  # limit to ABQ campus and online until we have better plotting across campuses
+  message("limiting to ABQ and EA campus for plotting...")
   myopt[["campus"]] <- c("ABQ","EA")
+  
   
   # get grades by each course and term for table in dept report
   myopt$aggregate <- "course"
@@ -243,7 +242,6 @@ get_grades_for_dept_report <- function(students,opt,d_params) {
   
   # filter for lower division, unless there aren't any (like MSST)
   grades_summary_by_course_ld <- grades_summary_by_course %>% filter (level == "lower")
-  
   if (nrow(grades_summary_by_course_ld) == 0) {
     grades_summary_by_course_ld <- grades_summary_by_course
   }
@@ -257,9 +255,6 @@ get_grades_for_dept_report <- function(students,opt,d_params) {
   grades_summary_by_course_avg <- get_grades(students,myopt)[["course_avg"]]
   
   grades_summary_by_course_avg_ld <- grades_summary_by_course_avg %>% filter (level == "lower") 
-  # %>% 
-  #   filter (`Course Campus Code` =="ABQ")
-  # 
   if (nrow(grades_summary_by_course_avg_ld) == 0) {
     grades_summary_by_course_avg_ld <- grades_summary_by_course_avg
   }
@@ -274,38 +269,11 @@ get_grades_for_dept_report <- function(students,opt,d_params) {
     geom_bar(stat="identity", position=position_dodge()) +
     ylab("Course") + xlab("mean DFW % (since 2019)") 
   
-  grades_summary_for_ld_plot
+  # grades_summary_for_ld_plot
   
   message("adding grades_summary_for_ld_abq_ea_plot to d_params...")
   d_params$plots[["grades_summary_for_ld_abq_ea_plot"]] <- grades_summary_for_ld_plot 
 
-  # # repeat for EA campus
-  # grades_summary_by_course_avg_ld <- grades_summary_by_course_avg %>% filter (level == "lower") %>% 
-  #   filter (`Course Campus Code` == "EA")
-  # 
-  # if (nrow(grades_summary_by_course_avg_ld) == 0) {
-  #   grades_summary_by_course_avg_ld <- grades_summary_by_course_avg
-  # }
-  # 
-  # grades_summary_by_course_avg_ld <- grades_summary_by_course_avg_ld %>% ungroup()
-  # 
-  # grades_summary_for_ld_plot <- grades_summary_by_course_avg_ld %>% 
-  #   mutate(SUBJ_CRSE = fct_reorder(SUBJ_CRSE, `DFW %`)) %>%
-  #   ggplot(aes(y=SUBJ_CRSE, x=`DFW %`)) + 
-  #   theme(legend.position="bottom") +
-  #   guides(color = guide_legend(title = "")) +
-  #   geom_bar(stat="identity") +
-  #   ylab("Course") + xlab("mean DFW % (since 2019)") 
-  # 
-  # #grades_summary_for_ld_plot
-  # 
-  # message("adding grades_summary_for_ld_ea_plot to d_params...")
-  # d_params$plots[["grades_summary_for_ld_ea_plot"]] <- grades_summary_for_ld_plot 
-  # 
-  
-  
-  
-  
   
   message("returning d_params with new plot(s) and table(s)...")
   return(d_params)

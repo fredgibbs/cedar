@@ -10,6 +10,8 @@ cedar <- function(func="guide",...) {
   if (is.null(opt$guide)) {
     opt$guide <- FALSE
   }
+  
+  # display command line params
   print(opt)  
   
   message("processing function: ", opt$func, "...")
@@ -20,6 +22,7 @@ cedar <- function(func="guide",...) {
   
   message("cedar function done!")
 }
+
 
 resolve_conflicts <- function() {
   conflicted::conflicts_prefer(dplyr::filter())
@@ -151,10 +154,9 @@ filter_by_term <- function(data,term,term_col_name) {
 }
 
 
-#TODO: extend this course_list to grab a CSV file (created by CEDAR or externally)
 
 # get a course list based on opt params 
-# increasingly useful as more funcs become vectorized and can take a course list
+# increasingly useful as more funcs become vectorized and can accept course list as input
 get_course_list <- function(courses,opt) {
   
   # for testing
@@ -165,7 +167,8 @@ get_course_list <- function(courses,opt) {
   # opt$uel <- TRUE
 
   # TODO: set standard opts if null
-    
+  # TODO: extend to grab a CSV file (created by CEDAR or externally)
+  
   enrls <- get_enrl(courses,opt)
   course_list <- unique(enrls$SUBJ_CRSE)
   
@@ -176,11 +179,9 @@ get_course_list <- function(courses,opt) {
 # this function filters a simple SUBJ_CRSE list according to opt params
 # select_courses should be a 1xn tibble or list
 filter_course_list <- function(all_courses,select_courses,opt) {
-  message("welcome to filter_course list")
-  #print(head(all_courses))
-  #print(select_courses)
-  #print(as.list(select_courses))
-  # studio testing...
+  message("welcome to filter_course list!")
+  
+  # for studio testing...
   #all_courses <- load_courses()
   #select_courses <- as_tibble(next_courses$SUBJ_CRSE)
   
@@ -193,7 +194,7 @@ filter_course_list <- function(all_courses,select_courses,opt) {
   # grab just course list
   course_list <- unique(enrls$SUBJ_CRSE)
   
-  message("all done in filter_course_list!")
+  message("all done in filter_course_list.")
   return(course_list)
 }
 
@@ -204,8 +205,7 @@ filter_out_summer <- function (data,term_col_name) {
   return(data)
 }
 
-
-
+# TODO: way too hacky. 
 update_codes <- function(df,col) {
   df[col][df[col] == "CCS"] <- "CCST"
   df[col][df[col] == "PSY"] <- "PSYC"
@@ -252,11 +252,17 @@ add_acad_year <- function(df, term_col) {
 # }
 
 
-load_global_data <- function() {
+load_global_data <- function(opt) {
   message("loading data...")
   .GlobalEnv$courses <- load_courses()
-  .GlobalEnv$students <- load_students()
-  .GlobalEnv$academic_studies <- load_academic_studies()
+  
+  # special exception to speed up common use
+  if (opt[["func"]] != "enrl") {
+    .GlobalEnv$students <- load_students()
+    .GlobalEnv$academic_studies <- load_academic_studies()
+  }
+  
+  
   # don't make forecasts global b/c it changes too often 
 }
 
@@ -296,7 +302,7 @@ load_datafile <- function(filename) {
 
 
 
-# TODO: replace these specific loads with load_datafile across codebase
+# TODO: replace these specific loads with load_datafile across app
 load_hr_data <- function() {
   data <- load_datafile("hr_data")
   return(data)
@@ -509,6 +515,7 @@ get_dept_from_course <- function (course) {
 }
 
 
+
 # output_data is going to be a df/tibble or list
 process_output <- function(output_data,filename,opt) {
   message("welcome to process_output!")
@@ -524,12 +531,10 @@ process_output <- function(output_data,filename,opt) {
     output_list <- output_data
   }
   
-  # print(output_list)  
-  
   # process each element of list
   for (i in 1: length(output_list)) {
     cur_name <- names(output_list)[i]
-    message(cur_name)
+    message("current output list name: ", cur_name)
     
     cur_item <- as_tibble(output_list[[i]])
     
@@ -542,16 +547,15 @@ process_output <- function(output_data,filename,opt) {
     # if output csv flag set, print 5 rows as sample and save file 
     if (!is.null(opt[["output"]]) && opt[["output"]] == "csv") {
       
-      message(cur_name)
+      message("output for ",cur_name,":")
       cur_item %>% tibble::as_tibble() %>% print(n = 5, width=Inf)
       
-      message("saving CSV file...")
       filename <- paste0(cedar_output_dir,"csv/",cur_name,".csv")  
-      message("filename set to: ",filename)
+      message("saving CSV file with name: ",filename,"..."))
       write.csv(cur_item, file = filename)
+      message("file saved.")
     }
-    else {
-      # print all rows to terminal
+    else { # if not saving CSV, print all rows to terminal
       cur_item %>% tibble::as_tibble() %>% print(n = nrow(cur_item), width=Inf)  
     }
   }
@@ -561,7 +565,7 @@ process_output <- function(output_data,filename,opt) {
 
 
 
-# this function is called when looping through a list of depts (even if just one)
+# generic Rmd report creator
 create_report <- function(opt, d_params) {
   message("\nWelcome to create_report! (in misc_funcs.R)")
   
@@ -577,7 +581,7 @@ create_report <- function(opt, d_params) {
     suffix <- ".html"
   }
   
-  # TRICKY! the paths for the output file are relative to the Rmd file, not the current working directory.
+  # CAREFUL! the paths for the output file are relative to the Rmd file, not the current working directory
   if (!is.null(opt[["onedrive"]]) && opt[["onedrive"]]) {
     output_filename <- paste0(cedar_onedrive_dir,"/",d_params$output_filename,".aspx")
   } 

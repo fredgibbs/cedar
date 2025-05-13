@@ -17,7 +17,12 @@ The most powerful control here is the `Group by` input box that selects a field 
 
 
 ## Course Reports
-Course Reports show 
+Course Reports show basic course enrollment trends for: 
+- different semester types
+- where students come from
+- where students go
+- other courses take
+- enrollment forecasts
 
 ## Seatfinder
 Finds courses with available seats. This is fundamentally an enrollment report that's geared toward finding seats in Gen Ed courses. 

@@ -56,29 +56,22 @@ get_sfr <- function () {
   studfac_ratios <- studfac_ratios %>% 
     group_by(term_code,`Academic Year`,DEPT,`Student Level`,major_name, PRGM, total)
   
+  # separate majors
   majors <- studfac_ratios %>% filter (major_type %in% c("Major","Second Major")) 
-  #majors <- majors %>%  mutate(major_type = major_type, all_majors = sum(students))
   majors <- majors %>%  summarize(major_type="all_majors", students = sum(students))
+  #majors %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
-  majors %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
-  
-  
+  # separate minors
   minors <- studfac_ratios %>% filter (major_type %in% c("First Minor","Second Minor")) 
-  #minors <- minors %>% mutate(major_type = major_type, all_minors = sum(students))
   minors <- minors %>%  summarize(major_type="all_minors", students = sum(students))
-  
-  minors %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  # minors %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
   studfac_ratios <- rbind(majors,minors)
-  #studfac_ratios <- merge(majors,minors, by=c("term_code","DEPT","Academic Year","Student Level","major_name","PRGM","count"))
-  
-  message("studfac_ratios summarized:")
   studfac_ratios <- studfac_ratios %>% group_by(term_code, DEPT,`Student Level`,major_type) %>% arrange(term_code,major_name,`Student Level`,major_type)
-  studfac_ratios %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
+  #studfac_ratios %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   
-  # compute and add actual student faculty ratios
+  # compute SFRs
   message("studfac_ratios:")
-  #studfac_ratios$all_majors_sfr <- studfac_ratios$all_majors / studfac_ratios$count
   studfac_ratios$sfr <- studfac_ratios$students / studfac_ratios$total
   studfac_ratios %>% tibble::as_tibble() %>% print(n = 20, width=Inf)
   

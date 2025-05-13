@@ -150,7 +150,8 @@ load_funcs("./")
 
 resolve_conflicts() # defined in misc_funcs, loaded by load_funcs
 
-load_global_data()
+# load data globally
+load_global_data(opt)
 
 
 msg <- process_func(opt)

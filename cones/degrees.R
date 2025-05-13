@@ -1,15 +1,15 @@
 count_degrees <- function() {
   
-  # degrees.Rda comes from parse-degrees.R, which processes Graduates and Pending Graduates Report.
+  # load degrees.Rda, which is Graduates and Pending Graduates Report.
   degrees <- load_degrees()
   
   # don't filter by college here to get majors/minors from other colleges who have an A&S program as a second majors, certificate, etc.
-  # degrees <- grads %>% filter (`College`=="College of Arts and Sciences" | `College`=="Graduate Programs") 
   degrees <- degrees %>% select(`Academic Period Code`,`Actual College`,`Translated College`,ID, Department,Program,`Program Code`,`Award Category`,Degree, Major, `Major Code`,`Second Major`, `First Minor`,`Second Minor`)
   degrees <- unique(degrees) # many degree duplicated because of student attribute field from original data
   degrees <- degrees %>% rename("term_code" = `Academic Period Code`)
   
   # use pre-defined major_to_program_map to filter for just A&S degrees
+  # TODO: make useful for all colleges
   programs <- names(major_to_program_map)
   
   # get students who are graduating with a first or second major
@@ -17,7 +17,8 @@ count_degrees <- function() {
   
   #TODO: what to do with minors /  certificates / etc?
   
-  # summarize, but not using major code to avoid variations like PSY and PSYC; The 'Major' field is more reliable/standard because of mappings.
+  # summarize, but not using major code to avoid variations like PSY and PSYC; 
+  # the 'Major' field is more reliable/standard because of mappings.
   degree_summary <- degrees_filtered %>%  group_by(term_code,Major,Degree) %>% summarize (majors=n())
   
   message("degree_summary:")
