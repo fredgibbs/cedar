@@ -1,6 +1,6 @@
 ---
 title: Web guide
-parent: guides 
+parent: Guides 
 layout: home
 ---
 
