@@ -17,11 +17,12 @@ The most powerful control here is the `Group by` input box that selects a field 
 
 
 ## Course Reports
-Course Reports show basic course enrollment trends for: 
-- different semester types
+Course Reports aggregate and summarize a variety of data about a course
+- enrollment across different semester types
+- anomalous enrollment dips or bumps
 - where students come from
 - where students go
-- other courses take
+- other courses taken at the same time
 - enrollment forecasts
 
 ## Seatfinder

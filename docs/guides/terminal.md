@@ -25,6 +25,7 @@ For more information about what different cones do, use the --guide flag for mor
 `Rscript -f enrl --guide` 
 
 
+
 ## ENROLLMENT 
 
 ### How do I see past enrollments for a course? 
@@ -52,35 +53,6 @@ Use the -a (aggregate) flag, with the 'course' option
 Rscript cedar.R -f enrl --uel -c 'ENGL 1120' -a course 
 
  
-
-Other aggregating examples: 
-
-Rscript cedar.R -f enrl -c 'ENGL 1110' -a course 
-
- 
-
-Rscript cedar.R -f enrl -t 202480 -c 'ENGL 1110' -a course_type 
-
- 
-
-Rscript cedar.R -f enrl -c 'ENGL 1110' -a course_term 
-
- 
-
- 
-
-Rscript cedar.R -f enrl -c 'ENGL 1110'  -t 202480 -a dept_level 
-
- 
-
- 
-
-Rscript cedar.R -f enrl -t 202480 -a college_level 
-
- 
-
- 
-
 What do 2H enrollments look like for a given term? 
 
 Use the --pt (part of term) filter. 
@@ -129,8 +101,6 @@ Use the --im filter (instructional method); look for the legacy label of MOPS:
 
  
 
-  
-
 How can I compare available courses across semesters? 
 
 For the most flexibilty, you can run two reports and manually compare: 
@@ -153,13 +123,8 @@ This saves an ugly report to CEDAR_OUTPUT_DIR/seatfinder-reports
 
   
 
-How can I get unit enrollment totals across the College? 
-
-Use the aggregate flag! 
-
-Rscript cedar.R -f enrl --college AS -a college-dept 
-
- 
+### How can I get unit enrollment totals across a college? 
+`Rscript cedar.R -f enrl --college AS --group_cols DEPT`
 
  
 
@@ -171,34 +136,32 @@ Rscript cedar.R -f enrl -t 202510 --uel --arrange waiting --college AS -l lower 
 
  
 
-### COURSE-REPORT 
-
+## COURSE-REPORT 
 Use the course report generator to see trends in a particular course. The report will be saved to CEDAR_OUTPUT_DIR/course-reports.
 `Rscript cedar.R -f course-report -c 'BIOL 2305' -t 202510` 
 
 
 
-### CREDIT-HOURS 
+## CREDIT-HOURS 
 
-#### How can I see the credit hours for a dept? 
+### How can I see the credit hours for a dept? 
 `Rscript cedar.R -f credit-hours -d EPS` 
 
 
-
-### DATA-STATUS 
+## DATA-STATUS 
 This reports when CEDAR data was updated with MyReports data. 
 `Rscript cedar.R -f data-status` 
 
 
-### DEPT-REPORT 
+## DEPT-REPORT 
 
-How can I see general department trends? 
-
+### How can I see general department trends? 
 Use the department report generator that saves a report to CEDAR_OUTPUT_DIR/dept-reports 
+`Rscript cedar.R -f dept-report -d ECON` 
+
+[See an example report](../ANTH.html)
 
 If sharing the report via OneDrive, use the --output-format flag set to aspx; otherwise use html (default). 
-
-Rscript cedar.R -f dept-report -d ECON 
 
   
 
@@ -240,18 +203,15 @@ Lookout reports what courses students are taking along with a given course, as w
 
 ## ROLLCALL 
 
-How can I tell what kinds of students are in a course? 
-
-Rscript cedar.R -f rollcall -c 'MATH 1130' 
+### How can I tell what kinds of students are in a course? 
+`Rscript cedar.R -f rollcall -c 'MATH 1130'` 
 
   
 Use the -a (aggregate) flag to aggregate data by some combintation of course, major, and classification. Options:   
 
 Rscript cedar.R -f rollcall -c 'HIST 434' -a course_classification 
  
-
 Rscript cedar.R -f rollcall -c 'HIST 434' -a course_classification_avg 
-
 
 Rscript cedar.R -f rollcall -c 'HIST 434' -a major_wide 
 
