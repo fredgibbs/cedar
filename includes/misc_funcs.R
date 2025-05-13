@@ -518,7 +518,7 @@ get_dept_from_course <- function (course) {
 
 # output_data is going to be a df/tibble or list
 process_output <- function(output_data,filename,opt) {
-  message("welcome to process_output!")
+  message("\nWelcome to process_output!")
   
   output_list <- list()
   
@@ -551,7 +551,7 @@ process_output <- function(output_data,filename,opt) {
       cur_item %>% tibble::as_tibble() %>% print(n = 5, width=Inf)
       
       filename <- paste0(cedar_output_dir,"csv/",cur_name,".csv")  
-      message("saving CSV file with name: ",filename,"..."))
+      message("saving CSV file with name: ", filename, "...")
       write.csv(cur_item, file = filename)
       message("file saved.")
     }
