@@ -6,6 +6,8 @@ layout: home
 
 # CEDAR CLI
 
+This page explains how to use CEDAR from the Command Line. 
+
 
 ### A note about examples and terminology
 Everything after a single or double dash is a flag. There are two kinds of flags:  
@@ -42,116 +44,89 @@ Use the "use exclude list" flag (--uel). Courses to be excluded are in the exclu
 
   
 ### What have Physics enrollments been like in recent summers? 
-The term filter understands term types (fall, spring, summer)
+The term filter understands term types (fall, spring, summer):
 `Rscript cedar.R -f enrl  --uel -d PHYS -t summer` 
 
 
-How can I quickly see total enrollments for courses with many sections (like ENGL 1120)? 
+### How can I quickly see total enrollments for courses with many sections (like ENGL 1120)?
+Use the `--group_cols` parameter with the name of columns (separated by columns) that you want to group
+`Rscript cedar.R -f enrl --uel -c 'ENGL 1120' --group_cols SUBJ_CRSE`
+`Rscript cedar.R -f enrl --uel -c 'ENGL 1120' --group_cols SUBJ_CRSE,TERM`
 
-Use the -a (aggregate) flag, with the 'course' option 
 
-Rscript cedar.R -f enrl --uel -c 'ENGL 1120' -a course 
+### What do 2H enrollments look like for a given term? 
+Use the --pt (part of term) filter: `Rscript cedar.R -f enrl --college AS --pt 2H --uel -t 202410` 
 
- 
-What do 2H enrollments look like for a given term? 
 
-Use the --pt (part of term) filter. 
+### Why are courses listed multiple times?
+Often because they are crosslisted with different values in the XL_SUBJ field. You can compress crosslisted courses into a single row by setting the -x flag to 'compress'.  
 
-Rscript cedar.R -f enrl --college AS --pt 2H --uel -t 202410 
+Compare:
+- `Rscript cedar.R -f enrl -d AFST -t 202310`
+- `Rscript cedar.R -f enrl -d AFST -t 202310 -x compress` 
 
- 
 
- 
-
-Why are courses listed multiple times?  
-
-Often because they are crosslisted with different values in the XL_SUBJ field. 
-
-For an example, run Rscript cedar.R -f enrl -d AFST -t 202310  
-
-You can compress crosslisted courses into a single row by setting the -x flag to 'compress'. 
-
-Rscript cedar.R -f enrl -d AFST -t 202310 -x compress 
-
-  
-
-  
-
-AOP section enrollments rows are distracting. How can I filter out AOP enrollments? 
-
-It almost always makes more sense to just combine the AOP and non-AOP sections 
+### How can I filter out AOP enrollments? 
+It almost always makes more sense to just combine the AOP and non-AOP sections in a single row, but there are two ways to handle AOP section display.
 
 If you want to see the AOP sections stand out in an enrollment list: 
-
-Rscript cedar.R -f enrl -c 'SPAN 1110'  -t 202380 --aop compress 
+`Rscript cedar.R -f enrl -c 'SPAN 1110'  -t 202380 --aop compress` 
 
 If you want the AOP sections to be totally merged into twin section: 
-
-Rscript cedar.R -f enrl -c 'SPAN 1110'  -t 202380 -x compress 
-
-  
+`Rscript cedar.R -f enrl -c 'SPAN 1110'  -t 202380 -x compress` 
 
   
+### What do AOP enrollments look like for a dept? 
 
-What do AOP enrollments look like for a dept? 
-
-Use the --im filter (instructional method); look for the legacy label of MOPS: 
-
-- cedar.R -f enrl -d CCS --im MOPS -t 202410 
+Use the --im filter (instructional method) for MOPS: 
+`Rscript cedar.R -f enrl -d CCS --im MOPS -t 202410` 
 
  
 
-How can I compare available courses across semesters? 
+### How can I compare available courses across semesters? 
+The easiest way is to use the SEATFINDER-REPORT:
+- `Rscript cedar.R -f seatfinder-report -d AMST --pt 2H -t 202310,202410`
+  - This saves an ugly report to CEDAR_OUTPUT_DIR/seatfinder-reports. 
 
 For the most flexibilty, you can run two reports and manually compare: 
+`- Rscript cedar.R -f enrl -d AMST --pt 2H -t 202310` 
+`- Rscript cedar.R -f enrl -d AMST --pt 2H -t 202410` 
 
-Rscript cedar.R -f enrl -d AMST --pt 2H -t 202310  
-
-Rscript cedar.R -f enrl -d AMST --pt 2H -t 202410  
-
- 
-
-  
-
-You can also use the SEATFINDER-REPORT 
-
-Rscript cedar.R -f seatfinder-report -d AMST --pt 2H -t 202310,202410  
-
-This saves an ugly report to CEDAR_OUTPUT_DIR/seatfinder-reports 
-
-  
-
-  
 
 ### How can I get unit enrollment totals across a college? 
 `Rscript cedar.R -f enrl --college AS --group_cols DEPT`
 
  
 
-How can I see total waitlist numbers for courses? 
+### How can I see total waitlist numbers for courses? 
+Use the ENRL function with filtering (here, for lower-division A&S courses):
+`Rscript cedar.R -f enrl -t 202510 --uel --arrange waiting --college AS -l lower -a course` 
 
-Use the ENRL function with filtering (here, for lower-division A&S courses) 
-
-Rscript cedar.R -f enrl -t 202510 --uel --arrange waiting --college AS -l lower -a course 
-
- 
+--- 
 
 ## COURSE-REPORT 
 Use the course report generator to see trends in a particular course. The report will be saved to CEDAR_OUTPUT_DIR/course-reports.
-`Rscript cedar.R -f course-report -c 'BIOL 2305' -t 202510` 
+`Rscript cedar.R -f course-report -c 'BIOL 2305'`
 
 
+---
 
 ## CREDIT-HOURS 
 
 ### How can I see the credit hours for a dept? 
 `Rscript cedar.R -f credit-hours -d EPS` 
 
+### How can I see the credit hours for a college?
+ `Rscript cedar.R -f credit-hours --college UC`
+
+### How can I see the credit hours for a college for a specific term?
+ `Rscript cedar.R -f credit-hours --college UC -t 202580`
 
 ## DATA-STATUS 
 This reports when CEDAR data was updated with MyReports data. 
 `Rscript cedar.R -f data-status` 
 
+---
 
 ## DEPT-REPORT 
 
@@ -163,43 +138,42 @@ Use the department report generator that saves a report to CEDAR_OUTPUT_DIR/dept
 
 If sharing the report via OneDrive, use the --output-format flag set to aspx; otherwise use html (default). 
 
-  
+---  
 
 ## FORECASTING 
 See the separate forecasting guide 
 
 
+---
+
 ## GRADEBOOK 
 
 ### How can I see what grades students are getting in a course? 
 `Rscript cedar.R -f gradebook -c 'MATH 1220'` 
-  
+
+---
+
 
 ## HEADCOUNT 
 Because there is not much filtering available, probably most useful for creating CSV files.
 
-#### How do I track numbers of students historically in a given program? 
+### How do I track numbers of students in a program? 
 `Rscript cedar.R -f headcount -d ECON` 
 
+Rscript cedar.R -f headcount -d 
 
-How do I get just grad and undergrad headcount totals for a department? 
+How do I get headcount totals for a department based on first major, second major, etc? 
+Rscript cedar.R -f headcount -d ECON --group_cols level 
 
-Rscript cedar.R -f headcount -d ECON -a level 
+---
 
-   
-
-How can I see headcounts across the College? 
-
-Rscript cedar.R -f headcount -a level –t 202480 
-
-  
 
 ## LOOKOUT 
 Lookout reports what courses students are taking along with a given course, as well as courses taken beforehand and courses they go into afterwards. 
 
 `Rscript cedar.R -f lookout -c 'MATH 1130'`
 
-   
+---   
 
 ## ROLLCALL 
 
@@ -207,17 +181,13 @@ Lookout reports what courses students are taking along with a given course, as w
 `Rscript cedar.R -f rollcall -c 'MATH 1130'` 
 
   
-Use the -a (aggregate) flag to aggregate data by some combintation of course, major, and classification. Options:   
+Use the --group_cols flag to aggregate data by some combintation of course, major, and classification. Options:   
 
-Rscript cedar.R -f rollcall -c 'HIST 434' -a course_classification 
+Rscript cedar.R -f rollcall -c 'HIST 434' --group_cols course_classification 
  
 Rscript cedar.R -f rollcall -c 'HIST 434' -a course_classification_avg 
 
-Rscript cedar.R -f rollcall -c 'HIST 434' -a major_wide 
-
-Rscript cedar.R -f rollcall -c 'HIST 434' -a classification_wide 
-
-  
+---
 
 ## SEATFINDER-REPORT 
 
@@ -230,7 +200,7 @@ Rscript cedar.R -f rollcall -c 'HIST 434' -a classification_wide
 ### What 2H Gen Ed courses have seats available? 
 `Rscript cedar.R -f seatfinder-report --pt 2H -t '202380,202480'` 
 
-  
+---
 
 ## WAITLIST 
 
