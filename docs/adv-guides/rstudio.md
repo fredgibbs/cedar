@@ -1,6 +1,6 @@
 ---
-title: CLI guide
-parent: Guides 
+title: RStudio guide
+parent: Advanced Guides 
 layout: home
 ---
 
