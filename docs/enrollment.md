@@ -5,14 +5,14 @@ nav_order: 10
 ---
 
 # Enrollment
+One of the most useful features of CEDAR is aggregated and filtered enrollment reporting, which allows for a broader perspective---whether for a single semester or historical trends---that are not otherwise easily gained through MyReports data.
+
 
 ## Web Interface
 The ENROLLMENT tab on the web tool provides aggregated and filtered enrollment reporting. The filtering is mostly self-explanatory.
 
-Special courses like thesis credits and similar are automatically filtered out. Let me know if you're not seeing a course that you need to.
-
-
-The most powerful control here is the `Group by` input box, which groups aggregated output. The grouping options are fields in DESR reports, and will look familiar.
+- Special courses like thesis credits and similar are automatically filtered out. Let me know if you're not seeing a course that you need to.
+- The most powerful control here is the `Group by` input box, which groups aggregated output. The grouping options are fields in DESR reports, and will look familiar.
 
 For instance, you could look at:
 
@@ -37,6 +37,8 @@ For instance, you could look at:
 
 
 ## Command Line
+CEDAR's CLI allows for finer control than via the web interface, but is generally slower because it loads data each command (but simple enrollment queries are still pretty quick).
+
 
 ### How do I see past enrollments for a course? 
 Use the course filter: `Rscript cedar.R -f enrl -c 'HIST 491'` 

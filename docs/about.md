@@ -4,10 +4,10 @@ layout: home
 nav_order: 2
 ---
 
-# CEDAR
-### Curriculum + Enrollment Data Analysis & Reporting
+# About CEDAR
 
 ## What is CEDAR?
+### Curriculum + Enrollment Data Analysis & Reporting
 CEDAR is a suite of R scripts developed as a quick aggregation and analysis tool for MyReports data, particularly with the following reports:
 - DESRs
 - Class Lists
@@ -16,10 +16,10 @@ CEDAR is a suite of R scripts developed as a quick aggregation and analysis tool
 
 
 ## Mission
-Provide quick and easy aggregating reporitng for MyReports data
+Provide quick and easy aggregating reporting for MyReports data
 
 ## Vision
-Help facilitate a modular, extensible, and maintainable framework for everyday (or week or semster) UNM data analytics. 
+Help facilitate a modular, extensible, and maintainable framework for everyday (or week or semester) UNM data analytics. 
 
 
 ## Data note

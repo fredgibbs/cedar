@@ -17,8 +17,8 @@ CEDAR is a suite of R scripts developed as a quick aggregation and analysis tool
 
 ## Using CEDAR
 - The friendliest way to use CEDAR is the [web interface](https://019552fb-f251-4eff-3c5d-53c55c0619d2.share.connect.posit.cloud/). 
-- There are some instructions in the tool, but most are in the [web guide](web-guide). More specific instructions for enrollment reporting are on the [enrollment page](enrollment)
-- Advanced users may want to consult instructions for using CEDAR on the [command line](adv-guides/terminal) or [within RStudio](adv-guides/rstudio). There is much more functionality available through these methods than the web interface at the moment.
+- There are some instructions in the tool, but it's worth perusing the general [web guide](web-guide). More details can be found on the [enrollment page](enrollment) and the [regstats page](regstats).
+- Advanced users may want to consult instructions for using CEDAR on the [command line](adv-guides/terminal) or [within RStudio](adv-guides/rstudio). There is much more functionality available through these methods than the web interface at the moment (like producing dept reports, as in this [ANTH dept report](ANTH.html)).
 
 
 ### Data note
@@ -28,7 +28,7 @@ Institutional data reports enrollment as of the 3rd Friday of the semester (the 
 
 
 ### View on GitHub
-The code is available for download, cloning, forking, etc. in a [GitHub Repository](https://github.com/fredgibbs/cedar)
+The code is available for download, cloning, forking, etc. in a [GitHub Repository](https://github.com/fredgibbs/cedar). This project needs more contributors!
 
 
 ### Questions, Requests, Problems
