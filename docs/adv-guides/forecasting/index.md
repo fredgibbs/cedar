@@ -10,15 +10,7 @@ nav_order: 1
 ## Data updates 
 Before forecasting, it's best to update DESR and Class List data from MyReports. See the [data page](../../data) for details on how to do this.
  
-
-## Accuracy and demand 
-When looking at forecast output, the accuracy columns report the extent to which forecasts matched prior enrollments (compared to all registrations, enrollment at census, and end-of-term enrollment). Despite the "accuracy" label, this doesn't necessarily indicate how accurate the forecasts were because enrollments are throttled by many variables, including cap sizes, instructor availability, historical precedent, funding, etc. 
-
-Obviously, forecasts can be off for many reasons. BUT, seeing consistently higher predictions than enrollments isn't necessarily an overestimate, but perhaps a suggestion that there is more demand than being met.  
-
-The forecasting function uses previous enrollment data (one term or one semester depending on the method) to forecast enrollment for specified courses in future semesters. You can do individual course forecasts by course and “target” term to forecast for. You can also use set course lists and term lists (defined in lists.R). You can use the [regstats function](../../regstats) to automatically flag courses to forecast for given recent enrollment shifts.   
  
-
 ## Methods
 For a given "target" course and term: 
 
