@@ -17,12 +17,14 @@ source("includes/load_funcs.R")
 load_funcs(cedar_base_dir)
 
 # use "secret" environment variables from posit cloud connect 
+# these secrets are paths to the data files
 desrs <- Sys.getenv("desrs") 
 class_lists <- Sys.getenv("class_lists") 
 academic_studies <- Sys.getenv("academic_studies") 
 degrees <- Sys.getenv("degrees") 
 forecasts <- Sys.getenv("forecasts") 
 
+# sometimes CEDAR needs to know if it is running in a shiny app or locally
 Sys.setenv("shiny" = TRUE)
 
 message("loading data...")
@@ -59,7 +61,14 @@ ui <- page_navbar(
   
   nav_panel(
     title = "Data Status",
-    
+
+    card( 
+      card_header("Data Note"),
+      
+      "Data presented here MyReports data. It is not official, institutional data, which has a specific meaning for required reporting purposes, and is distinct from the data that MyReports provides.
+      Institutional data reports enrollment as of the 3rd Friday of the semester (the census date). My Reports data is updated nightly, which makes it a more useful source for data about things that happen after the census date. 
+      "),
+
     card( 
       card_header("Data Summary"),
       data_status %>% group_by(MyReport) %>% #filter (MyReport %in% c("DESR","class_list")) %>% 
