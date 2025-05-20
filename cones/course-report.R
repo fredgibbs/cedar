@@ -92,7 +92,7 @@ get_course_data <- function(students, courses, forecasts, opt) {
     # if any forecast short data, select cols
     if (!is.null(forecast_short) && nrow(forecast_short) > 0) {
       course_data[["forecasts"]] <- forecast_short %>% 
-        select(-c(de_mean,dl_mean,use_enrl_vals,use_cl_vals))  %>% 
+        select(-c(dr_early_mean,dr_late_mean,use_enrl_vals,use_cl_vals))  %>% 
         filter (SUBJ_CRSE %in% opt[["course"]])
     }
     else {
@@ -115,7 +115,7 @@ get_course_data <- function(students, courses, forecasts, opt) {
   # TODO: very similar code duplicated in regstats.R
   message("calculating squeezes and merging enrls and regstats data...")
   enrls <- merge(enrls,regstats,by.x=c("CAMP","COLLEGE","TERM","SUBJ_CRSE"),by.y=c("Course Campus Code","Course College Code","Academic Period Code","SUBJ_CRSE"),all.x=TRUE )
-  enrls <- enrls %>% mutate(squeeze = round(avail/da_mean,digits=2))
+  enrls <- enrls %>% mutate(squeeze = round(avail/dr_all_mean,digits=2))
   course_data[["enrls"]] <- enrls
   
   

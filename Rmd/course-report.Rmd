@@ -106,7 +106,7 @@ cat("<br> level: ", opt$level,"\n")
 
 ### FALL enrollments
 ```{r fall_enrl} 
-cols <- c("CAMP", "COLLEGE", "TERM","enrolled", "cl_total", "sections","avg_size","avail","waiting", "dr_early", "dr_late","da_mean","squeeze")
+cols <- c("CAMP", "COLLEGE", "TERM","enrolled", "cl_total", "sections","avg_size","avail","waiting", "dr_early", "dr_late","dr_all_mean","squeeze")
 
 # filter by term and course
 enrl_fall <- enrls  %>% filter (SUBJ_CRSE == course ) %>% filter (substring(TERM,5,6) == 80) %>% select(cols)

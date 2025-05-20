@@ -136,7 +136,7 @@ calc_forecast_accuracy <- function(students, courses, opt) {
   enrl_w_forecast <- merge (enrl_w_forecast, cl_enrls, by.x=c("CAMP", "COLLEGE", "SUBJ_CRSE", "TERM","term_type"), by.y=c("Course Campus Code", "Course College Code", "SUBJ_CRSE", "Academic Period Code","term_type") ,all.x=T)
   
   selected <- enrl_w_forecast %>% group_by(CAMP,COLLEGE,SUBJ_CRSE,term_type) %>% 
-    select (c(CAMP,COLLEGE,SUBJ_CRSE,term_type, de_mean,dl_mean,da_mean)) %>% 
+    select (c(CAMP,COLLEGE,SUBJ_CRSE,term_type, dr_early_mean,dr_late_mean,dr_all_mean)) %>% 
     distinct(CAMP,COLLEGE,SUBJ_CRSE,term_type, .keep_all = T)
   
   
@@ -309,9 +309,15 @@ calc_forecast_accuracy <- function(students, courses, opt) {
   # use thresholds for adjusting computed recommendations
   # forecast_summarhy <- process_recommendations(forecast_summary)
   
-  forecast_summary_short <- forecast_summary %>% ungroup() %>% select(CAMP,COLLEGE,SUBJ_CRSE,TERM,enrolled,cl_total,de_mean,dl_mean,sections,avg_size,avail,conduit,major,pref_enrl_method,pref_cl_method,use_enrl_vals,use_cl_vals,avg_enrl_accr,avg_cl_accr,rec_enrl_sections,rec_cl_sections,diff_fr_prev_cl,diff_fr_prev_enrl)
+  forecast_summary_short <- forecast_summary %>% ungroup() %>% select(CAMP,COLLEGE,SUBJ_CRSE,TERM,enrolled,cl_total,dr_early_mean,dr_late_mean,sections,avg_size,avail,
+                                                                      conduit,major,pref_enrl_method,pref_cl_method,use_enrl_vals,use_cl_vals,avg_enrl_accr,avg_cl_accr,
+                                                                      rec_enrl_sections,rec_cl_sections,diff_fr_prev_cl,diff_fr_prev_enrl)
   
-  forecast_summary <- forecast_summary %>% ungroup() %>% select(CAMP,COLLEGE,SUBJ_CRSE,TERM,enrolled,cl_total,dr_early,de_mean,dr_late,dl_mean,sections,avg_size,avail,conduit,conduit_wo_dr,c_enrl_accr,avg_c_enrl_accr, c_dr_enrl_accr, avg_c_dr_enrl_accr,c_cl_accr, avg_c_cl_accr, c_dr_cl_accr, avg_c_dr_cl_accr, major, major_wo_dr, m_enrl_accr, avg_m_enrl_accr, m_dr_enrl_accr, avg_m_dr_enrl_accr, m_cl_accr, avg_m_cl_accr, m_dr_cl_accr, avg_m_dr_cl_accr,pref_enrl_method,pref_cl_method,use_enrl_vals,use_cl_vals,avg_enrl_accr,avg_cl_accr,rec_enrl_sections,rec_cl_sections,diff_fr_prev_enrl,diff_fr_prev_cl)
+  forecast_summary <- forecast_summary %>% ungroup() %>% select(CAMP,COLLEGE,SUBJ_CRSE,TERM,enrolled,cl_total,dr_early,dr_early_mean,dr_late,dr_late_mean,sections,avg_size,avail,
+                                                                conduit,conduit_wo_dr,c_enrl_accr,avg_c_enrl_accr, c_dr_enrl_accr, avg_c_dr_enrl_accr,c_cl_accr, avg_c_cl_accr, c_dr_cl_accr, avg_c_dr_cl_accr, 
+                                                                major, major_wo_dr, m_enrl_accr, avg_m_enrl_accr, m_dr_enrl_accr, avg_m_dr_enrl_accr, m_cl_accr, avg_m_cl_accr, m_dr_cl_accr, avg_m_dr_cl_accr,
+                                                                pref_enrl_method,pref_cl_method,use_enrl_vals,use_cl_vals,avg_enrl_accr,avg_cl_accr,
+                                                                rec_enrl_sections,rec_cl_sections,diff_fr_prev_enrl,diff_fr_prev_cl)
   
   payload <- list()
   payload[["forecast_short"]] <- forecast_summary_short
