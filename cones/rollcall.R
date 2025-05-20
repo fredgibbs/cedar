@@ -90,7 +90,7 @@ rollcall <- function(students, opt) {
   if (is.null(opt[["group_cols"]])) {
     message("Everything works better with the group_cols param. Grouping with Student Classification and Major...")
     opt[["group_cols"]] <- c("Course Campus Code", "Course College Code", "Academic Period Code", "term_type", 
-                             "Student Classification", "SUBJ_CRSE", "Short Course Title", "level")
+                             "Student Classification", "Major", "SUBJ_CRSE", "Short Course Title", "level")
   }
 
   if (is.null(opt[["registration_status_code"]])) {
