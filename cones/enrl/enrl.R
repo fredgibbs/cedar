@@ -3,8 +3,8 @@
 # return a row for each course in students list, 
 # with a count and mean for each registration status code
 
-calc_cl_enrls <- function(students,reg_status=NULL) {
-  
+calc_cl_enrls <- function(students, reg_status = NULL) {
+
   # students <- load_students()
   # #reg_status <- c("DR")
   # reg_status <- NULL

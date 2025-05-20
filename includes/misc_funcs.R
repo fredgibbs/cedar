@@ -253,11 +253,12 @@ add_acad_year <- function(df, term_col) {
 
 
 load_global_data <- function(opt) {
-  message("loading data...")
+  message("loading global data...")
+  
   .GlobalEnv$courses <- load_courses()
   
   # special exception to speed up common use
-  if (opt[["func"]] != "enrl") {
+  if (is.null(opt) || opt[["func"]] != "enrl") {
     .GlobalEnv$students <- load_students()
     .GlobalEnv$academic_studies <- load_academic_studies()
   }

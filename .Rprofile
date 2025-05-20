@@ -12,7 +12,7 @@ if (interactive()) {
   
   resolve_conflicts() # defined in misc_funcs, loaded by load_funcs
   
-  load_global_data()
+  load_global_data(opt=NULL)
   
 }
 
