@@ -42,15 +42,12 @@ filter_class_list <- function(students, opt) {
   }
   
   # filter by registration status
-  # automatically treats Registered and Student Registered as the same
-  if (!is.null(opt$registration_status)) {
-    message("filtering by registration status:",opt$registration_status)
-    if (opt$registration_status == "Registered") {
-      students <- students  %>% filter (`Registration Status`== "Registered" | `Registration Status`== "Student Registered")
-    } else {
-      students <- students  %>% filter (`Registration Status`== opt$registration_status)
-    }
+  if (!is.null(opt$registration_status_code)) {
+    message("filtering by registration status code: ", opt$registration_status_code)
+    param_to_list <- convert_param_to_list(opt[["registration_status_code"]])
+    students <- students %>% filter (`Registration Status Code` %in% param_to_list)
   }
+  
   
   # filter by instruction method
   # this is the best way to identify/filter AOP courses
