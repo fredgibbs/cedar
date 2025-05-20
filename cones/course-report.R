@@ -128,6 +128,9 @@ get_course_data <- function(students, courses, forecasts, opt) {
   # get rollcall data and pivot to wide
   message("getting rollcall data...")
   
+  # Only get registered students
+  myopt[["registration_status_code"]] <- c("RE","RS")
+  
   myopt[["group_cols"]] <- c("Course Campus Code", "Course College Code","Academic Period Code", "term_type", "Student Classification", "SUBJ_CRSE","Short Course Title","level")
   rollcall_out <- rollcall(students,myopt)
   rollcall_out <- rollcall_out %>% select(-c(term_type, mean)) %>% 
