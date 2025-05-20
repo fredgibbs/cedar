@@ -28,13 +28,12 @@ summarize_classifications <- function(filtered_students, opt) {
     group_cols <- as.character(group_cols)
   }
 
-  # Group and count distinct and registered students
+  # Group and count distinct students
   # TODO: this is similar to calc_cl_enrls but with Major and Classification
   # TODO: should probably handle those in that function instead of here
   summary <- filtered_students %>%
     group_by_at(group_cols) %>%
     distinct(`Student ID`, .keep_all = TRUE) %>%
-    filter(`Registration Status Code` %in% c("RE","RS")) %>%
     summarize(.groups = "keep", count = n())
 
   # Regroup without "Academic Period Code" to calculate means
@@ -51,7 +50,7 @@ summarize_classifications <- function(filtered_students, opt) {
   # Ungroup for merging and select relevant columns
   crse_enrollment <- reg_summary %>%
     ungroup() %>%
-    select(c(`Course Campus Code`, `Course College Code`, SUBJ_CRSE, `Academic Period Code`, registered, reg_mean))
+    select(c(`Course Campus Code`, `Course College Code`, SUBJ_CRSE, `Academic Period Code`, registered, registered_mean))
 
   # Merge summary of majors and classifications with course enrollment data
   merge_sum_enrl <- merge(summary, crse_enrollment, by = c("Course Campus Code", "Course College Code", 
@@ -60,8 +59,8 @@ summarize_classifications <- function(filtered_students, opt) {
   merge_sum_enrl <- merge_sum_enrl %>%
     group_by(`Course Campus Code`, `Course College Code`, `Academic Period Code`, SUBJ_CRSE) %>%
     mutate(pct = round(count / registered * 100, digits = 1)) %>%
-    select(-c(count, registered, reg_mean)) %>%
-    arrange(`Academic Period Code`, desc(pct))
+    select(-c(count, registered, registered_mean)) %>%
+    arrange(`Course Campus Code`, `Course College Code`, `Academic Period Code`, SUBJ_CRSE, desc(pct))
 
   return(merge_sum_enrl)
 }
@@ -71,9 +70,9 @@ summarize_classifications <- function(filtered_students, opt) {
 #' This is the main function for processing student data. It filters students, removes pre-201980 data,
 #' and aggregates student classifications and majors.
 #'
-#' @param students A data frame of student data.
+#' @param students A dataframe of aggregated MyReports Class List Reports
 #' @param opt A list of options for filtering and grouping, including `group_cols`, `term`, and `course`.
-#' @return A summarized data frame of student classifications and majors.
+#' @return A summarized dataframe of student classifications and majors.
 #' @examples
 #' opt <- list(group_cols = c("Major", "Student Classification"), term = 202110)
 #' rollcall(students, opt)
@@ -81,11 +80,11 @@ rollcall <- function(students, opt) {
   message("\nWelcome to Rollcall!")
 
   # for studio testing...
-  opt <- list()
-  opt$term <- NULL
-  opt[["group_cols"]] <- c("Course Campus Code", "Course College Code","Academic Period Code", "term_type", 
-                           "Student Classification", "SUBJ_CRSE","Short Course Title","level")
-  opt$course <- "BIOL 2305"
+  # opt <- list()
+  # opt$term <- NULL
+  # opt[["group_cols"]] <- c("Course Campus Code", "Course College Code","Academic Period Code", "term_type", 
+  #                          "Student Classification", "SUBJ_CRSE","Short Course Title","level")
+  # opt$course <- "BIOL 2305"
 
   # Set default group_cols if not provided
   if (is.null(opt[["group_cols"]])) {
@@ -94,6 +93,12 @@ rollcall <- function(students, opt) {
                              "Student Classification", "SUBJ_CRSE", "Short Course Title", "level")
   }
 
+  if (is.null(opt[["registration_status_code"]])) {
+    message("No registration status code provided; defaulting to Registered (RE and RS) students only...")
+    opt[["registration_status_code"]] <- c("RE", "RS")
+  }
+  
+  
   # Set the "use exclude list" flag
   message("Setting --uel flag to TRUE...")
   opt$uel <- TRUE
