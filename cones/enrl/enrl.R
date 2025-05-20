@@ -30,31 +30,34 @@ calc_cl_enrls <- function(students, reg_status = NULL) {
   
   if (is.null(reg_status)) {
     message("reg_status is NULL; calculating all reg stats...")
+    
+    # Group without Registration Status Code
     cl_enrls <- cl_enrls %>% group_by(`Course Campus Code`,`Course College Code`,SUBJ_CRSE,`Academic Period Code`, term_type)
     
-    reg_stats_summary <- cl_enrls %>% filter(`Registration Status Code`== "RE" | `Registration Status Code`== "RS")  %>%
+    reg_stats_summary <- cl_enrls %>% filter(`Registration Status Code` %in% c("RE","RS"))  %>%
       summarize(registered = sum(count), .groups="keep")
     
     de <- cl_enrls %>% filter (`Registration Status Code` %in% c("DR")) %>%
       summarize(dr_early = sum(count), .groups="keep")
     reg_stats_summary <- merge(reg_stats_summary, de, all=T)
     
-    
     dl <- cl_enrls %>% filter (`Registration Status Code` %in% c("DG","DW","DD")) %>%
       summarize(dr_late = sum(count), .groups="keep")
     reg_stats_summary <- merge(reg_stats_summary, dl, all=T)
-    
     
     da <- cl_enrls %>% filter (`Registration Status Code` %in% c("DR","DG","DW","DD")) %>%
       summarize(dr_all = sum(count), .groups="keep")
     reg_stats_summary <- merge(reg_stats_summary, da, all=T)
     
-
-    cl_total <- cl_enrls %>% 
+    wl <- cl_enrls %>% filter (`Registration Status Code` %in% c("WL")) %>%
+      summarize(wl_all = sum(count), .groups="keep")
+    reg_stats_summary <- merge(reg_stats_summary, wl, all=T)
+    
+    # Filter out waitlisted students
+    cl_total <- cl_enrls %>% filter (!`Registration Status Code` %in% c("WL")) %>% 
       summarize(cl_total = sum(count), .groups="keep")
     reg_stats_summary <- merge(reg_stats_summary, cl_total, all=T)
     
-        
     # remove NAs from merging
     reg_stats_summary[is.na(reg_stats_summary)] <- 0
     
@@ -63,12 +66,8 @@ calc_cl_enrls <- function(students, reg_status = NULL) {
     reg_stats_summary <- reg_stats_summary %>% group_by(`Course Campus Code`,`Course College Code`,SUBJ_CRSE, term_type)
     
     # get means across term_types
-    reg_stats_summary <- reg_stats_summary %>% mutate(de_mean = round(mean(dr_early),digits=2))
-    reg_stats_summary <- reg_stats_summary %>% mutate(dl_mean = round(mean(dr_late),digits=2))
-    reg_stats_summary <- reg_stats_summary %>% mutate(da_mean = round(mean(dr_all),digits=2))
-    reg_stats_summary <- reg_stats_summary %>% mutate(cl_mean = round(mean(cl_total),digits=2))
-    reg_stats_summary <- reg_stats_summary %>% mutate(reg_mean = round(mean(registered),digits=2))
-    
+    reg_stats_summary <- reg_stats_summary %>%
+      mutate(across(c(dr_early, dr_late, dr_all,cl_total,registered), ~ round(mean(.), digits = 2), .names = "{.col}_mean"))
   }
   # if given list of reg codes, filter for those
   else if (!is.null(reg_status)) {
