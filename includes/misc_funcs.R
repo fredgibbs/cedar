@@ -14,6 +14,13 @@ cedar <- function(func="guide",...) {
   # display command line params
   print(opt)  
   
+  message("loading external functions...")
+  source("includes/config.R")
+  source("includes/load_funcs.R")
+  load_funcs("./")
+  
+  resolve_conflicts() # defined in misc_funcs
+  
   message("processing function: ", opt$func, "...")
   msg <- process_func(opt)
   if (is.character(msg)) { 

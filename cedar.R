@@ -143,18 +143,21 @@ if (opt$func == "guide") {
   stop("no error")
 } 
 
-message("loading external functions...")
+# Load external R files
 source("includes/config.R")
 source("includes/load_funcs.R")
 load_funcs("./")
 
-resolve_conflicts() # defined in misc_funcs, loaded by load_funcs
+# prefer dyplr and plotly functions; defined in misc_funcs
+resolve_conflicts() 
 
 # load data globally
 load_global_data(opt)
 
-
+# call function from opt param
 msg <- process_func(opt)
+
+# display return values
 if (is.character(msg)) { 
   message(msg)
 }

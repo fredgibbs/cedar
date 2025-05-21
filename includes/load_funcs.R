@@ -1,5 +1,5 @@
 load_funcs <- function(cedar_base_dir) {
-  message("loading CEDAR cones...")
+  message("loading R files...")
   setwd(cedar_base_dir)
   
   source("includes/mappings.R")
