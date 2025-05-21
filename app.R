@@ -533,7 +533,9 @@ server <- function(input, output, session) {
     
     opt <- list()
     opt[["course"]] <- input$wl_course
-    if (opt[["course"]] == "") {
+    
+    # Set course to NULL if empty
+    if (length(opt[["course"]]) == 1 && opt[["course"]] == "") {
       opt[["course"]] <- NULL
     }
     waitlist_data <- inspect_waitlist(students,opt)
