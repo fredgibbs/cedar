@@ -223,8 +223,7 @@ ui <- page_navbar(
              selectizeInput(
                inputId = "wl_course",
                label = "Select Course", 
-               multiple = FALSE,
-               selected = "",
+               multiple = TRUE,
                choices = NULL),
       ),
       column(2,

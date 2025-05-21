@@ -7,16 +7,18 @@ get_unique_waitlisted <- function(filtered_students, opt) {
     
   message("welcome to get_unique_waitlisted!")
 
+  select_cols <- c("Course Campus Code", "Academic Period Code", "SUBJ_CRSE", "Short Course Title", "Student ID")
+
   # Get waitlisted student IDs
   waitlisted <- filtered_students %>%
     filter(`Registration Status` == "Wait Listed") %>%
-    select(`Course Campus Code`, `Student ID`) %>%
+    select(all_of(select_cols)) %>%
     unique()
   
   # Get registered student IDs
   registered <- filtered_students %>%
     filter(`Registration Status` %in% c("Student Registered", "Registered")) %>%
-    select(`Course Campus Code`, `Student ID`) %>%
+    select(all_of(select_cols)) %>%
     unique()
   
   
@@ -25,7 +27,7 @@ get_unique_waitlisted <- function(filtered_students, opt) {
   only_waitlisted <- only_waitlisted %>%
     group_by(`Course Campus Code`) %>%
     summarize(count = n(), .groups = "drop") %>%
-    arrange(`Course Campus Code`, desc(count))
+    arrange(`Course Campus Code`, SUBJ_CRSE, desc(count))
 
 
   # Return waitlisted IDs not also registered
