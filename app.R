@@ -216,7 +216,7 @@ ui <- page_navbar(
   
 
   nav_panel(
-    title = "Wait Lists", 
+    title = "Waitlists", 
     
     fluidRow(
       column(6,
@@ -414,7 +414,7 @@ server <- function(input, output, session) {
   
   updateSelectizeInput(session, 'enrl_course', choices = sort(unique(courses$SUBJ_CRSE)), server = TRUE)
   updateSelectizeInput(session, 'cr_course', choices = sort(unique(courses$SUBJ_CRSE)), server = TRUE)
-  
+  updateSelectizeInput(session, 'wl_course', choices = sort(unique(courses$SUBJ_CRSE)), server = TRUE)
   
   ##### ENROLLMENT #####
   observeEvent(input$enrl_button,{
