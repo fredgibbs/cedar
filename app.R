@@ -534,6 +534,9 @@ server <- function(input, output, session) {
     
     opt <- list()
     opt[["course"]] <- input$wl_course
+    if (opt[["course"]] == "") {
+      opt[["course"]] <- NULL
+    }
     waitlist_data <- inspect_waitlist(students,opt)
     
     output$wl_majors = DT::renderDataTable({
