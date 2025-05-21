@@ -59,7 +59,7 @@ summarize_classifications <- function(filtered_students, opt) {
   merge_sum_enrl <- merge_sum_enrl %>%
     group_by(`Course Campus Code`, `Course College Code`, `Academic Period Code`, SUBJ_CRSE) %>%
     mutate(pct = round(count / registered * 100, digits = 1)) %>%
-    select(-c(count, registered, registered_mean)) %>%
+    # select(-c(count, registered, registered_mean)) %>%
     arrange(`Course Campus Code`, `Course College Code`, `Academic Period Code`, SUBJ_CRSE, desc(pct))
 
   return(merge_sum_enrl)

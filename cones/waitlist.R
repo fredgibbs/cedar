@@ -1,71 +1,95 @@
-# In addition to terminal output, saves a CSV file that shows the aggregated wait list across sections of a course
-# Students are already registered are NOT included
-# Terminal display shows waiting and registered AND waiting and not registered (by major and by classification), 
+#' Get unique waitlisted student IDs not registered for a course
+#'
+#' @param students Data frame of student enrollments, already filtered by opt params.
+#' @param opt The usual opt list
+#' @return Dataframe of counts by Campus who are waitlisted and not registered for the course.
+get_unique_waitlisted <- function(filtered_students, opt) {
+    
+  message("welcome to get_unique_waitlisted!")
 
-# No required params, but this is more useful to use filtering params (usually by course)
+  # Get waitlisted student IDs
+  waitlisted <- filtered_students %>%
+    filter(`Registration Status` == "Wait Listed") %>%
+    select(`Course Campus Code`, `Student ID`) %>%
+    unique()
+  
+  # Get registered student IDs
+  registered <- filtered_students %>%
+    filter(`Registration Status` %in% c("Student Registered", "Registered")) %>%
+    select(`Course Campus Code`, `Student ID`) %>%
+    unique()
+  
+  
+  only_waitlisted <- setdiff(waitlisted, registered)
 
-inspect_waitlist <- function (students,opt) {
+  only_waitlisted <- only_waitlisted %>%
+    group_by(`Course Campus Code`) %>%
+    summarize(count = n(), .groups = "drop") %>%
+    arrange(`Course Campus Code`, desc(count))
+
+
+  # Return waitlisted IDs not also registered
+  message("returning waitlisted students not registered...")
+  return (only_waitlisted)
+}
+
+
+#' Inspect Waitlist by Major and Classification
+#'
+#' This function summarizes the waitlist for a given set of students and options.
+#' It aggregates waitlist data by major and by classification, and counts the number of
+#' unique students who are waitlisted but not registered.
+#'
+#' @param students A data frame of student enrollments.
+#' @param opt A list of options for filtering and grouping.
+#' @return A list containing summaries by major, by classification, and the count of unique waitlisted students.
+#' @examples
+#' inspect_waitlist(students, list(course = "MATH 1430", term = 202580))
+inspect_waitlist <- function (students, opt) {
 
   #### for studio testing
   # opt <- list()
   # opt$course <- "MATH 1430"
-  # opt$term <- 202410
-  # opt$pt <- "2H"
+  # opt$term <- 202580
   
-  message("welcome to inspect_waitlist! (in waitlist.R)")
+  message("welcome to inspect_waitlist!")
   
   message("filtering students from params...")
   filtered_students <- filter_class_list(students,opt) 
-  
-  filtered_students <- filtered_students %>% 
-    select (`Academic Period Code`,SUBJ_CRSE,CRSE_TITLE,`Student ID`,`Student Name`,`Student Classification`,`Student College`, Major, `Registration Status`,`Schedule Attribute Code`) %>% 
-    distinct(`Student ID`, `Registration Status`, .keep_all = T)
-  
-  message("getting students with registration status as 'Wait Listed'...")
-  waiting <- filtered_students %>% filter (`Registration Status` == "Wait Listed")
-  waitingids <- waiting$`Student ID`
-  message("All waitlisted students:")
-  waiting %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  message("number of waitlisted students: ",nrow(waiting))
-  
-  # using IDs from waitlists, get list of students registered for same course (across all sections)
-  waiting_and_registered <- filtered_students %>% filter (`Student ID` %in% waitingids & `Registration Status` %in% c("Student Registered", "Registered" ))  
-  war_ids <- waiting_and_registered$`Student ID`
-  waiting_and_registered <- add_acad_year(waiting_and_registered,"Academic Period Code")
-  
-  message("students waiting AND registered:")
-  waiting_and_registered %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  message("number of waitlisted AND registered students: ",nrow(waiting_and_registered))
-  
-  message("summary of students waiting AND registered:")
-  war_summary <- waiting_and_registered %>% group_by(`Academic Period Code`,`Student Classification`,Major,`Schedule Attribute Code`) %>% 
-    summarize(total = n()) 
-  war_summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  
-  message("students waiting AND NOT registered:")
-  just_waiting <- filtered_students %>% filter (`Registration Status` == "Wait Listed" & !(`Student ID` %in% war_ids))
-  just_waiting %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  message("number of waitlisted AND NOT registered students: ",nrow(just_waiting))
 
-  message("summary of students waitlisted and NOT registered:")  
-  jm_summary <- just_waiting %>% group_by(`Academic Period Code`,`Student Classification`,Major,`Schedule Attribute Code`) %>% 
-    summarize(total = n()) 
-  jm_summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  message("number of waitlisted students NOT registered: ",nrow(waiting))
+  # Get only waitlisted students
+  filtered_students <- filtered_students  %>% filter(`Registration Status` == "Wait Listed")
 
-  message("summary of students waiting and NOT registered:")
-  jm_summary <- just_waiting %>% group_by(`Academic Period Code`,Major,`Schedule Attribute Code`) %>% summarize(total = n()) 
-  jm_summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  message("number of waitlisted students by MAJOR and NOT registered: ",nrow(waiting))
+  # Set groups in case multiple courses are selected
+  filtered_students <- filtered_students %>%
+    group_by(`Course Campus Code`, `Course College Code`, `Academic Period Code`, `term_type`, 
+           Major, SUBJ_CRSE, `Short Course Title`, level)
+
+  # Create empty list for waitlist data
+  waitlist_data <- list()
+
+  # Set group_cols for Major
+  opt[["group_cols"]] <- c("Course Campus Code", "Course College Code", "Academic Period Code", "term_type", 
+                          "Major", "SUBJ_CRSE", "Short Course Title", "level")
+
+  waitlist_data[["majors"]] <- summarize_classifications(filtered_students, opt) %>% 
+    ungroup() %>% 
+    select (-c(`Course College Code`, level, term_type, mean, registered, registered_mean, pct)) %>% 
+    arrange (`Course Campus Code`, desc(count))
+
+
+# Set group_cols for Classification
+  opt[["group_cols"]] <- c("Course Campus Code", "Course College Code", "Academic Period Code", "term_type", 
+                          "Student Classification", "SUBJ_CRSE", "Short Course Title", "level")
+
+  waitlist_data[["classifications"]] <- summarize_classifications(filtered_students, opt) %>% 
+    ungroup() %>% 
+    select (-c(`Course College Code`, level, term_type, mean, registered, registered_mean, pct)) %>% 
+    arrange (`Course Campus Code`, desc(count))
+
+  waitlist_data[["count"]] <- get_unique_waitlisted(filtered_students, opt)
   
-  message("summary of students waiting and NOT registered:")
-  jm_summary <- just_waiting %>% group_by(`Academic Period Code`,`Student Classification`,`Schedule Attribute Code`) %>% summarize(total = n()) 
-  jm_summary %>% tibble::as_tibble() %>% print(n = nrow(.), width=Inf)
-  message("number of waitlisted students by CLASSIFICATION and NOT registered: ",nrow(waiting))
+  message("returning waitlist data...")
   
-  message("all done inspecting waitlists!")
-  
-  # TODO: return list of student totals rather than student list
-  
-  return(just_waiting)
+  return(waitlist_data)
 }
