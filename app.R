@@ -214,7 +214,33 @@ ui <- page_navbar(
     # )
   ), # end nav panel course_report
   
+
+  nav_panel(
+    title = "Wait Lists", 
+    
+    fluidRow(
+      column(6,
+             selectizeInput(
+               inputId = "wl_course",
+               label = "Select Course", 
+               multiple = FALSE,
+               selected = "",
+               choices = NULL),
+      ),
+      column(2,
+             actionButton("wl_button",label = "Inspect Wait Lists")
+      )
+    ), # end fluidRow
+    
+    fluidRow(
+      column(12,
+             DTOutput("wl_majors")
+      )
+    ) # end fluidRow
+  ), # end waitlist panel course_report
   
+  
+    
   
   nav_panel(
     title = "Seatfinder", 
@@ -381,6 +407,8 @@ ui <- page_navbar(
 ) # end ui
 
 
+
+
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
@@ -485,6 +513,35 @@ server <- function(input, output, session) {
     })
     
   },ignoreInit = TRUE)
+  
+  
+  ##### WAITLIST #####
+  observeEvent(input$wl_button,{
+    #RV$data<-myCustomFunction(RV$data)
+    
+    # get seatfinder data
+    opt <- list()
+    opt[["course"]] <- input$cl_course
+    waitlist_data <- inspect_waitlist(students,opt)
+    
+    output$wl_majors = DT::renderDataTable({
+      data <- waitlist_data[["majors"]]
+    })
+    
+    output$wl_classifications = DT::renderDataTable({
+      data <- waitlist_data[["classifications"]]
+    })
+    
+    output$wl_count = DT::renderDataTable({
+      data <- waitlist_data[["count"]]
+    })
+    
+    output$courses_new = DT::renderDataTable({
+      data <- courses_list[["courses_new"]]
+    })
+    
+  },ignoreInit = TRUE)
+  
   
   
   ##### REGSTATS #####
