@@ -231,10 +231,23 @@ ui <- page_navbar(
              actionButton("wl_button",label = "Inspect Wait Lists")
       )
     ), # end fluidRow
-    
+
+    fluidRow(
+      column(12,
+             DTOutput("wl_count")
+      ),
+    ) # end fluidRow
+
+
     fluidRow(
       column(12,
              DTOutput("wl_majors")
+      ),
+    ) # end fluidRow
+
+    fluidRow(
+      column(12,
+             DTOutput("wl_classifications")
       )
     ) # end fluidRow
   ), # end waitlist panel course_report
@@ -519,9 +532,8 @@ server <- function(input, output, session) {
   observeEvent(input$wl_button,{
     #RV$data<-myCustomFunction(RV$data)
     
-    # get seatfinder data
     opt <- list()
-    opt[["course"]] <- input$cl_course
+    opt[["course"]] <- input$wl_course
     waitlist_data <- inspect_waitlist(students,opt)
     
     output$wl_majors = DT::renderDataTable({
