@@ -235,15 +235,15 @@ ui <- page_navbar(
     fluidRow(
       column(12,
              DTOutput("wl_count")
-      ),
-    ) # end fluidRow
+      )
+    ), # end fluidRow
 
 
     fluidRow(
       column(12,
              DTOutput("wl_majors")
-      ),
-    ) # end fluidRow
+      )
+    ), # end fluidRow
 
     fluidRow(
       column(12,
