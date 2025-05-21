@@ -80,10 +80,8 @@ filter_class_list <- function(students, opt) {
   # COURSE filter
   if (!is.null(opt[["course"]])) {
     message("filtering by course...")
-    param_to_list <- convert_param_to_list(opt[["course"]])
-    students <- students %>% filter (SUBJ_CRSE %in% param_to_list)
-  }
-  
+    students <- filter_by_col(students,"SUBJ_CRSE",opt[["course"]])
+  }  
   
   # MAJOR filter
   message("figuring out major filtering...")
