@@ -252,7 +252,7 @@ special_filters_desr <- list(
   crosslist = function(df, value) .xlist_filter(df, value),
   enrl_min = function(df, value) df %>% filter(total_enrl >= as.integer(value)),
   enrl_max = function(df, value) df %>% filter(total_enrl <= as.integer(value)),
-  uel = function(df, value) df %>% subset(!(SUBJ_CRSE %in% excluded_courses)),
+  uel = function(df, value) df %>% subset(!(SUBJ_CRSE %in% excluded_courses))
 )
 
 special_filters_classlist <- list(
