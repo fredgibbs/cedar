@@ -9,9 +9,11 @@ load_funcs <- function(cedar_base_dir) {
   
   source("includes/misc_funcs.R")
   source("includes/process_func.R")
-  source("includes/filter_class_list.R")
-  source("includes/filter_DESRs.R")
+  source("includes/filter.R")
+  #source("includes/filter_class_list.R")
+  #source("includes/filter_DESRs.R")
   
+
   source("cones/enrl/enrl.R")
   source("cones/forecast/forecast.R")
   source("cones/forecast/forecast-stats.R")

@@ -38,128 +38,14 @@ resolve_conflicts <- function() {
 }
 
 
-check_num_rows <- function(data) {
-  message("current data has ",nrow(data)," rows.")
+
+# TODO: way too hacky. 
+update_codes <- function(df,col) {
+  df[col][df[col] == "CCS"] <- "CCST"
+  df[col][df[col] == "PSY"] <- "PSYC"
+  df[col][df[col] == "SOC"] <- "SOCI"
+  return(df)
 }
-
-
-filter_by_col <- function(data, col, val) {
-  message("filtering by ",col, "=", val)
-  
-  param_to_list <- convert_param_to_list(val)
-  message(param_to_list)
-  
-  ## use get instead of {{ }} because col is passed in as a string, rather than a variable
-  data <- data %>% filter (get(col) %in% param_to_list)
-  
-  check_num_rows(data)
-  
-  return(data)
-}
-
-
-
-# this function inspects and parses a param to a vector (not list as it did originally)
-# named vectors/lists should returned with their value
-# commma separated strings should be converted to a list
-# char vectors should be returned as is
-
-# TODO: fix list vs vector throughout code
-# TODO: handle a list/vector of named lists/vectors
-
-convert_param_to_list <- function(param) {
-  #message("\nWelcome to convert_param_to_list!")
-  #print(str(param))
-  
-  # check if list type already; if so, return it
-  if (is.list(param)) {
-    #message("param is already list. returning it...")
-    param_to_list <- param
-    return(param_to_list)
-  }
-  #check for comma in param
-  else if (length(param) == 1 && grepl(",", param)) {
-    message("comma string detected...")
-    param <- str_replace(param, ", ", ",")
-    param <- strsplit(param, ",")[[1]]
-    message("converting to list and returning...")
-    param_to_list <- as.list(param)
-    return(param_to_list)
-  }
-  # check if param is a named object (probably defined in includes/lists.R) 
-  # TODO: need to be explicit about where to look; this sometimes finds an R-level entity
-  else if (length(param) == 1 && exists(get("param"))) { 
-    message("param already defined: ", get("param"))
-    message(str(get(param)))
-    if (param == "as" || param =="CJ") { # hack for now
-     return (as.list(param))
-    } 
-    else return(get(param))
-  }
-  else if (is.character(param)) {
-    #message("param is character. returning as list...")
-    param_to_list <- as.list(param)
-    return(param_to_list)
-  }
-  # quit if unsure what to do to prevent weird errors down the line
-  else {
-    stop(paste0("covert_param_to_list not sure what to do with supplied param: ", str(param)))
-  }
-}
-
-
-filter_by_term <- function(data,term,term_col_name) {
-  
-  # if term is not a list, convert to string
-  if (!is.list(term)) {
-    term <- as.character(term)
-  }
-  
-  message("term legnth: ", length(term))
-  
-  if (length(term) > 0 || !is.null(term)) { 
-    message("processing term param: ", term)
-    #message("term_col_name: ", term_col_name)
-    print(str(term))
-    # check for single string and dash to indicate range
-    if (length(term) == 1 && grepl("-",term)) {
-      message("parsing term code range...")
-      terms <- unlist(str_split(term,"-"))
-      message("terms: ",terms)
-      
-      # for terms like 202280-
-      if (terms[2] == "") {
-        term_str <- paste0("`",term_col_name,"` >= ",terms[1])
-      }
-      else {
-        term_str <- paste0(term_col_name," >= ",terms[1], " & ", term_col_name , " <= ",terms[2])
-      }
-      
-      message("term_str: ",term_str)
-      
-      data <- data %>% filter (!!rlang::parse_expr(term_str))
-    } # end if not list
-    
-    else if (length(term) == 1 && term == "fall") {
-      data <- data %>% filter (substring(get({{term_col_name}}),5,6) == 80)
-    } 
-    else if (length(term) == 1 && term == "spring") {
-      data <- data %>% filter (substring(get({{term_col_name}}),5,6) == 10)
-    }
-    else if (length(term) == 1 && term == "summer") {
-      data <- data %>% filter (substring(get({{term_col_name}}),5,6) == 60)
-    }
-    else {  # convert param to list and filter
-      term_list <- convert_param_to_list(term)
-      #message("filtering ", term_col_name, " by ",term_list)
-      data <- data %>% filter (get(term_col_name) %in% term_list)
-    }
-  } # end if term is not null
-  
-  message("term filtering done. returning ",nrow(data)," rows.")
-  return (data)
-}
-
 
 
 # get a course list based on opt params 
@@ -180,44 +66,6 @@ get_course_list <- function(courses,opt) {
   course_list <- unique(enrls$SUBJ_CRSE)
   
   return(course_list)
-}
-
-
-# this function filters a simple SUBJ_CRSE list according to opt params
-# select_courses should be a 1xn tibble or list
-filter_course_list <- function(all_courses,select_courses,opt) {
-  message("welcome to filter_course list!")
-  
-  # for studio testing...
-  #all_courses <- load_courses()
-  #select_courses <- as_tibble(next_courses$SUBJ_CRSE)
-  
-  # filter all courses to just supplied selected 
-  courses <- all_courses %>% filter (SUBJ_CRSE %in% unlist(select_courses))
-  
-  # get all enrollment data for course to
-  enrls <- get_enrl(courses,opt)
-  
-  # grab just course list
-  course_list <- unique(enrls$SUBJ_CRSE)
-  
-  message("all done in filter_course_list.")
-  return(course_list)
-}
-
-
-# filter out summer from DF
-filter_out_summer <- function (data,term_col_name) {
-  data <- data %>% filter (substring(get({{term_col_name}}),5,6) != 60)
-  return(data)
-}
-
-# TODO: way too hacky. 
-update_codes <- function(df,col) {
-  df[col][df[col] == "CCS"] <- "CCST"
-  df[col][df[col] == "PSY"] <- "PSYC"
-  df[col][df[col] == "SOC"] <- "SOCI"
-  return(df)
 }
 
 

@@ -437,8 +437,8 @@ server <- function(input, output, session) {
       opt$status <- "A"
       opt$uel <- TRUE
       opt[["group_cols"]] <- input$enrl_agg_by
-      opt[["campus"]] <- input$enrl_campus
-      opt[["college"]] <- input$enrl_college
+      opt[["course_campus"]] <- input$enrl_campus
+      opt[["course_college"]] <- input$enrl_college
       opt[["dept"]] <- input$enrl_dept
       opt[["inst"]] <- input$enrl_inst
       opt[["pt"]] <- input$enrl_pt
@@ -490,8 +490,8 @@ server <- function(input, output, session) {
     
     # get seatfinder data
     opt <- list()
-    opt[["campus"]] <- input$sf_campus
-    opt[["college"]] <- input$sf_college
+    opt[["course_campus"]] <- input$sf_campus
+    opt[["course_college"]] <- input$sf_college
     opt[["dept"]] <- input$sf_dept
     opt[["term"]] <- input$sf_term
     opt[["pt"]] <- input$sf_pt
@@ -567,8 +567,8 @@ server <- function(input, output, session) {
     # get regstats data
     opt <- list()
     opt[["shiny"]] <- TRUE
-    opt[["campus"]] <- input$rs_campus
-    opt[["college"]] <- input$rs_college
+    opt[["course_campus"]] <- input$rs_campus
+    opt[["course_college"]] <- input$rs_college
     opt[["term"]] <- input$rs_term
     opt[["pt"]] <- input$rs_pt
     opt[["im"]] <- input$rs_im
@@ -581,11 +581,8 @@ server <- function(input, output, session) {
     
     flagged <- create_regstat_report(students, courses, opt)
     
-    #html_file <- "/Users/fwgibbs/Dropbox/cedar/output/regstats-reports/html/regstats-202510-1.html"
     html_file <- "Rmd/output.html"
-    #print(html_file)
     
-    #output$cd_enrls <- renderDataTable({
     output$rs_report <- renderUI({
       tags$iframe(src = base64enc::dataURI(file=html_file, mime="text/html; charset=UTF-8"),style="height:100vh; width:100%")
     })

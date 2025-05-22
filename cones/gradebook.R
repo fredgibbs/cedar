@@ -233,7 +233,7 @@ get_grades_for_dept_report <- function(students,opt,d_params) {
   
   # limit to ABQ campus and online until we have better plotting across campuses
   message("limiting to ABQ and EA campus for plotting...")
-  myopt[["campus"]] <- c("ABQ","EA")
+  myopt[["course_campus"]] <- c("ABQ","EA")
   
   
   # get grades by each course and term for table in dept report

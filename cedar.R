@@ -15,21 +15,24 @@ set_option_list <- function() {
                 help="show instructions and options for specified function."),
     
     # basic filtering params
-    make_option(c("--campus"), type="character",
-                help="campus", metavar="character"),
-    
-    make_option(c("--classification"), type="character",
-                help="student classification [default= %default]", metavar="character"),
-    
-    make_option(c("--college"), type="character", # for filtering DESRs
-                help="college offering course"), 
-    
-    make_option(c("--studentcollege"), type="character", # for filtering class lists
-                help="college (code) student is enrolled in"), 
-    
-    make_option(c("--coursecollege"), type="character", # for filtering class lists
+    make_option(c("--course_campus"), type="character",
+                help="course campus", metavar="character"),
+
+    make_option(c("--course_college"), type="character", # for filtering class lists
                 help="college (code) offering course"), 
     
+    make_option(c("--course_status"), type="character", default="A", 
+                help="status [default = %default]", metavar="character"), 
+
+    make_option(c("--student_campus"), type="character",
+                help="student campus", metavar="character"),
+
+    make_option(c("--student_college"), type="character", # for filtering class lists
+                help="college (code) student is enrolled in"), 
+
+    make_option(c("--classification"), type="character",
+                help="student classification [default= %default]", metavar="character"),
+            
     make_option(c("-c", "--course"), type="character",
                 help="course SUBJ and NUMBER (=SUBJ and CRSE in DESRs); this can be like HIST 491 or a comma-separated list, or a named list."),
     
@@ -47,10 +50,7 @@ set_option_list <- function() {
     
     make_option(c("--gen_ed"), type="character",
                 help="gen ed area number"),
-    
-    make_option(c("--group_cols"), type="character",
-                help="column names to aggregate results by"),
-    
+        
     make_option(c("-i","--inst"), type="character", 
                 help="instructor", metavar="character"),
     
@@ -69,17 +69,11 @@ set_option_list <- function() {
     make_option(c("--pt"), type="character",
                 help="part of term [1, 1H, 2H] ", metavar="character"),
     
-    make_option(c("--registration_status"), type="character", #default="Student Registered",
+    make_option(c("--reg_status_code"), type="character", #default="Student Registered",
                 help="student registration status", metavar="character"), 
     
     make_option(c("-s", "--subj"), type="character", 
                 help="subject code", metavar="character"),
-    
-    make_option(c("--status"), type="character", default="A", 
-                help="status [default = %default]", metavar="character"), 
-    
-    make_option(c("--summer"), default=FALSE, action="store_true",
-                help="include summer terms"),
     
     make_option(c("-t", "--term"), type="character", 
                 help="term code (i.e. 202410)", metavar="character"),
@@ -95,8 +89,8 @@ set_option_list <- function() {
     
     
     # non-filtering options used with various flags
-    make_option(c("-a", "--aggregate"), type="character",
-                help="aggreagte: specify how; see guide for function for options.", metavar="character"),
+    make_option(c("--group_cols"), type="character",
+                help="column names to aggregate results by"),
     
     make_option(c("--arrange"), type="character",
                 help="arrange: specify a column name to arrange by.", metavar="character"),

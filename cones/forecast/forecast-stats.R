@@ -86,9 +86,9 @@ calc_forecast_accuracy <- function(students, courses, opt) {
   }
   
   # filter for college
-  if (!is.null(opt$college)) {
+  if (!is.null(opt$course_college)) {
     message("filtering forecast data for college...")
-    college_list <- convert_param_to_list(opt$college)
+    college_list <- convert_param_to_list(opt$course_college)
     forecast_data <- forecast_data %>% filter (COLLEGE %in% college_list)
   }
 

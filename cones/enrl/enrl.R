@@ -327,8 +327,7 @@ get_enrl <- function (courses,opt,group_cols=NULL) {
 
   ########## for studio testing
   # opt <- list()
-  # opt$college <- "AS"
-  # opt$aggregate <- "course"
+  # opt$group_cols <- "SUBJ_CRSE"
   # opt$course <- "ENGL 1110"
   
   message("\n","Welcome to get_enrl!")
@@ -350,6 +349,7 @@ get_enrl <- function (courses,opt,group_cols=NULL) {
   # TODO: move into load_courses or parser?
   courses <- add_acad_year (courses, "TERM")
   
+  # define standard columns to keep
   select_cols <- c("CAMP","COLLEGE", "DEPT", "TERM","term_type","CRN","SUBJ","SUBJ_CRSE","SECT","level","CRSE_TITLE","INST_METHOD","PT","INST_NAME", "job_cat", "ENROLLED","total_enrl","XL_SUBJ","SEATS_AVAIL","WAIT_COUNT","gen_ed_area")
   
   ### AOP COMPRESSION
