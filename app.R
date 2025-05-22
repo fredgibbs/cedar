@@ -577,7 +577,7 @@ server <- function(input, output, session) {
     opt[["thresholds"]][["min_wait"]] <-  input$rs_min_wait
     opt[["thresholds"]][["pct_sd"]] <- input$rs_pct_sd
     opt[["thresholds"]][["min_squeeze"]] <- input$rs_min_squeeze
-    
+    opt[["course"]] <- NULL
     
     flagged <- create_regstat_report(students, courses, opt)
     

@@ -72,7 +72,7 @@ get_reg_stats <- function(students,courses,opt) {
   if (!is.null(opt[["thresholds"]])) {
     message("overriding with opt$thresholds...")
     thresholds <- opt[["thresholds"]]
-    print(thresholds)
+    print(thresholds) 
   }
   
   # process course param
