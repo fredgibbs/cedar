@@ -214,12 +214,14 @@ opt_col_map_desr <- list(
   subj          = "SUBJ",
   crn           = "CRN",
   course        = "SUBJ_CRSE",
+  term          = "TERM",
   pt            = "PT",
   inst          = "PRIM_INST_LAST",
   gen_ed        = "gen_ed_area",
   level         = "level",
   im            = "INST_METHOD",
-  job_cat       = "job_cat"
+  job_cat       = "job_cat",
+  uel          = ""
 )
 
 # Example usage for class lists
@@ -240,7 +242,8 @@ opt_col_map_classlist <- list(
   subj              = "Subject Code",
   gen_ed            = "Gen Ed Area",
   reg_status_code   = "Registration Status Code",
-  im                = "Instruction Delivery Mode Code"
+  im                = "Instruction Delivery Mode Code",
+  uel               = ""
 )
 
 
@@ -250,10 +253,6 @@ special_filters_desr <- list(
   enrl_min = function(df, value) df %>% filter(total_enrl >= as.integer(value)),
   enrl_max = function(df, value) df %>% filter(total_enrl <= as.integer(value)),
   uel = function(df, value) df %>% subset(!(SUBJ_CRSE %in% excluded_courses)),
-  job_cat = function(df, value) {
-    param_to_list <- convert_param_to_list(value)
-    df %>% filter(job_cat %in% param_to_list)
-  }
 )
 
 special_filters_classlist <- list(
@@ -264,7 +263,7 @@ special_filters_classlist <- list(
 #' Filter DESRs based on provided options
 filter_DESRs <- function(courses, opt) {
   message("Filtering DESRs with supplied options...")
-  message("Starting with ", nrow(df), " rows.")
+  message("Starting with ", nrow(courses), " rows.")
 
   # Check for at least one filter option
   if (!length(opt)){
