@@ -212,26 +212,48 @@ add_prev_term_col <- function (df,term_col_name,summer=F) {
 }
 
 
-add_next_term_col <- function (df,term_col_name,summer=F) {
-  message("adding prev_term col...")
-  if (summer) {
-    df <- df %>%
-      mutate(next_term = case_when(
-        substring(get({{term_col_name}}),5,6) == 80 ~ as.integer(get({{term_col_name}})) + 30,
-        substring(get({{term_col_name}}),5,6) == 10 ~ as.integer(get({{term_col_name}})) + 50,
-        substring(get({{term_col_name}}),5,6) == 60 ~ as.integer(get({{term_col_name}})) + 20
-      ))
-  } else {
-    df <- df %>%
-      mutate(next_term = case_when(
-        substring(get({{term_col_name}}),5,6) == 80 ~ as.integer(get({{term_col_name}})) + 30,
-        substring(get({{term_col_name}}),5,6) == 10 ~ as.integer(get({{term_col_name}})) + 70,
-        substring(get({{term_col_name}}),5,6) == 60 ~ as.integer(get({{term_col_name}})) + 20
-      ))
-  }
-  return (df)
-}
+# add_next_term_col <- function (df,term_col_name,summer=F) {
+#   message("adding next_term col...")
+#   if (summer) {
+#     df <- df %>%
+#       mutate(next_term = case_when(
+#         substring(get({{term_col_name}}),5,6) == 80 ~ as.integer(get({{term_col_name}})) + 30,
+#         substring(get({{term_col_name}}),5,6) == 10 ~ as.integer(get({{term_col_name}})) + 50,
+#         substring(get({{term_col_name}}),5,6) == 60 ~ as.integer(get({{term_col_name}})) + 20
+#       ))
+#   } else {
+#     df <- df %>%
+#       mutate(next_term = case_when(
+#         substring(get({{term_col_name}}),5,6) == 80 ~ as.integer(get({{term_col_name}})) + 30,
+#         substring(get({{term_col_name}}),5,6) == 10 ~ as.integer(get({{term_col_name}})) + 70,
+#         substring(get({{term_col_name}}),5,6) == 60 ~ as.integer(get({{term_col_name}})) + 20
+#       ))
+#   }
+#   return (df)
+# }
 
+add_next_term_col <- function(df, term_col_name, summer = FALSE) {
+  message("adding next_term col...")
+  term_col <- rlang::ensym(term_col_name)
+  df <- df %>%
+    mutate(
+      term_str = as.character(!!term_col),
+      term_part = substr(term_str, 5, 6),
+      next_term = case_when(
+        summer & term_part == "80" ~ as.integer(term_str) + 30,
+        summer & term_part == "10" ~ as.integer(term_str) + 50,
+        summer & term_part == "60" ~ as.integer(term_str) + 20,
+        !summer & term_part == "80" ~ as.integer(term_str) + 30,
+        !summer & term_part == "10" ~ as.integer(term_str) + 70,
+        !summer & term_part == "60" ~ as.integer(term_str) + 20,
+        TRUE ~ NA_integer_
+      )
+    ) %>%
+    select(-term_str, -term_part)
+  df <- df %>%
+    mutate(next_term = as.character(next_term)) # convert
+  return(df)
+}
 
 
 
