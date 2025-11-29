@@ -1,0 +1,22 @@
+# RStudio and system files
+.Rhistory
+.Rdata
+.Rproj.user
+.DS_Store
+
+# renv local library
+renv/library
+
+# Git and editor files
+.git
+.gitignore
+.gitattributes
+.github/
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Data and output 
+data/
+output/

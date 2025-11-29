@@ -1,0 +1,128 @@
+# CEDAR Changelog Configuration
+# Following CEDAR patterns for modular configuration
+
+changelog:
+
+  - version: "v0.8.6"
+    date: "2025-11-18"
+    title: "Minor fixes and enhancements"
+    type: "minor"
+    items:
+      - "Changed enrl slider to min and max input boxes"
+      - "Enabled Low Enrollment Dashboard to display total enrollment for cross-listed courses"
+      - "Fixed dept report creation error when no lower division courses exist (fixes MSST error)"
+      - "Added section enrollment and total enrollment columns to the enrollment trends table"
+      - "Tightened up Enrollment dashboard spacing, messaging, and instructions"
+      - "Made logging and usage data use more readable timestamp format (Mountain Time)"
+
+  - version: "v0.8.5"
+    date: "2025-11-09"
+    title: "Low enrollment Dashboard & Data Parser Fixes"
+    type: "minor"
+    items:
+      - "Added low enrollment dashboard to Enrollment tab"
+      - "Fixed data parser to respect cedar_use_qs config when loading existing data files"
+      - "Improved rollcall plots to show only top 5 classifications/majors by default"
+      - "Parse-data.R now correctly uses load_cedar_data() instead of hardcoded readRDS()"
+      - "Ensures consistent QS/RDS format handling across data loading and saving operations"
+
+  - version: "v0.8.3"
+    date: "2025-11-07"
+    title: "Minor Fixes"
+    type: "minor"
+    items:
+      - "Enabled Spring 2026 data gathering and reporting"
+      - "Fixed dept report creation error"
+      - "Fixed minor DFW reporting error for students retaking a course w/ same instructor"
+      - "Implemented QS file format for faster data I/O (with fallback to Rds)"
+      - "Streamlined course-report processing"
+      - "Changelog modal displays only on first visit"
+
+
+  - version: "v0.8.2"
+    date: "2025-10-30"
+    title: "Outcomes"
+    type: "minor"
+    items:
+      - "Various performance updates"
+      - "Outcomes tab replaces Gradebook in Course Reports"
+      - "Refined average DFW plot with instructor averages imposed"
+      - "DFW rates over time plot added"
+      - "DFW rates by instructor type plot added"
+      - "More detailed grade table for detailed outcomes analysis"
+      - "More detailed enrollment table included on Enrollment tab"
+
+  - version: "v0.8.1"
+    date: "2025-10-24"
+    title: "Enrollment plot and CSV download"
+    type: "minor"
+    items:
+      - "Added a user-selectable facet field for Enrollment plots."
+      - "Added CSV download for the Enrollment summary table and improved UX."
+      - "Refactored Course Report rollcall renderers to reduce repetition and support campus-level filtering without rebuilding full datasets."
+      - "Performance and memory improvements during interactive course report generation (minor GC points and caching adjustments)."
+      - "Small UI and logging enhancements for clearer user feedback during report generation."
+
+
+  - version: "v0.8"
+    date: "2025-10-15"
+    title: "Course Reports visualizations"
+    type: "major"
+    items:
+      - "Added new interactive course report plots"
+      - "Added rollcall time series plots showing classification and major trends over time"
+      - "Enhanced Course Reports Rollcall tab with new time series visualizations"
+      - "Improved gradebook plotting with instructor dots properly aligned to course bars"
+      - "Added plot_time_series function for dynamic rollcall trend analysis"
+      - "Fixed UI layout for rollcall plots (fall/spring comparison + unified tables)"
+      - "Improved data processing for rollcall analytics with better grouping logic"
+
+  - version: "v0.7.0"
+    date: "2025-09-26"
+    title: "Headcount Analytics & UI Improvements"
+    type: "major"
+    items:
+      - "Added comprehensive headcount tab for majors, minors, concentrations"
+      - "Implemented hierarchical filtering (Campus → College → Department → Programs)"
+      - "Added stacked bar charts with program type visualization"
+      - "Enhanced enrollment plots with better grouping options"
+      - "Added navigation icons for better visual consistency"
+      - "Improved cascading filter performance and user experience"
+
+  - version: "v0.6.1"
+    date: "2025-09-13"
+    title: "Performance & Analytics Updates"
+    type: "minor"
+    items:
+      - "Department Reports much faster"
+      - "Headcount tab, for majors, minors, concentrations"
+      - "Enrollment plots"
+      - "Enhanced usage analytics with detailed logging"
+      - "Improved data status monitoring"
+
+  - version: "v0.6"
+    date: "2025-08-24"
+    title: "Department Reports & Interactive Features"
+    type: "major"
+    items:
+      - "Department Reports tab with tabbed data and interactive plots"
+      - "Downloadable HTML Department Reports"
+      - "Dept report DFW plot now includes instructor information"
+      - "Course report gradebook section filtered out certain drops erroneously"
+      - "Clearer labeling of early vs late drops"
+      - "Various performance improvements"
+      - "Clearer logging and messaging"
+
+  - version: "v0.5"
+    date: "2025-08-04"
+    title: "Automated Data & Performance Improvements"
+    type: "major"
+    items:
+      - "Data is now automatically updated nightly!"
+      - "No more waiting for the app to load!"
+      - "Previously created course reports are instantly ready; still need to add refresh option"
+      - "Reduced width of enrollment table"
+      - "Removed autoupdating for enrollment data to prevent accidental long queries"
+      - "Added enrollment min/max slider to Enrollment tab"
+      - "Fixed problem with displaying large Course Reports"
+      - "Fixed formatting error with major and classification tables in Course Report"

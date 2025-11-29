@@ -32,6 +32,7 @@ course <- opt[["course"]]
 term <-opt[["term"]]
 
 course_data <- params[["course_data"]]
+
 enrls <- course_data[["enrls"]]
 where_to_data <- course_data[["where_to"]]
 where_from_data <- course_data[["where_from"]]
@@ -334,9 +335,9 @@ if (ncol(agg_by_major_summer) > 3) {
 
 ### Gradebook
 ```{r gradebook} 
-grade_data <-  grade_data %>%  select(c(`Course Campus Code`, `Course College Code`, `Academic Period Code`,`DFW %`,8:ncol(grade_data)))
-
+grade_data <-  grade_data %>%  select(c(`Course Campus Code`, `Course College Code`, `Academic Period Code`,`DFW %`,`passed`,`failed`,`withdrew`,`late_dropped`))
 datatable(grade_data, options=dt_opts, class = dt_class)
+
 
 # table <- kbl(grade_data,digits=2)  %>% 
 #   kable_styling(bootstrap_options = c("striped", "hover", "condensd", "responsive"),

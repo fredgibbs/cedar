@@ -1,18 +1,18 @@
 ---
-title: "Department Report"
-date: ""
+title: "Trends Report"
 output:
-    html_document:
-        toc: true
-        toc_float:
-            collapsed: false
-            smooth_scroll: false
-        theme: flatly
-        self_contained: TRUE
-        df_print: paged
-always_allow_html: true
+  html_document:
+    toc: true  
+    toc_float:
+      collapsed: false
+      smooth_scroll: false    
+  pdf_print: paged
+  pdf_document:
+    fig_width: 7
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+always_allow_html: yes
 params:
-  dept_code: 1 
+  dept_code: 1
   dept_name: 1
   subj_codes: 1
   prog_name: 1
@@ -35,158 +35,46 @@ library(kableExtra)
 library(rmarkdown)
 library(plotly)
 
-
-knitr::opts_chunk$set(
-  echo = FALSE,
-  warning = FALSE, 
-  message = FALSE,
-  fig.pos = "H",
-  fig.width = 10,
-  fig.height = 6,
-  out.width = "100%",
-  cache = FALSE,
-  dev = "ragg_png",  # Faster image rendering
-  dpi = 150
-)
-
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE, message = FALSE,fig.pos = "H",fig.width = 9)
 ```
 
 ```{css, echo=FALSE}
-/* Set base font size */
-html {
-    font-size: 16px;
-}
 
-/* Main content responsive styling */
-.main-container {
-    max-width: 75rem;
-    margin: 0 auto;
-    padding: 0 0.9375rem;
-}
-
-body {
-    font-size: 0.875rem;
-    line-height: 1.6;
-}
-
-/* Make tables responsive */
-table {
-    max-width: 100%;
-    overflow-x: auto;
-    display: block;
-    white-space: nowrap;
-}
-
-@media (max-width: 768px) {
-    table {
-        font-size: 0.75rem;
-    }
-    
-    .main-container {
-        padding: 0 0.625rem;
-    }
-}
-
-/* Plotly responsive styling */
-.plotly {
-    width: 100% !important;
-    height: auto !important;
-}
-
-/* ToC formatting */
 .tocify-header {
-    text-indent: 0.5rem;
-    font-weight: 900;
-    font-size: 1rem;
-    line-height: 1.3;
-    padding: 0.5rem 0;
-    color: #2c3e50;
-    text-transform: uppercase;
-    letter-spacing: 0.05rem;
-    border-bottom: 2px solid #3498db;
-    margin: 0.25rem 0;
-    background-color: #f8f9fa;
+    text-indent: 10px;
+    font-weight: bold;
+    font-size: 120%
 }
+
 
 .tocify-subheader {
-    text-indent: 1.5rem;
-    font-weight: 400;
-    font-size: 0.8rem;
-    line-height: 1.4;
-    padding: 0.2rem 0;
-    color: #5a6c7d;
-    text-transform: none;
-    letter-spacing: normal;
-    border-left: 3px solid #ecf0f1;
-    margin-left: 0.5rem;
-    padding-left: 0.5rem;
+    text-indent: 20px;
+    font-weight: normal;
+    font-size: 80%
+    line-height:80%
 }
 
 .tocify .list-group-item {
-    font-size: 0.6875rem;
-    line-height: 1.2;
-    padding: 0.1875rem 0.3125rem;
-    border: none;
-    margin-bottom: 0.0625rem;
-    transition: background-color 0.2s ease;
-}
-
-.tocify .list-group-item:hover {
-    background-color: #f8f9fa;
-    border-left: 0.1875rem solid #3498db;
-}
-
-.tocify .list-group-item.active {
-    background-color: #e3f2fd;
-    border-left: 0.1875rem solid #2196f3;
-    font-weight: 600;
-}
-
-/* ToC container styling */
-#TOC {
-    border: 1px solid #ddd;
-    border-radius: 0.375rem;
-    background-color: #fff;
-    margin-bottom: 1.25rem;
-    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.1);
+    font-size: 60%
+    line-height:60%
 }
 
 @media print {
-    #TOC { 
-        display: none; 
-    }
-    
-    .main-container {
-        max-width: none;
-        margin: 0;
-        padding: 0;
-    }
-}
 
-@media (max-width: 768px) {
-    #TOC {
-        font-size: 90%;
-    }
-    
-    .tocify-header {
-        font-size: 0.9rem;
-        font-weight: 800;
-        padding: 0.4rem 0;
-    }
-    
-    .tocify-subheader {
-        font-size: 0.7rem;
-        font-weight: 300;
-        text-indent: 1.2rem;
-    }
+  #TOC { display: none; }
+
 }
 ```
 
 
 
-# `r params$dept_name` Trends
+---
+title: " `r params$dept_name` Trends"
+subtitle: " "
 
 **Report created on:** `r format(Sys.time(), '%d %B, %Y')`
+
+---
 
 - Unit code: `r unlist(paste(params["dept_code"], collapse=", "))` 
 - Program(s): `r paste(params$prog_names, collapse=", ")` 
@@ -238,7 +126,7 @@ params$plots[["hc_progs_grad_long_majors_plot"]]
 params$plots[["hc_progs_grad_long_minors_plot"]]
 ```
 
- 
+
 \newpage
 
 <hr>
@@ -248,15 +136,21 @@ params$plots[["hc_progs_grad_long_minors_plot"]]
 - THEREFORE, the numbers here lower than what's found on the OIA dashboard, which counts credit hours based on the number of enrolled students at the census date (3rd Friday of classes).
 
 
-### College vs Department Direct Comparison
-```{r college_dept_dual_plot} 
-params$plots[["college_dept_dual_plot"]]
+### College Credit Hours
+```{r college_credit_hours_plot} 
+params$plots[["college_credit_hours_plot"]]
+```
+
+
+### Comparison to College
+```{r college_credit_hours_comp_plot} 
+params$plots[["college_credit_hours_comp_plot"]]
 ```
 
 
 ### Total Credit Hours
-```{r chd_by_period_plot} 
-params[["plots"]][["chd_by_period_plot"]]
+```{r chd_by_year_plot} 
+params[["plots"]][["chd_by_year_plot"]]
 
 ```
 
@@ -297,14 +191,7 @@ credit_hours_data_w <- params$tables[["credit_hours_data_w"]]
 color.me <- which(credit_hours_data_w$Major %in% params$prog_names)
 
 if (nrow(credit_hours_data_w) > 0) {
-  kbl(credit_hours_data_w, digits=2, table.attr = "class='table-responsive'") %>%   
-    kable_styling(
-      bootstrap_options = c("striped", "hover", "condensed", "responsive"),
-      latex_options = c("striped", "HOLD_position", "condensed", "scale_down"), 
-      position = "center", 
-      full_width = TRUE,
-      font_size = 12
-    ) %>%
+  kbl(credit_hours_data_w,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","HOLD_position","condensed","scale_down"), position="center", full_width=F) %>%
     row_spec(color.me, bold = T, color = "white", background = "red") %>% 
     scroll_box(width = "100%", height = "300px")
 }
@@ -367,6 +254,13 @@ params$plots[["grades_summary_for_ld_abq_ea_plot"]]
 
 
 
+### LD Grade Breakdown
+```{r grades_summary_gened_by_course_w} 
+  grades_summary_for_ld <- params$tables[["grades_summary_for_ld"]]
+
+  kbl(grades_summary_for_ld,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","HOLD_position","condensed","scale_down"), position="center", full_width=F) %>%
+    scroll_box(width = "100%", height = "500px")
+```
 
 \newpage
 
@@ -430,6 +324,58 @@ params$plots[["sfr_scatterplot"]]
   - Grades data: "Class List Guided Adhoc"
 
 MyReports data is always current (to the last business day), unlike other reports, including OIA dashboards, that use 3-week census data. Which is "better" simply depends on one's purpose. But it does mean that dashboard data is usually a bit different from other sources. How much this matters depends primarily on the course.
+
+
+
+## Tables {.tabset}
+
+### UG Headcount
+```{r} 
+hc_progs_under <- params$tables[["hc_progs_under"]]
+
+if (nrow(hc_progs_under) > 0) {
+kbl(hc_progs_under,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","HOLD_position","condensed","scale_down"), position="center", full_width=F) %>% 
+    scroll_box(width = "100%", height = "300px")
+}
+```
+
+### GR Headcount
+```{r} 
+hc_progs_grad <- params$tables[["hc_progs_grad"]]
+
+if (nrow(hc_progs_grad) > 0) {
+kbl(hc_progs_grad,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","HOLD_position","condensed","scale_down"), position="center", full_width=F) %>% 
+    scroll_box(width = "100%", height = "300px")
+}
+```
+
+
+
+### CH by Course Level
+```{r} 
+chd_by_year_table <- params$tables[["chd_by_year_table"]]
+
+kbl(chd_by_year_table,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","HOLD_position","condensed","scale_down"), position="center", full_width=F) %>% 
+    scroll_box(width = "100%", height = "300px")
+```
+
+
+### Degrees by Type
+```{r} 
+degree_summary_filtered_program <- params$tables[["degree_summary_filtered_program"]]
+
+kbl(degree_summary_filtered_program,digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","HOLD_position","condensed","scale_down"), position="center", full_width=F) %>% 
+   scroll_box(width = "100%", height = "300px")
+```
+
+
+### SFR
+```{r} 
+sfr_table <- params$tables[["sfr_table"]]
+
+kbl(sfr_table, digits=2)  %>%   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),latex_options = c("striped","HOLD_position","condensed","scale_down"), position="center", full_width=F) %>% 
+    scroll_box(width = "100%", height = "300px")
+```
 
 
 

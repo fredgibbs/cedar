@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
+# CEDAR CLI 
 # This script expects to be run from the cedar_base_dir (defined in includes/config.R)
 
 #install.packages("pacman", repos='http://cran.us.r-project.org')
-
 
 set_option_list <- function() {
   
@@ -96,7 +96,7 @@ set_option_list <- function() {
                 help="arrange: specify a column name to arrange by.", metavar="character"),
     
     make_option(c("--output"), type="character",
-                help="csv, html, aspx"), 
+                help="csv, html, aspx, shiny"), 
     
     make_option(c("--nso"), default=FALSE, action="store_true",
                 help="use nso data for forecasting"), 
@@ -116,7 +116,7 @@ set_option_list <- function() {
 
 
 # run below when cedar.R is called from command line
-message("Welcome to CEDAR CLI! starting timer...")
+message("[cedar.R] Welcome to CEDAR CLI! starting timer...")
 start.time <- Sys.time()
 
 options("width"=300)
@@ -124,7 +124,7 @@ options("width"=300)
 pacman::p_load(tidyverse,fs,data.table, optparse, plotly)
 
 
-message("setting up option list...")
+message("[cedar.R] Setting up option list...")
 option_list <- set_option_list()
 opt_parser <- OptionParser(option_list = option_list);
 opt <- parse_args(opt_parser);
@@ -132,14 +132,16 @@ print(opt)
 
 if (opt$func == "guide") {
   message("
-          Available functions: course-report, credit-hours, data-status, dept-report, enrl, forecast, gradebook, headcount, lookout, rollcall, seatfinder, sfr, waitlist.
-          Specify -f FUNC (where FUNC is one of the terms above) --guide for instructions on each function, like '-f enrl --guide'")  
+          Available functions: course-report, credit-hours, data-status, dept-report, enrl, forecast, gradebook, headcount, lookout, regstats, rollcall, seatfinder, sfr, waitlist.
+          Specify -f FUNC (where FUNC is one of the terms above) --guide for instructions on each function, like '-f regstats --guide'")  
   stop("no error")
 } 
 
 # Load external R files
-source("includes/config.R")
-source("includes/load_funcs.R")
+source("config/config.R")
+source("R/includes/load_funcs.R")
+
+# load all functions
 load_funcs("./")
 
 # prefer dyplr and plotly functions; defined in misc_funcs
@@ -158,4 +160,4 @@ if (is.character(msg)) {
 
 end.time <- Sys.time()
 time.taken <- round(end.time - start.time,2)
-message("cedar.R all done. completed in ",time.taken," seconds.","\n")
+message("[cedar.R] All done! Completed in ",time.taken," seconds.","\n")

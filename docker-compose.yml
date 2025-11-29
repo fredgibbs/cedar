@@ -1,0 +1,32 @@
+services:
+  
+  cedar-shiny:
+    build:
+      context: .
+      dockerfile: Dockerfile.shiny
+    platform: linux/amd64
+    container_name: cedar-shiny
+    ports:
+      - "3838:3838"
+    restart: unless-stopped
+
+    networks:
+      - shiny-net
+
+    volumes:
+      # for droplet
+      #- /root/shared-data:/srv/shiny-server/cedar/data
+      
+      # for local development (if building from cedar folder)
+      - /Users/fwgibbs/Dropbox/projects/shared-data:/srv/shiny-server/cedar/data
+      
+      # for shared mounting (never used)
+      # - shared-data:/data
+    
+#volumes:
+  #shared-data:
+
+networks:
+  shiny-net:
+    external: true
+  
