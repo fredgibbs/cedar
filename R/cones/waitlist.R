@@ -76,7 +76,7 @@ inspect_waitlist <- function (students, opt) {
 
   waitlist_data[["majors"]] <- summarize_classifications(filtered_students, opt) %>% 
     ungroup() %>% 
-    select (-c(`Course College Code`, level, term_type, mean, registered, registered_mean, pct)) %>% 
+    select (-c(`Course College Code`, level, term_type, mean, registered, registered_mean, term_pct, term_type_pct)) %>% 
     arrange (`Course Campus Code`, desc(count))
 
 
@@ -86,7 +86,7 @@ inspect_waitlist <- function (students, opt) {
 
   waitlist_data[["classifications"]] <- summarize_classifications(filtered_students, opt) %>% 
     ungroup() %>% 
-    select (-c(`Course College Code`, level, term_type, mean, registered, registered_mean, pct)) %>% 
+    select (-c(`Course College Code`, level, term_type, mean, registered, registered_mean, term_pct, term_type_pct)) %>% 
     arrange (`Course Campus Code`, desc(count))
 
   waitlist_data[["count"]] <- get_unique_waitlisted(filtered_students, opt)
