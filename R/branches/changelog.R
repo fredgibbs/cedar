@@ -46,9 +46,12 @@ format_changelog_html <- function(entries = NULL, max_entries = 3) {
     )
     
     version_html <- paste0(
-      "<h4>", entry$date, ": ", entry$title, " ",
+      "<div class='changelog-entry'>",
+      "<div class='changelog-date'>", entry$date, "</div>",
+      "<h4 class='changelog-title'>", entry$title, " ",
       "<span class='badge ", type_class, "'>", entry$version, "</span>",
-      "</h4>"
+      "</h4>",
+      "</div>"
     )
     
     # Items list

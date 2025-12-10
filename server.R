@@ -28,6 +28,91 @@ server <- function(input, output, session) {
     write_log("INFO", "session_end", NULL, session_id, NULL)
   }) # end onSessionEnded
 
+  
+  # Parse URL query parameters and update inputs dynamically
+  # Use observeEvent with once=TRUE to only trigger on initial page load
+  observeEvent(session$clientData$url_search, {
+    query <- parseQueryString(session$clientData$url_search)
+    
+    # Only process if there are actual query parameters
+    if (length(query) == 0) return()
+    
+    # Map URL-friendly tab names to actual tab titles
+    tab_aliases <- list(
+      "seatfinder" = "Seatfinder",
+      "waitlists" = "Waitlists",
+      "enrollment" = "Enrollment",
+      "headcount" = "Headcount",
+      "course-reports" = "Course Reports",
+      "department-reports" = "Department Reports"
+    )
+    
+    # Switch to specific tab if requested
+    tab_param <- tolower(query$tab)  # Make case-insensitive
+    tab_name <- if (!is.null(tab_param) && !is.null(tab_aliases[[tab_param]])) {
+      tab_aliases[[tab_param]]
+    } else {
+      query$tab  # Use as-is if not in aliases
+    }
+    
+    # Only update navbar and close dropdowns if we have a tab parameter
+    if (!is.null(tab_name)) {
+      updateNavbarPage(session, "main_navbar", selected = tab_name)
+    }
+    
+    # Map tab names to their input prefixes
+    tab_prefixes <- list(
+      "Seatfinder" = "sf",
+      "Waitlists" = "wl",
+      "Enrollment" = "enrl",
+      "Headcount" = "hc",
+      "Course Reports" = "cr",
+      "Department Reports" = "dr"
+      # Add more tabs as needed
+    )
+    
+    # Get the prefix for the current tab
+    prefix <- if (!is.null(tab_name) && !is.null(tab_prefixes[[tab_name]])) {
+      tab_prefixes[[tab_name]]
+    } else {
+      NULL
+    }
+    
+    # Update inputs based on tab prefix
+    for (param_name in names(query)) {
+      # Skip special control params
+      if (param_name %in% c("tab", "autorun")) next
+      
+      # Construct the actual input ID
+      input_id <- if (!is.null(prefix)) {
+        paste0(prefix, "_", param_name)  # e.g., "sf_term"
+      } else {
+        param_name  # Use as-is if no prefix
+      }
+      
+      param_value <- query[[param_name]]
+      
+      # Try to update the input
+      tryCatch({
+        updateSelectizeInput(session, input_id, selected = param_value)
+      }, error = function(e) {
+        # Input doesn't exist, that's OK
+      })
+    }
+    
+    # Auto-run functionality if requested
+    if (!is.null(query$autorun) && query$autorun == "true" && !is.null(prefix)) {
+      button_id <- paste0(prefix, "_button")
+      isolate({
+        tryCatch({
+          updateActionButton(session, button_id, label = "Loading...")
+        }, error = function(e) {
+          # Button doesn't exist
+        })
+      })
+    }
+  }, once = TRUE) # end URL parameter parsing - only run once on page load
+
 
   # Helper function for consistent error logging and notifications
   handle_error <- function(e, context = "general", notification_id = NULL) {
@@ -138,9 +223,13 @@ server <- function(input, output, session) {
       changelog_html <- format_changelog_html(max_entries = 2)
       
       showModal(modalDialog(
-        title = "Welcome to CEDAR!",
+        title = "Latest CEDAR updates!",
         HTML(paste0(
-          "<p><strong>New updates are available!</strong></p>",
+          "<style>",
+          ".changelog-title { margin-top: 0; margin-bottom: 0rem; }",
+          ".changelog-entry { margin-bottom: 0; }",
+          ".changelog-date { font-size: 1.5rem; color: #666; margin-bottom: 5px; }",
+          "</style>",
           changelog_html,
           "<hr>",
           "<p>Please make suggestions or report problems: fwgibbs@unm.edu</p>"
@@ -1726,41 +1815,85 @@ output$enrl_summary_download <- downloadHandler(
       level = input$sf_level
     ))
     
-    #RV$data<-myCustomFunction(RV$data)
+    # Show loading notification
+    status_message <- create_timing_status_message("seatfinder", "Generating seatfinder analysis")
+    showNotification(status_message, type = "warning", duration = NULL, id = "seatfinder_loading")
     
-    # get seatfinder data
-    opt <- list()
-    opt[["course_campus"]] <- input$sf_campus
-    opt[["course_college"]] <- input$sf_college
-    opt[["dept"]] <- input$sf_dept
-    opt[["term"]] <- input$sf_term
-    opt[["pt"]] <- input$sf_pt
-    opt[["im"]] <- input$sf_im
-    opt[["level"]] <- input$sf_level
-    courses_list <- seatfinder(students,courses,opt)
+    # Start timing
+    timer <- start_report_timer("seatfinder", list(
+      dept = input$sf_dept,
+      term = input$sf_term
+    ))
     
-    output$type_summary = DT::renderDataTable({
-      data <- courses_list[["type_summary"]]
-    })
-    
-    output$courses_common = DT::renderDataTable({
-      data <- courses_list[["courses_common"]]
-    })
-    
-    output$courses_prev = DT::renderDataTable({
-      data <- courses_list[["courses_prev"]]
-    })
-    
-    output$courses_new = DT::renderDataTable({
-      data <- courses_list[["courses_new"]]
-    })
-    
-    output$gen_ed_summary = DT::renderDataTable({
-      data <- courses_list[["gen_ed_summary"]]
-    })
-    
-    output$gen_ed_likely = DT::renderDataTable({
-      data <- courses_list[["gen_ed_likely"]]
+    tryCatch({
+      #RV$data<-myCustomFunction(RV$data)
+      
+      # get seatfinder data
+      opt <- list()
+      opt[["course_campus"]] <- input$sf_campus
+      opt[["course_college"]] <- input$sf_college
+      opt[["dept"]] <- input$sf_dept
+      opt[["term"]] <- input$sf_term
+      opt[["pt"]] <- input$sf_pt
+      opt[["im"]] <- input$sf_im
+      opt[["level"]] <- input$sf_level
+      opt[["group_cols"]] <- input$sf_agg_by
+      
+      courses_list <- seatfinder(students,courses,opt)
+      
+      # Type Summary: has ENRL, avail, avail_diff, DFW %
+      output$type_summary = DT::renderDataTable({
+        create_seatfinder_datatable(
+          courses_list[["type_summary"]],
+          color_avail = TRUE,          
+          color_dfw = TRUE
+        )
+      }, options = list(pageLength = 50))
+      
+      # Common Courses: has enrolled, avail, enrl_diff_from_last_year, DFW %
+      output$courses_common = DT::renderDataTable({
+        create_styled_datatable(
+          courses_list[["courses_common"]],
+          column_schemes = list(
+            "avail" = "availability",
+            "DFW %" = "dfw"
+          )
+        )
+      }, options = list(pageLength = 50))
+      
+      # Previously Offered: has enrolled, avail, DFW %
+      output$courses_prev = DT::renderDataTable({
+        create_styled_datatable(courses_list[["courses_prev"]])  # Auto-detect columns
+      }, options = list(pageLength = 50))
+      
+      # Newly Offered: has enrolled, avail, DFW %
+      output$courses_new = DT::renderDataTable({
+        create_styled_datatable(courses_list[["courses_new"]])  # Auto-detect columns
+      }, options = list(pageLength = 50))
+      
+      # Gen Ed Summary: has enrolled, avail, DFW %
+      output$gen_ed_summary = DT::renderDataTable({
+        create_styled_datatable(courses_list[["gen_ed_summary"]])  # Auto-detect columns
+      }, options = list(pageLength = 50))
+      
+      # Gen Ed Likely: has enrolled (=0), avail (=0) - no color coding needed
+      output$gen_ed_likely = DT::renderDataTable({
+        courses_list[["gen_ed_likely"]]
+      }, options = list(pageLength = 50))
+      
+      # End timing and show success
+      duration_sec <- end_report_timer(timer)
+      removeNotification("seatfinder_loading")
+      showNotification(paste("Seatfinder analysis generated successfully! (", round(duration_sec, 1), "s)"), 
+                      type = "message", duration = 3)
+      
+    }, error = function(e) {
+      handle_error(e, "seatfinder", "seatfinder_loading")
+      
+      # End timer even on error
+      tryCatch(end_report_timer(timer), error = function(timer_error) {
+        message("[server.R] Error ending timer: ", timer_error$message)
+      })
     })
     
   },ignoreInit = TRUE) # end observeEvent for sf_button

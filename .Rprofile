@@ -1,24 +1,44 @@
 message("Welcome to .Rprofile!")
 
-# Check if we're in a Shiny context - if so, skip all setup (global.R will handle everything)
-is_shiny_context <- nzchar(Sys.getenv("SHINY_SERVER_VERSION")) || 
-                   exists("shiny", where = globalenv(), mode = "any") ||
-                   any(grepl("shiny", search()))
+# Detect execution context:
+# 1. Shiny app startup - skip everything (global.R handles it)
+# 2. CLI/Rscript - activate renv only, let script source what it needs
+# 3. Interactive RStudio - activate renv and load full environment
 
-if (is_shiny_context) {
-  message("Shiny context detected - skipping all .Rprofile setup (global.R will handle everything)")
-} else {
-  # Handle renv activation for non-Shiny contexts
+message("Detecting execution context...")
+
+cmdline <- paste(commandArgs(), collapse = " ")
+is_shiny_startup <- nzchar(Sys.getenv("SHINY_SERVER_VERSION")) ||
+                    grepl("shiny", cmdline, ignore.case = TRUE)
+
+is_cli <- !interactive() && !is_shiny_startup
+
+if (is_shiny_startup) {
+  message("Shiny app startup detected - activating renv only (global.R will load libraries)")
+  # Activate renv so Shiny can find installed packages
+  if (file.exists("renv/activate.R")) {
+    source("renv/activate.R")
+  }
+  
+} else if (is_cli) {
+  message("CLI/Rscript execution detected - activating renv only")
+  # Activate renv so CLI gets correct package versions
+  if (file.exists("renv/activate.R")) {
+    source("renv/activate.R")
+    message("Activated renv for CLI.")
+  }
+  # Don't load libraries or data - let the CLI script control what it needs
+  
+} else if (interactive()) {
+  message("Interactive RStudio session detected - loading full environment")
+  # Handle renv activation for interactive use
   if (file.exists("renv/activate.R")) {
     message("Found renv/activate.R. Activating renv...")
     source("renv/activate.R")
     message("Activated renv.")
   }
 
-  # Load libraries, config files, functions, and data for interactive use
-  message("checking if running interactively...")
-  
-  if (interactive()) {
+
     message(".Rprofile is running interactively in RStudio.")
     message("Loading libraries...")
     pacman::p_load(tidyverse, dplyr, fs, qs, optparse, plotly)
@@ -39,9 +59,6 @@ if (is_shiny_context) {
 
     load_global_data(opt=NULL)
     message("Ran load_global_data().")
-  } else {
-    message(".Rprofile is running outside of RStudio.")
-  }
 }
 
 message(".Rprofile has finished loading.")

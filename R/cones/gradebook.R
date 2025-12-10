@@ -51,7 +51,7 @@ get_grades <- function(students, hr_data, opt) {
   message("[gradebook.R] Options: ", toString(opt))
 
   # filter students from opt params (usually course and term OR dept for dept reports)
-  filtered_students <- filter_class_list(students,opt)
+  filtered_students <- filter_class_list(students, opt)
 
   # If no data after filtering, return empty list
   # this happens for instance for when a unit has no lower division and we try to get grades for plotting dfw rates

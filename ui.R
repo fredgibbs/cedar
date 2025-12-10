@@ -1,5 +1,6 @@
 # Define UI for application
 ui <- page_navbar(
+  id = "main_navbar",  # Add ID to enable tab switching
 
   tags$head(
     tags$style(HTML("
@@ -22,6 +23,15 @@ ui <- page_navbar(
             $('[data-toggle=\"tooltip\"]').tooltip();
           }, 100);
         });
+        
+        // Close any open dropdowns when page loads with URL parameters
+        if (window.location.search) {
+          setTimeout(function() {
+            $('.navbar-nav .dropdown').removeClass('show');
+            $('.navbar-nav .dropdown-toggle').removeClass('show').attr('aria-expanded', 'false');
+            $('.navbar-nav .dropdown-menu').removeClass('show');
+          }, 100);
+        }
       });
       
       // Check localStorage for changelog version AFTER Shiny is connected
@@ -719,20 +729,30 @@ nav_panel(
       title = "Seatfinder", 
       
       # Page title
-      h1("Course Seat Availability Explorer", style = "margin-bottom: 20px;"),
+      h1("Course / Seat Availability"),
+      
+      # Instructional note
+      p("Seatfinder is a special case of the enrollment tab that focuses on courses with available seats for the specified search parameters.
+      It also provides DFW rates for those courses that have been offered in before with the same filtering parameters. No DFW rate means that the course has not been offered before with those parameters.
+      It also provides tabs to see courses that were offered a year previously, courses not offered a year previously, and courses common to both terms.
+      Gen Ed Likely tab shows courses that are active but with no enrollment and likely capped at 0 for now (e.g., gen ed courses not yet opened for enrollment).",
+        style = "color: #666; font-size: 0.9em"),
+
+      p("DFW rates reflect courses matching your selected filters (e.g., if you filter by 2H, DFW % is for 2H versions of those courses).",
+        style = "color: #666; font-size: 0.9em"),
       
       fluidRow(
         column(1,
                selectizeInput(
                  inputId = "sf_campus",
-                 label = "Select Campus", 
+                 label = "Campus", 
                  multiple = TRUE,
                  choices = sort(unique(courses$CAMP))),
         ),
         column(1,
                selectizeInput(
                  inputId = "sf_college",
-                 label = "Select College", 
+                 label = "College", 
                  multiple = TRUE,
                  choices = sort(unique(courses$COLLEGE))),
         ),
@@ -740,14 +760,14 @@ nav_panel(
         column(2,
                selectizeInput(
                  inputId = "sf_dept",
-                 label = "Select Dept", 
+                 label = "Department", 
                  multiple = TRUE,
                  choices = sort(unique(courses$DEPT))),
         ),
         column(2,
                selectizeInput(
                  inputId = "sf_term",
-                 label = "Select Term", 
+                 label = "Term", 
                  multiple = TRUE,
                  choices = sort(unique(c(courses$term_type,courses$TERM)),decreasing = TRUE)),
         ),
@@ -773,6 +793,13 @@ nav_panel(
                  multiple = TRUE,
                  choices = sort(unique(courses$level))),
         ),
+        # column(2,
+        #        selectizeInput(
+        #          inputId = "sf_agg_by",
+        #          label = "Group by", 
+        #          multiple = TRUE,
+        #          choices = c("CAMP","COLLEGE","SUBJ_CRSE", "CRSE_TITLE", "DEPT", "TERM","term_type", "PT","INST_METHOD", "level", "gen_ed_area" )),
+        # ),
         column(2,
                actionButton("sf_button",
                            label = "Refresh table", 
@@ -781,7 +808,7 @@ nav_panel(
       ), # end fluidRow
       
       tabsetPanel(
-        tabPanel("Summary", DT::DTOutput("type_summary")),
+        tabPanel("Courses", DT::DTOutput("type_summary")),
         tabPanel("Common", DT::DTOutput("courses_common")),
         tabPanel("Prev", DT::DTOutput("courses_prev")),
         tabPanel("New", DT::DTOutput("courses_new")),
